@@ -3,6 +3,7 @@
 *~
 *.d
 *.o
+*.zip
 unittests
 saimport
 saexport
@@ -10,3 +11,6 @@ SAIMPORT
 SAEXPORT
 SAIMPORT.X
 SAEXPORT.X
+build.sh
+compile.sh
+build/specasm
