@@ -1,0 +1,12 @@
+*.tap
+*.bin
+*~
+*.d
+*.o
+unittests
+saimport
+saexport
+SAIMPORT
+SAEXPORT
+SAIMPORT.X
+SAEXPORT.X

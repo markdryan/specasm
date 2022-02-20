@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: build
+      run: |
+        make -j
+    - name: make check
+      run: |
+        ./unittests
+        cd tests && ./tests.sh
+    - name: sanatizer
+      run: |
+        make clean
+        CFLAGS="-g -fsanitize=address -fno-omit-frame-pointer -Wall -Werror" make
+        ./unittests

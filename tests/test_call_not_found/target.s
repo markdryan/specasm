@@ -1,0 +1,2 @@
+.global
+  ret 	 ; 4

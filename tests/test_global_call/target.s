@@ -1,0 +1,2 @@
+.Global
+  ret 	 ; 4

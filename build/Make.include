@@ -1,0 +1,21 @@
+error.o: ../../src/error.c ../../src/error.h
+state_base.o: ../../src/state_base.c ../../src/peer.h ../../src/error.h ../../src/peer_zx.h \
+	      ../../src/line.h ../../src/state_base.h ../../src/strings.h
+state.o: ../../src/state.c ../../src/state.h ../../src/state_base.h ../../src/line.h ../../src/error.h \
+	 ../../src/strings.h
+line.o: ../../src/line.c ../../src/peer.h ../../src/error.h ../../src/peer_zx.h ../../src/line.h \
+	../../src/state.h ../../src/state_base.h ../../src/strings.h
+editor.o: ../../src/editor.c ../../src/editor.h ../../src/peer.h ../../src/error.h \
+  ../../src/peer_zx.h ../../src/line.h ../../src/state.h ../../src/state_base.h ../../src/strings.h
+saimport.o: ../../src/saimport.c ../../src/peer.h ../../src/error.h ../../src/peer_zx.h \
+  ../../src/line.h ../../src/peer_file.h ../../src/state.h ../../src/state_base.h ../../src/strings.h
+saexport.o: ../../src/saexport.c ../../src/peer.h ../../src/error.h ../../src/peer_zx.h \
+  ../../src/line.h ../../src/peer_file.h ../../src/state.h ../../src/state_base.h ../../src/strings.h
+salink.o: ../../src/salink.c ../../src/peer.h ../../src/error.h ../../src/peer_zx.h ../../src/line.h \
+	  ../../src/peer_file.h ../../src/state_base.h ../../src/strings.h
+peer_zx.o: ../../src/peer_zx.c ../../src/peer.h ../../src/state.h ../../src/state_base.h ../../src/line.h \
+	   ../../src/strings.h ../../src/error.h
+peer_file_zx.o: ../../src/peer_file_zx.c ../../src/error.h ../../src/peer_file.h
+
+%.o: %.c
+	zcc $(CFLAGS) -o $@ -c $<
