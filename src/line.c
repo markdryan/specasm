@@ -1643,9 +1643,9 @@ static const specasm_line_opcode_dump_t dump_opcodes[] = {
 	{ prv_dump_sub_e, {'s', 'u', 'b'} },        /* SPECASM_LINE_TYPE_SUB */
 	{ prv_dump_xor_e, {'x', 'o', 'r'} },        /* SPECASM_LINE_TYPE_XOR */
 	{ prv_dump_db_e, {'d', 'b'} },              /* SPECASM_LINE_TYPE_DB */
-	{ prv_dump_equw_e, { 'e', 'q', 'u', 'w'} }, /* SPECASM_LINE_TYPE_EQUW */
+	{ prv_dump_equw_e, {'d', 'w'} },            /* SPECASM_LINE_TYPE_DW */
 	{ prv_dump_equws_e, { 'd', 'b'} },          /* SPECASM_LINE_TYPE_DB_SUB */
-	{ prv_dump_equws_e, { 'e', 'q', 'u', 'w'} }, /* SPECASM_LINE_TYPE_EQUW_SUB */
+	{ prv_dump_equws_e, { 'd', 'w'} },          /* SPECASM_LINE_TYPE_DW_SUB */
 	{ prv_dump_ld_imm_16_sub_e, {'l', 'd' } }, /*SPECASM_LINE_TYPE_LD_IMM_16_SUB */
 	{ prv_dump_ld_imm_8_sub_e, {'l', 'd' } }, /*SPECASM_LINE_TYPE_LD_IMM_8_SUB */
 	{ prv_dump_repb_e, {'r', 'e', 'p', 'b' } }, /*SPECASM_LINE_TYPE_REPB */
@@ -2238,7 +2238,7 @@ static uint8_t prv_signed_ok_u16(uint8_t flags, uint16_t val)
 	       ((flags == SPECASM_FLAGS_NUM_UNSIGNED) && (val < 32768));
 }
 
-static uint8_t prv_parse_equw_e(const char *args, specasm_line_t *line,
+static uint8_t prv_parse_dw_e(const char *args, specasm_line_t *line,
 				const specasm_opcode_t *op_entry)
 {
 	uint16_t val;
@@ -2286,7 +2286,7 @@ static uint8_t prv_parse_equw_e(const char *args, specasm_line_t *line,
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 		if (label_count == 2)
-			line->type = SPECASM_LINE_TYPE_EQUW_SUB;
+			line->type = SPECASM_LINE_TYPE_DW_SUB;
 	}
 
 	specasm_line_set_size(line, sz);
@@ -3320,8 +3320,8 @@ const static specasm_opcode_t opcode_table[] = {
 	{ "dec", prv_parse_16bit_unary_e, SPECASM_LINE_TYPE_DEC, { 0xB, 0x35} },
 	{ "di", NULL, SPECASM_LINE_TYPE_DI, {0xF3} },
 	{ "djnz", prv_parse_djnz_e, SPECASM_LINE_TYPE_DJNZ, },
+	{ "dw", prv_parse_dw_e, SPECASM_LINE_TYPE_DW, },
 	{ "ei", NULL, SPECASM_LINE_TYPE_EI, {0xFB} },
-	{ "equw", prv_parse_equw_e, SPECASM_LINE_TYPE_EQUW, },
 	{ "ex", prv_parse_ex_e, SPECASM_LINE_TYPE_EX, },
 	{ "exx", NULL, SPECASM_LINE_TYPE_EXX, {0xD9} },
 	{ "halt", NULL, SPECASM_LINE_TYPE_HALT, {0x76} },

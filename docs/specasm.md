@@ -171,7 +171,7 @@ Specasm does not support expressions in the general sense.  There is one excepti
 | ld [a-l], end-start      | 8 bit immediate loads into a, b, c, d, e, h and l      |
 | ld [bc/de/hl], end-start | 16 bit immediate loads to bc, de and hl                |
 | db end-start             | 8 bit data directive                                   |
-| equw end-start           | 16 bit data directive                                  |
+| dw end-start             | 16 bit data directive                                  |
 
 An error will be generated at link time if the 8 bit versions of the mnemonics specify two labels
 that are more than 255 bytes apart.
@@ -217,7 +217,7 @@ The assembler provides two directives that can be used to store numeric constant
 | Directive | Description                                                               |
 |-----------|---------------------------------------------------------------------------|
 | db        | Used to encode up to 1 to 4 bytes.  Multiple bytes are comma separated.   |
-| equw      | Used to encode 1 or 2 16 bit words.  Multiple words are comma separated. Can also be used to encode the address of a label resolved at link time|
+| dw        | Used to encode 1 or 2 16 bit words.  Multiple words are comma separated. Can also be used to encode the address of a label resolved at link time|
 | repb      | Encodes 1 or more copies of a given byte |
 
 
@@ -225,10 +225,10 @@ Numbers can be specified as hex digits, signed and unsigned numbers or as charac
 
 ```
 db 10
-equw $1000
+dw $1000
 db 10, -10, 11, -11
 db 'a', 'b', 'c'
-equw 'c'
+dw 'c'
 db 255, 255
 ```
 
@@ -242,20 +242,20 @@ db -1, -2, -3, $20
 ; Mixing characters and decimals
 db 'A', 1, 2
 ```
-In addition to encoding numbers the **equw** directive can be used to encode the address of a label and also the difference between the addresses of two labels.  When used in this format, the **equw** directive can only contain a single argument.
+In addition to encoding numbers the **dw** directive can be used to encode the address of a label and also the difference between the addresses of two labels.  When used in this format, the **dw** directive can only contain a single argument.
 
 For example,
 
 ```
-equw data
+dw data
 ```
 
 will encode the address of the label data directly into the program.  The address is encoded at link time when salink has figured out the final address of the label.
 
 ```
-equw end-start
+dw end-start
 .start
-equw 10, 10
+dw 10, 10
 db 1
 .end
 ```
@@ -267,7 +267,7 @@ The **db** directive cannot be used to encode the address of a label as the addr
 ```
 db end-start
 .start
-equw 10, 10
+dw 10, 10
 db 1
 .end
 ```

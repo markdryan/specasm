@@ -538,7 +538,7 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 		id_pos = 1;
 		line = &state.lines.lines[i];
 		switch (line->type) {
-		case SPECASM_LINE_TYPE_EQUW:
+		case SPECASM_LINE_TYPE_DW:
 		case SPECASM_LINE_TYPE_CALL:
 		case SPECASM_LINE_TYPE_JP:
 		case SPECASM_LINE_TYPE_LD:
@@ -558,7 +558,7 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 							     addr, lng);
 			}
 			break;
-		case SPECASM_LINE_TYPE_EQUW_SUB:
+		case SPECASM_LINE_TYPE_DW_SUB:
 			id_pos = 0;
 		case SPECASM_LINE_TYPE_LD_IMM_16_SUB:
 			prv_label_subtraction_e(obj, line, i, id_pos);
