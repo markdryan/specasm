@@ -563,7 +563,7 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 		case SPECASM_LINE_TYPE_LD_IMM_16_SUB:
 			prv_label_subtraction_e(obj, line, i, id_pos);
 			break;
-		case SPECASM_LINE_TYPE_EQUB_SUB:
+		case SPECASM_LINE_TYPE_DB_SUB:
 			id_pos = 0;
 		case SPECASM_LINE_TYPE_LD_IMM_8_SUB:
 			prv_label_subtraction_byte_e(obj, line, i, id_pos);

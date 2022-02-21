@@ -5,4 +5,4 @@ repb 0, 128  ; 2
 .near        ; 132
   ret
 .near
-equb 'a'	
+db 'a'

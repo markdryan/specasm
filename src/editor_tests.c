@@ -883,7 +883,7 @@ const editor_test_t editor_tests[] = {
 	{
 		"byte_count",
 		"ld a, 10" EDITOR_KEY_ENTER
-		"equb 10" EDITOR_KEY_ENTER
+		"db 10" EDITOR_KEY_ENTER
 		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
 		"@hello" EDITOR_KEY_ENTER
 		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
@@ -891,7 +891,7 @@ const editor_test_t editor_tests[] = {
 		EDITOR_KEY_ENTER
 		EDITOR_KEY_COMMAND "b" EDITOR_KEY_ENTER,
 		"  ld a, 10                      "
-		"equb 10                         "
+		"db 10                           "
 		"  bit 3, (ix+127)               "
 		"@hello                          "
 		EDITOR_BLANK_LINE,
@@ -902,7 +902,7 @@ const editor_test_t editor_tests[] = {
 	{
 		"copy_into_selected_area",
 		"ld a, 10" EDITOR_KEY_ENTER
-		"equb 10" EDITOR_KEY_ENTER
+		"db 10" EDITOR_KEY_ENTER
 		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
 		"@hello" EDITOR_KEY_ENTER
 		EDITOR_KEY_UP EDITOR_KEY_UP
@@ -912,8 +912,8 @@ const editor_test_t editor_tests[] = {
 		EDITOR_KEY_COMMAND "c" EDITOR_KEY_ENTER,
 		"  ld a, 10                      "
 		"  ld a, 10                      "
-		"equb 10                         "
-		"equb 10                         "
+		"db 10                           "
+		"db 10                           "
 		"  bit 3, (ix+127)               "
 		"@hello                          "
 		EDITOR_BLANK_LINE,
@@ -924,7 +924,7 @@ const editor_test_t editor_tests[] = {
 	{
 		"copy_above_selected_area",
 		"ld a, 10" EDITOR_KEY_ENTER
-		"equb 10" EDITOR_KEY_ENTER
+		"db 10" EDITOR_KEY_ENTER
 		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
 		"@hello" EDITOR_KEY_ENTER
 		EDITOR_KEY_UP
@@ -932,10 +932,10 @@ const editor_test_t editor_tests[] = {
 		EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_ENTER
 		EDITOR_KEY_UP EDITOR_KEY_UP
 		EDITOR_KEY_COMMAND "c" EDITOR_KEY_ENTER,
-		"equb 10                         "
+		"db 10                           "
 		"  bit 3, (ix+127)               "
 		"  ld a, 10                      "
-		"equb 10                         "
+		"db 10                           "
 		"  bit 3, (ix+127)               "
 		"@hello                          "
 		EDITOR_BLANK_LINE,
@@ -946,7 +946,7 @@ const editor_test_t editor_tests[] = {
 	{
 		"copy_below_selected_area",
 		"ld a, 10" EDITOR_KEY_ENTER
-		"equb 10" EDITOR_KEY_ENTER
+		"db 10" EDITOR_KEY_ENTER
 		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
 		"@hello" EDITOR_KEY_ENTER
 		EDITOR_BUF_START
@@ -955,11 +955,11 @@ const editor_test_t editor_tests[] = {
 		EDITOR_BUF_END
 		EDITOR_KEY_COMMAND "c" EDITOR_KEY_ENTER,
 		"  ld a, 10                      "
-		"equb 10                         "
+		"db 10                           "
 		"  bit 3, (ix+127)               "
 		"@hello                          "
 		"  ld a, 10                      "
-		"equb 10                         "
+		"db 10                           "
 		EDITOR_BLANK_LINE,
 		"",
 		{ .row = 4, .line = 4, .command_col = 3 },

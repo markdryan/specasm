@@ -170,7 +170,7 @@ Specasm does not support expressions in the general sense.  There is one excepti
 |--------------------------|--------------------------------------------------------|
 | ld [a-l], end-start      | 8 bit immediate loads into a, b, c, d, e, h and l      |
 | ld [bc/de/hl], end-start | 16 bit immediate loads to bc, de and hl                |
-| equb end-start           | 8 bit data directive                                   |
+| db end-start             | 8 bit data directive                                   |
 | equw end-start           | 16 bit data directive                                  |
 
 An error will be generated at link time if the 8 bit versions of the mnemonics specify two labels
@@ -184,7 +184,7 @@ Here's an example of label subtraction
 ld bc, end-start
 ret
 .start
-equb 10, 10
+db 10, 10
 "hello"
 repb ' ', 12
 .end
@@ -216,7 +216,7 @@ The assembler provides two directives that can be used to store numeric constant
 
 | Directive | Description                                                               |
 |-----------|---------------------------------------------------------------------------|
-| equb      | Used to encode up to 1 to 4 bytes.  Multiple bytes are comma separated.   |
+| db        | Used to encode up to 1 to 4 bytes.  Multiple bytes are comma separated.   |
 | equw      | Used to encode 1 or 2 16 bit words.  Multiple words are comma separated. Can also be used to encode the address of a label resolved at link time|
 | repb      | Encodes 1 or more copies of a given byte |
 
@@ -224,23 +224,23 @@ The assembler provides two directives that can be used to store numeric constant
 Numbers can be specified as hex digits, signed and unsigned numbers or as characters.  There's one restriction here though.  If you specify multiple numbers on the same line the numbers must be of the same format, e.g., all hex digits or all characters.  Unsigned and singed numbers can be mixed as long as all the numbers can be represented by a signed number.  Here are some examples that are allowed
 
 ```
-equb 10
+db 10
 equw $1000
-equb 10, -10, 11, -11
-equb 'a', 'b', 'c'
+db 10, -10, 11, -11
+db 'a', 'b', 'c'
 equw 'c'
-equb 255, 255
+db 255, 255
 ```
 
 And here are some examples that aren't
 
 ```
 ; Both numbers cannot be represented by a signed byte
-equb -1, 255
+db -1, 255
 ; Mixing hex and signed decimals
-equb -1, -2, -3, $20
+db -1, -2, -3, $20
 ; Mixing characters and decimals
-equb 'A', 1, 2
+db 'A', 1, 2
 ```
 In addition to encoding numbers the **equw** directive can be used to encode the address of a label and also the difference between the addresses of two labels.  When used in this format, the **equw** directive can only contain a single argument.
 
@@ -256,19 +256,19 @@ will encode the address of the label data directly into the program.  The addres
 equw end-start
 .start
 equw 10, 10
-equb 1
+db 1
 .end
 ```
 
 will store the value 5 in a 16 bit word in the final program.
 
-The **equb** directive cannot be used to encode the address of a label as the address is unlikely to fit into a single byte.  It can however, be used to encode the difference between two labels providing the difference does fit into a byte.  If the labels are too far apart an error will be generated at link time.  When used in this form, no other numbers can follow the label subtraction on the same line.  For example,
+The **db** directive cannot be used to encode the address of a label as the address is unlikely to fit into a single byte.  It can however, be used to encode the difference between two labels providing the difference does fit into a byte.  If the labels are too far apart an error will be generated at link time.  When used in this form, no other numbers can follow the label subtraction on the same line.  For example,
 
 ```
-equb end-start
+db end-start
 .start
 equw 10, 10
-equb 1
+db 1
 .end
 ```
 

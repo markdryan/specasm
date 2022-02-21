@@ -1503,7 +1503,7 @@ static uint8_t prv_dump_xor_e(const specasm_line_t *line, char *buf)
 	return prv_dump_arith_e(line, buf, 0xEE, 0xA8) - start;
 }
 
-static uint8_t prv_dump_equb_e(const specasm_line_t *line, char *buf)
+static uint8_t prv_dump_db_e(const specasm_line_t *line, char *buf)
 {
 	uint8_t i;
 	unsigned int len;
@@ -1642,9 +1642,9 @@ static const specasm_line_opcode_dump_t dump_opcodes[] = {
 	{ prv_dump_shift_e, {'s', 'r', 'l'}},       /* SPECASM_LINE_TYPE_SRL */
 	{ prv_dump_sub_e, {'s', 'u', 'b'} },        /* SPECASM_LINE_TYPE_SUB */
 	{ prv_dump_xor_e, {'x', 'o', 'r'} },        /* SPECASM_LINE_TYPE_XOR */
-	{ prv_dump_equb_e, { 'e', 'q', 'u', 'b'} }, /* SPECASM_LINE_TYPE_EQUB */
+	{ prv_dump_db_e, {'d', 'b'} },              /* SPECASM_LINE_TYPE_DB */
 	{ prv_dump_equw_e, { 'e', 'q', 'u', 'w'} }, /* SPECASM_LINE_TYPE_EQUW */
-	{ prv_dump_equws_e, { 'e', 'q', 'u', 'b'} }, /* SPECASM_LINE_TYPE_EQUB_SUB */
+	{ prv_dump_equws_e, { 'd', 'b'} },          /* SPECASM_LINE_TYPE_DB_SUB */
 	{ prv_dump_equws_e, { 'e', 'q', 'u', 'w'} }, /* SPECASM_LINE_TYPE_EQUW_SUB */
 	{ prv_dump_ld_imm_16_sub_e, {'l', 'd' } }, /*SPECASM_LINE_TYPE_LD_IMM_16_SUB */
 	{ prv_dump_ld_imm_8_sub_e, {'l', 'd' } }, /*SPECASM_LINE_TYPE_LD_IMM_8_SUB */
@@ -2170,7 +2170,7 @@ static uint8_t prv_signed_ok(uint8_t flags, uint8_t val)
 	       ((flags == SPECASM_FLAGS_NUM_UNSIGNED) && (val < 128));
 }
 
-static uint8_t prv_parse_equb_e(const char *args, specasm_line_t *line,
+static uint8_t prv_parse_db_e(const char *args, specasm_line_t *line,
 				const specasm_opcode_t *op_entry)
 {
 	uint8_t val;
@@ -2200,7 +2200,7 @@ static uint8_t prv_parse_equb_e(const char *args, specasm_line_t *line,
 			return 0;
 		}
 
-		line->type = SPECASM_LINE_TYPE_EQUB_SUB;
+		line->type = SPECASM_LINE_TYPE_DB_SUB;
 		return args - start;
 	}
 	line->data.op_code[0] = val;
@@ -3316,11 +3316,11 @@ const static specasm_opcode_t opcode_table[] = {
 	{ "cpir", NULL, SPECASM_LINE_TYPE_CPIR, {0xED, 0xB1} },
 	{ "cpl", NULL, SPECASM_LINE_TYPE_CPL, {0x2F} },
 	{ "daa", NULL, SPECASM_LINE_TYPE_DAA, {0x27} },
+	{ "db", prv_parse_db_e, SPECASM_LINE_TYPE_DB, },
 	{ "dec", prv_parse_16bit_unary_e, SPECASM_LINE_TYPE_DEC, { 0xB, 0x35} },
 	{ "di", NULL, SPECASM_LINE_TYPE_DI, {0xF3} },
 	{ "djnz", prv_parse_djnz_e, SPECASM_LINE_TYPE_DJNZ, },
 	{ "ei", NULL, SPECASM_LINE_TYPE_EI, {0xFB} },
-	{ "equb", prv_parse_equb_e, SPECASM_LINE_TYPE_EQUB, },
 	{ "equw", prv_parse_equw_e, SPECASM_LINE_TYPE_EQUW, },
 	{ "ex", prv_parse_ex_e, SPECASM_LINE_TYPE_EX, },
 	{ "exx", NULL, SPECASM_LINE_TYPE_EXX, {0xD9} },

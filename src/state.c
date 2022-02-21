@@ -427,7 +427,7 @@ void specasm_format_line_e(char *buf, unsigned int l)
 		if (buf < end_ptr)
 			*buf++ = i;
 	} else {
-		if (!((line->type >= SPECASM_LINE_TYPE_EQUB &&
+		if (!((line->type >= SPECASM_LINE_TYPE_DB &&
 		       line->type <= SPECASM_LINE_TYPE_EQUW_SUB) ||
 		      line->type == SPECASM_LINE_TYPE_REPB))
 			for (i = 0; i < SPECASM_MAX_INDENT; i++)
