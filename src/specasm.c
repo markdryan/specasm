@@ -49,11 +49,16 @@ int main()
 		if (!k)
 			continue;
 		do {
-			for (i = 0; i < SPECASM_KEY_CALIBRATION; i++) {
-				specasm_sleep_ms(20);
+			if (k == SPECASM_KEY_COMMAND) {
+				in_wait_nokey();
 				new_key = in_inkey();
-				if (k != new_key)
-					break;
+			} else {
+				for (i = 0; i < SPECASM_KEY_CALIBRATION; i++) {
+					specasm_sleep_ms(20);
+					new_key = in_inkey();
+					if (k != new_key)
+						break;
+				}
 			}
 			specasm_handle_key_press(k);
 			k = new_key;
