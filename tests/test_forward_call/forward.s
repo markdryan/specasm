@@ -1,4 +1,4 @@
-org &8000
+org $8000
 .Main
   call far     ; 0
   ret          ; 3

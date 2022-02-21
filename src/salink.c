@@ -664,7 +664,7 @@ static void prv_dump_globals_e(specasm_handle_t f, salink_global_t *glob,
 {
 	char ibuf[16];
 
-	ibuf[0] = '&';
+	ibuf[0] = '$';
 	itoa(labels[glob->label_index].off, &ibuf[1], 16);
 	prv_write_buffered_e(f, ibuf);
 	if (err_type != SPECASM_ERROR_OK)
@@ -700,7 +700,7 @@ static void prv_write_map_e(void)
 	const char *str;
 	char ibuf[16];
 
-	ibuf[0] = '&';
+	ibuf[0] = '$';
 
 	(void)specasm_text_print("     ", SALINK_VAL_COL + 1,
 				 SALINK_FIELD_FILES_ROW, SPECASM_CODE_COLOUR);

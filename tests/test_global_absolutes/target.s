@@ -1,2 +1,2 @@
 .Global
-equw &dead 			; 9
+equw $dead 			; 9

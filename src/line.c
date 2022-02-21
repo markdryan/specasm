@@ -97,7 +97,7 @@ char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags)
 	while (*str == ' ')
 		++str;
 
-	if (*str == '&') {
+	if (*str == '$') {
 		base = 16;
 		++str;
 	}
@@ -484,7 +484,7 @@ static uint8_t prv_dump_byte(char *buf, uint8_t v, uint8_t flags)
 
 	start = buf;
 	if (flags == SPECASM_FLAGS_NUM_HEX) {
-		*buf++ = '&';
+		*buf++ = '$';
 		radix = 16;
 		iv = v;
 	} else {
@@ -516,7 +516,7 @@ static uint8_t prv_dump_word(char *buf, uint16_t v, uint8_t flags)
 		(void)itoa(v, buf, 10);
 	} else {
 		if (flags == SPECASM_FLAGS_NUM_HEX) {
-			*buf++ = '&';
+			*buf++ = '$';
 			radix = 16;
 		} else {
 			radix = 10;

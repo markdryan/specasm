@@ -842,7 +842,7 @@ const editor_test_t editor_tests[] = {
 	},
 	{
 		"goto_almost_end",
-		test_data EDITOR_BUF_START EDITOR_KEY_COMMAND "g &18"
+		test_data EDITOR_BUF_START EDITOR_KEY_COMMAND "g $18"
 		EDITOR_KEY_ENTER,
 		&formatted_test_data[4 *  SPECASM_LINE_MAX_LEN],
 		"",
@@ -851,7 +851,7 @@ const editor_test_t editor_tests[] = {
 	},
 	{
 		"goto_too_big",
-		test_data EDITOR_BUF_START EDITOR_KEY_COMMAND "g &fff"
+		test_data EDITOR_BUF_START EDITOR_KEY_COMMAND "g $fff"
 		EDITOR_KEY_ENTER,
 		&formatted_test_data[4 *  SPECASM_LINE_MAX_LEN],
 		"",

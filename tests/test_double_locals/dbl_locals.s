@@ -1,4 +1,4 @@
-org &8000
+org $8000
 .Main
   jr near    ; 0
 repb 0, 128  ; 2

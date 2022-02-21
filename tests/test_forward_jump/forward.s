@@ -1,4 +1,4 @@
-org &8000
+org $8000
 .Main
   jp far     ; 0
   jr near    ; 3

@@ -94,7 +94,7 @@ Here are some valid examples
 ```
 ld (ix+0), a
 ld (ix+-1), a
-ld (iy+&7f), a
+ld (iy+$7f), a
 ```
 
 and here are some invalid examples
@@ -106,10 +106,10 @@ ld (ix-1), a
 
 #### Numbers
 
-Numbers can be specified in decimal, hex or as characters.  Decimal numbers require no prefix, hex numbers use the '&' prefix and characters are enclosed with single quotes.  For example,
+Numbers can be specified in decimal, hex or as characters.  Decimal numbers require no prefix, hex numbers use the '$' prefix and characters are enclosed with single quotes.  For example,
 
 ```
-org &8000
+org $8000
 ld ix, -32768
 ld a, 'c'
 ld l, (ix+-100)
@@ -126,7 +126,7 @@ ld ix, -1
 and
 
 ```
-ld ix, &ffff
+ld ix, $ffff
 ```
 
 Both statements will assemble to the same opcode.  However, there are certain places where this is not allowed, namely when dereferencing an absolute address or specifying an offset to one of the index registers.  For example, the follow two statements will not assemble.
@@ -225,7 +225,7 @@ Numbers can be specified as hex digits, signed and unsigned numbers or as charac
 
 ```
 equb 10
-equw &1000
+equw $1000
 equb 10, -10, 11, -11
 equb 'a', 'b', 'c'
 equw 'c'
@@ -238,7 +238,7 @@ And here are some examples that aren't
 ; Both numbers cannot be represented by a signed byte
 equb -1, 255
 ; Mixing hex and signed decimals
-equb -1, -2, -3, &20
+equb -1, -2, -3, $20
 ; Mixing characters and decimals
 equb 'A', 1, 2
 ```
@@ -365,23 +365,23 @@ This will generate a map file in the current directory.  The name of the map fil
 ```
 Globals
 -------
-&8000 - SINSCRL.X:Main
+$8000 - SINSCRL.X:Main
 
 SINSCRL.X
 -------
-&8000 - Main
-&8003 - l1
-&801E - l2
-&8054 - stack
-&8065 - data
-&806A - roll
-&806F - l3
-&80B0 - l4
-&80B6 - down
-&80B9 - l5
+$8000 - Main
+$8003 - l1
+$801E - l2
+$8054 - stack
+$8065 - data
+$806A - roll
+$806F - l3
+$80B0 - l4
+$80B6 - down
+$80B9 - l5
 ```
 
-By default, the entry point of a Specasm program is &8000 hex, or 32768 decimal.  This can be modified by using the **org** directive.  The **org** directive can only appear in one .x file in a directory.  That file does not need to be the file that contains the **Main** label but, by convention, the **org** statement follows or precedes the **Main** label.  The parameter to the **org** statement can be specified in decimal or hex, e.g.,
+By default, the entry point of a Specasm program is $8000 hex, or 32768 decimal.  This can be modified by using the **org** directive.  The **org** directive can only appear in one .x file in a directory.  That file does not need to be the file that contains the **Main** label but, by convention, the **org** statement follows or precedes the **Main** label.  The parameter to the **org** statement can be specified in decimal or hex, e.g.,
 
 ```
 org 23760

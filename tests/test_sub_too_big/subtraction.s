@@ -1,4 +1,4 @@
-org &8000
+org $8000
 .Main
 ld a, small_end - small_start
 .small_start
