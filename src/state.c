@@ -429,7 +429,7 @@ void specasm_format_line_e(char *buf, unsigned int l)
 	} else {
 		if (!((line->type >= SPECASM_LINE_TYPE_DB &&
 		       line->type <= SPECASM_LINE_TYPE_DW_SUB) ||
-		      line->type == SPECASM_LINE_TYPE_REPB))
+		      line->type == SPECASM_LINE_TYPE_DS))
 			for (i = 0; i < SPECASM_MAX_INDENT; i++)
 				*buf++ = ' ';
 

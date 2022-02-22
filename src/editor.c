@@ -84,7 +84,7 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 		    (line->type <= SPECASM_LINE_TYPE_STR_AMP_LONG)) ||
 		   ((line->type >= SPECASM_LINE_TYPE_DB) &&
 		    (line->type <= SPECASM_LINE_TYPE_DW_SUB)) ||
-		   (line->type == SPECASM_LINE_TYPE_REPB)) {
+		   (line->type == SPECASM_LINE_TYPE_DS)) {
 		col = data_col;
 	} else {
 		col = code_col;

@@ -422,7 +422,7 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 	const char *data;
 
 	if ((buf_count + size > MAX_BUFFER_SIZE) ||
-	    ((buf_count > 0) && (line->type == SPECASM_LINE_TYPE_REPB))) {
+	    ((buf_count > 0) && (line->type == SPECASM_LINE_TYPE_DS))) {
 		specasm_file_write_e(f, file_buf, buf_count);
 		if (err_type != SPECASM_ERROR_OK)
 			return;
@@ -436,7 +436,7 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 		return;
 	}
 
-	if (line->type == SPECASM_LINE_TYPE_REPB) {
+	if (line->type == SPECASM_LINE_TYPE_DS) {
 		to_set = size < MAX_BUFFER_SIZE ? size : MAX_BUFFER_SIZE;
 		memset(&file_buf[0], line->data.op_code[0], to_set);
 		do {

@@ -2188,14 +2188,14 @@ static const test_t tests[] = {
 	 * these instructions.
 	 */
 
-	{"repb $ff, 1000", "repb $ff, 1000", 1, {0xFF, 0xe8, 0x3}},
-	{"repb  $ff  ,1000", "repb $ff, 1000", 1, {0xFF, 0xe8, 0x3}},
-	{"repb 100, $ff", "repb 100, $ff", 1, {0x64, 0xFF}},
-	{"repb 100 ,   $ff", "repb 100, $ff", 1, {0x64, 0xFF}},
-	{"repb -1, $100", "repb -1, $100", 1, {0xFF, 0x00, 0x1}},
-	{"repb  -1  ,$100", "repb -1, $100", 1, {0xFF, 0x00, 0x1}},
-	{"repb 'c', $100", "repb 'c', $100", 1, {0x63, 0x00, 0x1}},
-	{"repb  'c'  ,$100", "repb 'c', $100", 1, {0x63, 0x00, 0x1}},
+	{"ds 1000, $ff", "ds 1000, $ff", 1, {0xFF, 0xe8, 0x3}},
+	{"ds  1000  ,$ff", "ds 1000, $ff", 1, {0xFF, 0xe8, 0x3}},
+	{"ds $ff, 100", "ds $ff, 100", 1, {0x64, 0xFF}},
+	{"ds $ff ,  100", "ds $ff, 100", 1, {0x64, 0xFF}},
+	{"ds $100, -1", "ds $100, -1", 1, {0xFF, 0x00, 0x1}},
+	{"ds  $100  ,-1", "ds $100, -1", 1, {0xFF, 0x00, 0x1}},
+	{"ds $100, 'c'", "ds $100, 'c'", 1, {0x63, 0x00, 0x1}},
+	{"ds  $100  ,'c'", "ds $100, 'c'", 1, {0x63, 0x00, 0x1}},
 };
 
 static const format_test_t format_tests[] = {
@@ -2269,7 +2269,7 @@ static const format_test_t format_tests[] = {
 	{"db label1-label", "db label1-label", SPECASM_LINE_TYPE_DB_SUB},
 	{"db label1 - label", "db label1-label",
 	 SPECASM_LINE_TYPE_DB_SUB},
-	{"repb 10, $10", "repb 10, $10", SPECASM_LINE_TYPE_REPB},
+	{"ds $10, 10", "ds $10, 10", SPECASM_LINE_TYPE_DS},
 };
 
 static const bad_test_t bad_tests[] = {
@@ -2791,12 +2791,12 @@ static const bad_test_t bad_tests[] = {
 	{"dw -1, 32768", SPECASM_ERROR_BAD_NUM },
 	{"dw 'A', $fff", SPECASM_ERROR_BAD_NUM },
 
-	{"repb $10, 0", SPECASM_ERROR_BAD_NUM },
-	{"repb $100, 1000", SPECASM_ERROR_NUM_TOO_BIG },
-	{"repb 100, -1000", SPECASM_ERROR_NUM_NEG },
-	{"repb", SPECASM_ERROR_BAD_NUM },
-	{"repb 10", SPECASM_ERROR_COMMA_EXPECTED },
-	{"repb 10,", SPECASM_ERROR_BAD_NUM },
+	{"ds 0, $10", SPECASM_ERROR_BAD_NUM },
+	{"ds 1000, $100", SPECASM_ERROR_NUM_TOO_BIG },
+	{"ds -1000, 100", SPECASM_ERROR_NUM_NEG },
+	{"ds", SPECASM_ERROR_BAD_NUM },
+	{"ds 10", SPECASM_ERROR_COMMA_EXPECTED },
+	{"ds 10,", SPECASM_ERROR_BAD_NUM },
 };
 
 /* clang-format on */
@@ -2912,7 +2912,7 @@ static int prv_test_parse_format_bare()
 		    line->type != SPECASM_LINE_TYPE_DW &&
 		    line->type != SPECASM_LINE_TYPE_DB_SUB &&
 		    line->type != SPECASM_LINE_TYPE_DW_SUB &&
-		    line->type != SPECASM_LINE_TYPE_REPB)
+		    line->type != SPECASM_LINE_TYPE_DS)
 			memcpy(buf2 + SPECASM_MAX_INDENT, t->str,
 			       strlen(t->str));
 		else

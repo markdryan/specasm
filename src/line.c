@@ -1549,20 +1549,20 @@ static uint8_t prv_dump_equws_e(const specasm_line_t *line, char *buf)
 	return prv_dump_subtraction_e(line, buf, 0);
 }
 
-static uint8_t prv_dump_repb_e(const specasm_line_t *line, char *buf)
+static uint8_t prv_dump_ds_e(const specasm_line_t *line, char *buf)
 {
 	uint16_t *count;
 	char *start = buf;
 	const uint8_t *op_code = line->data.op_code;
 
-	buf += prv_dump_byte(buf, op_code[0], specasm_line_get_format(line));
+	count = (uint16_t *)&op_code[1];
+	buf += prv_dump_word(buf, *count, specasm_line_get_format2(line));
+
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
 
-	count = (uint16_t *)&op_code[1];
-	buf += prv_dump_word(buf, *count, specasm_line_get_format2(line));
-
+	buf += prv_dump_byte(buf, op_code[0], specasm_line_get_format(line));
 	return buf - start;
 }
 
@@ -1646,9 +1646,9 @@ static const specasm_line_opcode_dump_t dump_opcodes[] = {
 	{ prv_dump_equw_e, {'d', 'w'} },            /* SPECASM_LINE_TYPE_DW */
 	{ prv_dump_equws_e, { 'd', 'b'} },          /* SPECASM_LINE_TYPE_DB_SUB */
 	{ prv_dump_equws_e, { 'd', 'w'} },          /* SPECASM_LINE_TYPE_DW_SUB */
-	{ prv_dump_ld_imm_16_sub_e, {'l', 'd' } }, /*SPECASM_LINE_TYPE_LD_IMM_16_SUB */
-	{ prv_dump_ld_imm_8_sub_e, {'l', 'd' } }, /*SPECASM_LINE_TYPE_LD_IMM_8_SUB */
-	{ prv_dump_repb_e, {'r', 'e', 'p', 'b' } }, /*SPECASM_LINE_TYPE_REPB */
+	{ prv_dump_ld_imm_16_sub_e, {'l', 'd' } },  /*SPECASM_LINE_TYPE_LD_IMM_16_SUB */
+	{ prv_dump_ld_imm_8_sub_e, {'l', 'd' } },   /*SPECASM_LINE_TYPE_LD_IMM_8_SUB */
+	{ prv_dump_ds_e, {'d', 's' } },             /*SPECASM_LINE_TYPE_REPB */
 	{ prv_dump_org_e, {'o', 'r', 'g'} },        /* SPECASM_LINE_TYPE_ORG */
 	{ NULL, {'m', 'a', 'p'} },                  /* SPECASM_LINE_TYPE_MAP */
 };
@@ -3187,19 +3187,36 @@ static uint8_t prv_parse_rst_e(const char *args, specasm_line_t *line,
 	return args - start;
 }
 
-static uint8_t prv_parse_repb_e(const char *args, specasm_line_t *line,
-				const specasm_opcode_t *op_entry)
+static uint8_t prv_parse_ds_e(const char *args, specasm_line_t *line,
+			      const specasm_opcode_t *op_entry)
 {
 	uint16_t *count;
 	uint8_t flags;
 	const char *args2;
 	uint8_t *op_code = &line->data.op_code[0];
 
-	args2 = prv_get_byte_imm_e(args, op_code, &flags);
+	/*
+	 * We're storing the count and val in the opcode in
+	 * reverse order to which they are parsed.  This is
+	 * to maintain backward compatibility with Specasm v1,
+	 * which had the repb directive that expected its
+	 * arguments in the reverse order.
+	 *
+	 * So val is stored in the first byte and count in the
+	 * second and third.
+	 */
+
+	count = (uint16_t *)(&op_code[1]);
+	args2 = prv_get_uword_imm_e(args, count, &flags);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	specasm_line_set_format(line, flags);
+	if (*count == 0) {
+		err_type = SPECASM_ERROR_BAD_NUM;
+		return 0;
+	}
+	specasm_line_set_format2(line, flags);
+
 	while (*args2 == ' ')
 		++args2;
 
@@ -3208,17 +3225,11 @@ static uint8_t prv_parse_repb_e(const char *args, specasm_line_t *line,
 		return 0;
 	}
 
-	count = (uint16_t *)(&op_code[1]);
-	args2 = prv_get_uword_imm_e(args2 + 1, count, &flags);
+	args2 = prv_get_byte_imm_e(args2 + 1, op_code, &flags);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	if (*count == 0) {
-		err_type = SPECASM_ERROR_BAD_NUM;
-		return 0;
-	}
-
-	specasm_line_set_format2(line, flags);
+	specasm_line_set_format(line, flags);
 
 	return args2 - args;
 }
@@ -3320,6 +3331,7 @@ const static specasm_opcode_t opcode_table[] = {
 	{ "dec", prv_parse_16bit_unary_e, SPECASM_LINE_TYPE_DEC, { 0xB, 0x35} },
 	{ "di", NULL, SPECASM_LINE_TYPE_DI, {0xF3} },
 	{ "djnz", prv_parse_djnz_e, SPECASM_LINE_TYPE_DJNZ, },
+	{ "ds", prv_parse_ds_e, SPECASM_LINE_TYPE_DS, },
 	{ "dw", prv_parse_dw_e, SPECASM_LINE_TYPE_DW, },
 	{ "ei", NULL, SPECASM_LINE_TYPE_EI, {0xFB} },
 	{ "ex", prv_parse_ex_e, SPECASM_LINE_TYPE_EX, },
@@ -3351,7 +3363,6 @@ const static specasm_opcode_t opcode_table[] = {
 	{ "outi", NULL, SPECASM_LINE_TYPE_OUTI, {0xED, 0xA3} },
 	{ "pop", prv_parse_push_pop_e, SPECASM_LINE_TYPE_POP, {0x1} },
 	{ "push", prv_parse_push_pop_e, SPECASM_LINE_TYPE_PUSH, {0x5} },
-	{ "repb", prv_parse_repb_e, SPECASM_LINE_TYPE_REPB, },
 	{ "res", prv_parse_bit_e, SPECASM_LINE_TYPE_RES, {0x80} },
 	{ "ret", prv_parse_ret_e, SPECASM_LINE_TYPE_RET, },
 	{ "reti", NULL, SPECASM_LINE_TYPE_RETI, {0xED, 0x4D} },

@@ -1,5 +1,5 @@
 org $8000
 .Main
-  repb 0, 127  ; 0
+  ds 127, 0    ; 0
   jr Main      ; 383
   

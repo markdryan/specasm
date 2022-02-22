@@ -186,7 +186,7 @@ ret
 .start
 db 10, 10
 "hello"
-repb ' ', 12
+ds 12, ' '
 .end
 ```
 
@@ -218,7 +218,7 @@ The assembler provides two directives that can be used to store numeric constant
 |-----------|---------------------------------------------------------------------------|
 | db        | Used to encode up to 1 to 4 bytes.  Multiple bytes are comma separated.   |
 | dw        | Used to encode 1 or 2 16 bit words.  Multiple words are comma separated. Can also be used to encode the address of a label resolved at link time|
-| repb      | Encodes 1 or more copies of a given byte |
+| ds        | Encodes 1 or more copies of a given byte |
 
 
 Numbers can be specified as hex digits, signed and unsigned numbers or as characters.  There's one restriction here though.  If you specify multiple numbers on the same line the numbers must be of the same format, e.g., all hex digits or all characters.  Unsigned and singed numbers can be mixed as long as all the numbers can be represented by a signed number.  Here are some examples that are allowed
@@ -274,10 +274,10 @@ db 1
 
 Will store the byte 5 in memory followed by 5 bytes of data.
 
-The **repb** directive can be used to store multiple copies of them same byte value directly into the program code.  **repb** requires two parameters separated by a comma.  The first is the byte value to store.  This can be specified as a signed or unsigned decimal number, a hexidecimal number of a character.  The second value is 16 bit integer that specifies the number of copies of the first parameter to be encoded.  For example,
+The **ds** directive can be used to store multiple copies of the same byte value directly into the program code.  **ds** requires two parameters separated by a comma.  The first is 16 bit integer that specifies the number of copies of the first parameter to be encoded.  The second value is the byte value to store.  This can be specified as a signed or unsigned decimal number, a hexadecimal number or a character.   It is mandatory.  For example,
 
 ```
-repb 'A', 12
+ds 12, 'A'
 ```
 
 encodes 12 copies of the ASCII value of 'A' directly in the program.  The size of this mnemonic will be reported as 12 in the editor.

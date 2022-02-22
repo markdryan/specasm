@@ -1,3 +1,3 @@
-repb 0, 100
+ds 100, 0
 .Global
 	
