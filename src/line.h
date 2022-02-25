@@ -93,9 +93,10 @@
 #define SPECASM_LINE_TYPE_LD_IMM_16_SUB 71
 #define SPECASM_LINE_TYPE_LD_IMM_8_SUB 72
 #define SPECASM_LINE_TYPE_SIMPLE_MAX SPECASM_LINE_TYPE_LD_IMM_8_SUB
-#define SPECASM_LINE_TYPE_DS SPECASM_LINE_TYPE_SIMPLE_MAX + 1
-#define SPECASM_LINE_TYPE_ORG SPECASM_LINE_TYPE_SIMPLE_MAX + 2
-#define SPECASM_LINE_TYPE_MAP SPECASM_LINE_TYPE_SIMPLE_MAX + 3
+#define SPECASM_LINE_TYPE_DS (SPECASM_LINE_TYPE_SIMPLE_MAX + 1)
+#define SPECASM_LINE_TYPE_ORG (SPECASM_LINE_TYPE_SIMPLE_MAX + 2)
+#define SPECASM_LINE_TYPE_MAP (SPECASM_LINE_TYPE_SIMPLE_MAX + 3)
+#define SPECASM_LINE_TYPE_MAX (SPECASM_LINE_TYPE_MAP + 1)
 
 #define SPECASM_LINE_TYPE_EMPTY 128
 #define SPECASM_LINE_TYPE_LL 129
@@ -170,6 +171,8 @@ struct specasm_lines_t_ {
 
 typedef struct specasm_lines_t_ specasm_lines_t;
 
+
+void specasm_init_dump_table(void);
 char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags);
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 				 specasm_line_t *line);

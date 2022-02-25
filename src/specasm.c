@@ -33,6 +33,8 @@ int main()
 	uint8_t new_key;
 	uint16_t i;
 
+	specasm_init_dump_table();
+
 	zx_border(SPECASM_LABEL_BORDER);
 	zx_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
 	err_type = SPECASM_ERROR_OK;

@@ -3035,6 +3035,8 @@ static int prv_test_old_version()
 
 int main(int argc, char *argv[])
 {
+	specasm_init_dump_table();
+
 	if (prv_test_opcodes())
 		return 1;
 
