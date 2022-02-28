@@ -62,9 +62,13 @@ static uint16_t start_address = 0x8000;
 static uint8_t got_org;
 static uint8_t map_file;
 
+#define SALINK_LABEL_TYPE_SHORT 0
+#define SALINK_LABEL_TYPE_LNG 1
+#define SALINK_LABEL_TYPE_ALIGN 2
+
 struct salink_label_t_ {
 	uint8_t id;
-	uint8_t lng;
+	uint8_t type;
 	uint16_t off;
 };
 typedef struct salink_label_t_ salink_label_t;
@@ -150,7 +154,8 @@ static void prv_add_label(salink_obj_t *obj, specasm_line_t *line,
 	}
 	label = &labels[label_count];
 	label->id = line->data.label;
-	label->lng = line->type == SPECASM_LINE_TYPE_LL ? 1 : 0;
+	label->type = line->type == SPECASM_LINE_TYPE_LL ? SALINK_LABEL_TYPE_LNG
+		: SALINK_LABEL_TYPE_SHORT;
 	label->off = size;
 	id = line->data.label;
 	if (line->type & 1)
@@ -191,7 +196,9 @@ static void prv_add_label(salink_obj_t *obj, specasm_line_t *line,
 					 SPECASM_CODE_COLOUR);
 	} else {
 		for (i = obj->label_start; i < label_count; i++) {
-			if (labels[i].lng)
+			if (labels[i].type == SALINK_LABEL_TYPE_ALIGN)
+				continue;
+			else if (labels[i].type == SALINK_LABEL_TYPE_LNG)
 				str1 = specasm_state_get_long_e(labels[i].id);
 			else
 				str1 = specasm_state_get_short_e(labels[i].id);
@@ -205,6 +212,23 @@ static void prv_add_label(salink_obj_t *obj, specasm_line_t *line,
 		}
 	}
 	label_count++;
+}
+
+static void prv_add_align(salink_obj_t *obj, specasm_line_t *line,
+			  uint16_t size)
+{
+	salink_label_t *label;
+
+	if (label_count == MAX_LABELS) {
+		snprintf(error_buf, sizeof(error_buf),
+			 "Max label limit %d reached", MAX_LABELS);
+		err_type = SALINK_ERROR_TOO_MANY_LABELS;
+		return;
+	}
+	label = &labels[label_count++];
+	label->type = SALINK_LABEL_TYPE_ALIGN;
+	label->id = line->data.op_code[0];
+	label->off = size;
 }
 
 static void prv_parse_obj_e(const char *fname)
@@ -251,6 +275,8 @@ static void prv_parse_obj_e(const char *fname)
 			start_address = *((uint16_t *)&line->data.op_code[0]);
 		} else if (line->type == SPECASM_LINE_TYPE_MAP) {
 			map_file = 1;
+		} else if (line->type == SPECASM_LINE_TYPE_ALIGN) {
+			prv_add_align(obj, line, size);
 		} else {
 			size += specasm_compute_line_size(line);
 		}
@@ -308,12 +334,22 @@ static void prv_complete_absolutes_e(void)
 	uint16_t j;
 	salink_obj_t *obj;
 	salink_label_t *label;
+	unsigned int mask;
+	unsigned int adjust;
+	uint16_t align;
 	uint16_t real_off = start_address;
 
 	for (i = 0; i < obj_file_count; i++) {
 		obj = &obj_files[i];
 		for (j = obj->label_start; j < obj->label_end; j++) {
 			label = &labels[j];
+			if (label->type == SALINK_LABEL_TYPE_ALIGN) {
+				align = 1 << label->id;
+				mask = align - 1;
+				adjust = (real_off + label->off) & mask;
+				real_off += align - adjust;
+				continue;
+			}
 			if (label->off > 0xffff - real_off) {
 				snprintf(error_buf, sizeof(error_buf),
 					 "%s past end of memory", obj->fname);
@@ -334,7 +370,7 @@ static salink_label_t *prv_find_local_label(salink_obj_t *obj, uint8_t lng,
 
 	for (i = obj->label_start; i < obj->label_end; i++) {
 		label = &labels[i];
-		if (lng != label->lng)
+		if (lng != label->type)
 			continue;
 		if (id == label->id)
 			return label;
@@ -522,6 +558,27 @@ static void prv_label_subtraction_byte_e(salink_obj_t *obj,
 	}
 }
 
+static void prv_align_e(specasm_handle_t f, uint16_t align)
+{
+	unsigned int mask = align - 1;
+	unsigned int adjust = (start_address + bin_size + buf_count) & mask;
+
+	if (adjust == 0)
+		return;
+
+	adjust = align - adjust;
+
+	if (buf_count + adjust > MAX_BUFFER_SIZE) {
+		specasm_file_write_e(f, file_buf, buf_count);
+		if (err_type != SPECASM_ERROR_OK)
+			return;
+		bin_size += buf_count;
+		buf_count = 0;
+	}
+	memset(&file_buf[buf_count], 0, adjust);
+	buf_count += adjust;
+}
+
 static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 			       uint16_t offset)
 {
@@ -538,6 +595,9 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 		id_pos = 1;
 		line = &state.lines.lines[i];
 		switch (line->type) {
+		case SPECASM_LINE_TYPE_ALIGN:
+			prv_align_e(f, 1 << line->data.op_code[0]);
+			break;
 		case SPECASM_LINE_TYPE_DW:
 		case SPECASM_LINE_TYPE_CALL:
 		case SPECASM_LINE_TYPE_JP:
@@ -752,7 +812,9 @@ static void prv_write_map_e(void)
 			goto on_error;
 		for (i = obj->label_start; i < obj->label_end; i++) {
 			label = &labels[i];
-			if (label->lng)
+			if (label->type == SALINK_LABEL_TYPE_ALIGN)
+				continue;
+			else if (label->type == SALINK_LABEL_TYPE_LNG)
 				str = specasm_state_get_long_e(label->id);
 			else
 				str = specasm_state_get_short_e(label->id);

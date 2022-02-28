@@ -310,6 +310,19 @@ The @ and # directives output the length of the string, as a byte, before output
 
 Actually outputs 6 bytes; 5, 'H', 'e', 'l', 'l', 'o'.  Again two different directives are provided so that both the # and @ characters can be encoded.
 
+#### Align
+
+Specasm supports one more directive, **align**, that can be used to align the code or data that follows the **align** directive to a given power of 2.  The **align** directive takes one argument that must be a power of 2, greater than or equal to 2 and less and or equal to 256.  It inserts null bytes into the binary until the requested alignment is achieved.  Consider the following, simple program
+
+```
+.Main
+org $800a
+align 16
+db 1
+```
+
+Once assembled and linked our binary would be 7 bytes in size.  The first 6 bytes would be 0s and the final byte would contain a 1.
+
 ## Limitations
 
 ### Strings

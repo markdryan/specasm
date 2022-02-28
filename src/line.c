@@ -1572,6 +1572,12 @@ static uint8_t prv_dump_org_e(const specasm_line_t *line, char *buf)
 	return prv_dump_word(buf, addr, specasm_line_get_format(line));
 }
 
+static uint8_t prv_dump_align_e(const specasm_line_t *line, char *buf)
+{
+	return prv_dump_word(buf, 1 << line->data.op_code[0],
+			     specasm_line_get_format(line));
+}
+
 /* clang-format off */
 
 static specasm_line_opcode_dump_t dump_opcodes[] = {
@@ -1646,11 +1652,12 @@ static specasm_line_opcode_dump_t dump_opcodes[] = {
 	{ prv_dump_equw_e },          /* SPECASM_LINE_TYPE_DW */
 	{ prv_dump_equws_e },         /* SPECASM_LINE_TYPE_DB_SUB */
 	{ prv_dump_equws_e },         /* SPECASM_LINE_TYPE_DW_SUB */
-	{ prv_dump_ld_imm_16_sub_e }, /*SPECASM_LINE_TYPE_LD_IMM_16_SUB */
-	{ prv_dump_ld_imm_8_sub_e },  /*SPECASM_LINE_TYPE_LD_IMM_8_SUB */
-	{ prv_dump_ds_e },            /*SPECASM_LINE_TYPE_REPB */
+	{ prv_dump_ld_imm_16_sub_e }, /* SPECASM_LINE_TYPE_LD_IMM_16_SUB */
+	{ prv_dump_ld_imm_8_sub_e },  /* SPECASM_LINE_TYPE_LD_IMM_8_SUB */
+	{ prv_dump_ds_e },            /* SPECASM_LINE_TYPE_REPB */
 	{ prv_dump_org_e },           /* SPECASM_LINE_TYPE_ORG */
 	{ NULL },                     /* SPECASM_LINE_TYPE_MAP */
+	{ prv_dump_align_e },         /* SPECASM_LINE_TYPE_ALIGN */
 };
 
 /* clang-format on */
@@ -3311,11 +3318,45 @@ end:
 	return read;
 }
 
+static uint8_t prv_parse_align_e(const char *args, specasm_line_t *line,
+				 const specasm_opcode_t *op_entry)
+{
+	long lval;
+	uint8_t flags;
+	uint16_t target;
+	uint8_t i;
+	uint16_t valid;
+	const char *start = args;
+
+	args = specasm_get_long_imm_e(args, &lval, &flags);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	valid = 1;
+	target = (uint16_t) lval;
+	for (i = 1; i <= 8; i++) {
+		valid = valid << 1;
+		if (valid == target)
+			break;
+	}
+
+	if (i > 8) {
+		err_type = SPECASM_ERROR_BAD_NUM;
+		return 0;
+	}
+
+	specasm_line_set_format(line, flags);
+	line->data.op_code[0] = i;
+
+	return args - start;
+}
+
 /* clang-format off */
 
 const static specasm_opcode_t opcode_table[] = {
 	{ "adc", prv_parse_adc_sbc_e, SPECASM_LINE_TYPE_ADC, {0x4A, 0x88} },
 	{ "add", prv_parse_add_e, SPECASM_LINE_TYPE_ADD, },
+	{ "align", prv_parse_align_e, SPECASM_LINE_TYPE_ALIGN, },
 	{ "and", prv_parse_arith_e, SPECASM_LINE_TYPE_AND, {0xE6, 0xA0} },
 	{ "bit", prv_parse_bit_e, SPECASM_LINE_TYPE_BIT, { 0x40 } },
 	{ "call", prv_parse_call_e, SPECASM_LINE_TYPE_CALL, {0xC4, 0xCD} },

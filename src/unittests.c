@@ -139,6 +139,11 @@ static const test_t tests[] = {
 	{"add iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 	{"add  iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 
+	{"align 4", "align 4", 1, {0x2}},
+	{"align    16", "align 16", 1, {0x4}},
+	{"align $20", "align $20", 1, {0x5}},
+	{"align     256", "align 256", 1, {0x8}},
+
 	{"and (hl)", "and (hl)", 1, { 0xA6 }},
 	{"and  ( hl )", "and (hl)", 1, { 0xA6 }},
 	{"and (ix + 127)", "and (ix+127)", 3, { 0xDD, 0xA6, 0x7f }},
@@ -2331,6 +2336,13 @@ static const bad_test_t bad_tests[] = {
 	{ "add", SPECASM_ERROR_BAD_REG },
 	{ "add a, ", SPECASM_ERROR_BAD_REG },
 	{ "add , 10", SPECASM_ERROR_BAD_REG },
+
+	{"align 512", SPECASM_ERROR_BAD_NUM },
+	{"align 1", SPECASM_ERROR_BAD_NUM },
+	{"align 3", SPECASM_ERROR_BAD_NUM },
+	{"align -1", SPECASM_ERROR_BAD_NUM },
+	{"align 'c'", SPECASM_ERROR_BAD_NUM },
+	{"align ", SPECASM_ERROR_BAD_NUM },
 
 	{"and", SPECASM_ERROR_BAD_REG },
 	{"and (bc)", SPECASM_ERROR_BAD_REG },
