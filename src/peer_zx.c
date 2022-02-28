@@ -153,11 +153,3 @@ void specasm_screen_flush(uint16_t peer_last_row)
 	*posn_x = 33;
 	*posn_y = 24 - peer_last_row;
 }
-
-void specasm_halt_n(unsigned int a)
-{
-	uint16_t i;
-
-	for (i = 0; i < a; i++)
-		intrinsic_halt();
-}

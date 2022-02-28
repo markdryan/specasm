@@ -23,7 +23,7 @@ SALINK = \
        peer_zx.o
 
 specasm.tap: $(SPECASM)
-	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o specasm $^ -create-app
+	$(CC) $(CFLAGS) -zorg=24550 -startup=31 -o specasm $^ -create-app -Cz--merge=../../bas/SPECLD.TAP
 
 salink.tap: $(SALINK)
 	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o salink $^ -create-app

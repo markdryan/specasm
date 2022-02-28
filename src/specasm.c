@@ -32,6 +32,8 @@ int main()
 	uint8_t k;
 	uint8_t new_key;
 	uint16_t i;
+	uint8_t *ptr = (uint8_t*) 23328;
+	uint16_t delay = ((200/11) * *ptr) / 10;
 
 	specasm_init_dump_table();
 
@@ -44,7 +46,6 @@ int main()
 
 	// Make cursor flash
 	specasm_text_set_flash(col, line, FLASH);
-	intrinsic_ei();
 	do {
 		in_wait_key();
 		k = in_inkey();
@@ -56,7 +57,7 @@ int main()
 				new_key = in_inkey();
 			} else {
 				for (i = 0; i < SPECASM_KEY_CALIBRATION; i++) {
-					specasm_sleep_ms(20);
+					specasm_sleep_ms(delay);
 					new_key = in_inkey();
 					if (k != new_key)
 						break;
@@ -66,9 +67,6 @@ int main()
 			k = new_key;
 		} while (k);
 	} while (!quitting);
-
-	zx_border(INK_WHITE);
-	zx_cls(PAPER_WHITE | INK_BLACK);
 
 	return 0;
 }

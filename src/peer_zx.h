@@ -37,8 +37,6 @@
 #define SPECASM_FLASH FLASH
 #define specasm_cls(a) zx_cls(a)
 #define specasm_border(a) zx_border(a)
-#define specasm_sleep_ms(a) specasm_halt_n(a / 20)
-
-void specasm_halt_n(unsigned int a);
+#define specasm_sleep_ms(a) z80_delay_ms(a)
 
 #endif
