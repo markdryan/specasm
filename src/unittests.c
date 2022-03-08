@@ -2275,6 +2275,12 @@ static const format_test_t format_tests[] = {
 	{"db label1 - label", "db label1-label",
 	 SPECASM_LINE_TYPE_DB_SUB},
 	{"ds $10, 10", "ds $10, 10", SPECASM_LINE_TYPE_DS},
+	{"-  sub.x", "-sub.x", SPECASM_LINE_TYPE_INC_SHORT},
+	{"-/a/very/long/path", "-/a/very/long/path",
+	 SPECASM_LINE_TYPE_INC_LONG},
+	{"+  sub.x", "+sub.x", SPECASM_LINE_TYPE_INC_SYS_SHORT},
+	{"+a/very/long/path", "+a/very/long/path",
+	 SPECASM_LINE_TYPE_INC_SYS_LONG}
 };
 
 static const bad_test_t bad_tests[] = {

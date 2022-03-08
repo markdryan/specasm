@@ -106,7 +106,8 @@
 #define SPECASM_LINE_TYPE_SC 132
 
 // These need to stay sequential and the short types
-// need to be even, the longs odd.
+// need to be even, the longs odd.  The LINE_TYPE
+// need to be sequential as well.
 #define SPECASM_LINE_TYPE_STR_SIN_SHORT 134
 #define SPECASM_LINE_TYPE_STR_SIN_LONG 135
 #define SPECASM_LINE_TYPE_STR_DBL_SHORT 136
@@ -115,6 +116,10 @@
 #define SPECASM_LINE_TYPE_STR_HSH_LONG 139
 #define SPECASM_LINE_TYPE_STR_AMP_SHORT 140
 #define SPECASM_LINE_TYPE_STR_AMP_LONG 141
+#define SPECASM_LINE_TYPE_INC_SHORT 142
+#define SPECASM_LINE_TYPE_INC_LONG 143
+#define SPECASM_LINE_TYPE_INC_SYS_SHORT 144
+#define SPECASM_LINE_TYPE_INC_SYS_LONG 145
 
 #define SPECASM_MAX_MNEMOM 5
 #define SPECASM_MAX_LINES 512

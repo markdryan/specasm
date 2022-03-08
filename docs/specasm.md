@@ -212,7 +212,7 @@ or 8                  ; or with 8
 
 #### Data directives
 
-The assembler provides two directives that can be used to store numeric constant data directly in machine code programs.  These are
+The assembler provides three directives that can be used to store numeric constant data directly in machine code programs.  These are
 
 | Directive | Description                                                               |
 |-----------|---------------------------------------------------------------------------|
@@ -403,4 +403,29 @@ org 23760
 will cause the linked program to be assembled at 23760.
 
 The linker doesn't currently create a loader program or a tap file so this needs to be done manually.  It can be scripted using BASIC and the relevant ESXDOS commands.
+
+### Libraries
+
+Specasm supports two directives that allow the user to include .x files from other directories in the final executable.
+
+| Directive    | Description                                                                                |
+|--------------|--------------------------------------------------------------------------------------------|
+| - <filename> | Here filename is either an absolute or a relative path (relative to the current .x file)   |
+| + <filename> | Here filename is a path relative /specasm/.                                                |
+
+These are both linker directives rather than assembler directives.  The target of these directives are not included directly into the current source file.  Instead they are added to the final binary when it is linked.  The '-' directive is intended to be used to create custom libraries or to split your program into multiple folders.  The '+' directive is intended to be used to include .x files from a future Specasm standard library.  The trailing '.x' extension in <filename> is optional.
+
+Here are some examples of their use
+
+```
+; include /specasm/gr/rows.x
++gr/rows
+
+; include ./lib/math.x
+-lib/math.x
+```
+
+
+
+
 

@@ -239,6 +239,37 @@ static uint8_t prv_parse_string_e(const char *str, char type, uint8_t i,
 	return l;
 }
 
+static uint8_t prv_parse_include_e(const char *str, char type, uint8_t i,
+				   specasm_line_t *line)
+{
+	uint8_t k;
+	uint8_t l;
+
+	for (; i < SPECASM_LINE_MAX_LEN && str[i] <= ' '; i++)
+		;
+
+	if (i == SPECASM_LINE_MAX_LEN)
+		return i;
+
+	for (k = SPECASM_LINE_MAX_LEN - 1; k > i && str[k] <= ' '; k--)
+		;
+
+	l = (k - i) + 1;
+	line->type = (type == '-') ? SPECASM_LINE_TYPE_INC_SHORT :
+		SPECASM_LINE_TYPE_INC_SYS_SHORT;
+
+	memcpy(scratch, &str[i], l);
+	scratch[l] = 0;
+	if (l < SPECASM_MAX_SHORT_LEN) {
+		line->data.label = specasm_state_add_short_e(scratch);
+	} else {
+		line->data.label = specasm_state_add_long_e(scratch);
+		line->type++;
+	}
+
+	return k + 1;
+}
+
 void specasm_set_comment(unsigned int l, const char *str)
 {
 	uint8_t i;
@@ -351,6 +382,8 @@ void specasm_parse_line_e(unsigned int l, const char *str)
 
 	if (str[i] == '"' || str[i] == '\'' || str[i] == '@' || str[i] == '#')
 		i = prv_parse_string_e(str, str[i], i + 1, line);
+	else if (str[i] == '+' || str[i] == '-')
+		i = prv_parse_include_e(str, str[i],i + 1, line);
 	else
 		i = specasm_parse_mnemomic_e(str, i, line);
 	if (err_type != SPECASM_ERROR_OK)
@@ -394,7 +427,7 @@ void specasm_format_line_e(char *buf, unsigned int l)
 	char *comment_start;
 	char *start;
 	uint8_t i;
-	const char str_ids[] = {'\'', '"', '#', '@'};
+	const char str_ids[] = {'\'', '"', '#', '@', '-', '+'};
 	const specasm_line_t *line = &state.lines.lines[l];
 
 	end_ptr = buf + SPECASM_LINE_MAX_LEN;
@@ -419,12 +452,12 @@ void specasm_format_line_e(char *buf, unsigned int l)
 		goto clear;
 	}
 	if ((line->type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
-	    (line->type <= SPECASM_LINE_TYPE_STR_AMP_LONG)) {
+	    (line->type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
 		i = (line->type - SPECASM_LINE_TYPE_STR_SIN_SHORT) >> 1;
 		i = str_ids[i];
 		buf = prv_format_string_e(buf, line->type & 1, line->data.label,
 					  i);
-		if (buf < end_ptr)
+		if ((line->type < SPECASM_LINE_TYPE_INC_SHORT) && buf < end_ptr)
 			*buf++ = i;
 	} else {
 		if (!((line->type >= SPECASM_LINE_TYPE_DB &&
