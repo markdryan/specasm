@@ -32,8 +32,8 @@ int main()
 	uint8_t k;
 	uint8_t new_key;
 	uint16_t i;
-	uint8_t *ptr = (uint8_t*) 23328;
-	uint16_t delay = ((200/11) * *ptr) / 10;
+	uint8_t *ptr = (uint8_t *)23328;
+	uint16_t delay = ((200 / 11) * *ptr) / 10;
 
 	specasm_init_dump_table();
 

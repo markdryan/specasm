@@ -177,7 +177,6 @@ struct specasm_lines_t_ {
 
 typedef struct specasm_lines_t_ specasm_lines_t;
 
-
 void specasm_init_dump_table(void);
 char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags);
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,

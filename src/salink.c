@@ -160,8 +160,9 @@ static void prv_add_label_e(salink_obj_t *obj, specasm_line_t *line,
 	}
 	label = &labels[label_count];
 	label->id = line->data.label;
-	label->type = line->type == SPECASM_LINE_TYPE_LL ? SALINK_LABEL_TYPE_LNG
-		: SALINK_LABEL_TYPE_SHORT;
+	label->type = line->type == SPECASM_LINE_TYPE_LL
+			  ? SALINK_LABEL_TYPE_LNG
+			  : SALINK_LABEL_TYPE_SHORT;
 	label->off = size;
 	id = line->data.label;
 	if (line->type & 1)
@@ -237,7 +238,7 @@ static void prv_add_align_e(salink_obj_t *obj, specasm_line_t *line,
 	label->off = size;
 }
 
-static void prv_add_queued_file_e(const char* base, const char *prefix,
+static void prv_add_queued_file_e(const char *base, const char *prefix,
 				  specasm_line_t *line)
 {
 	const char *str;
@@ -289,7 +290,7 @@ static void prv_add_queued_file_e(const char* base, const char *prefix,
 	strcpy(ptr, str);
 	if (start[space_needed - 2] != '.' &&
 	    (start[space_needed - 1] | 32) != 'x') {
-		if (space_needed + 2 >  MAX_FNAME) {
+		if (space_needed + 2 > MAX_FNAME) {
 			err_type = SPECASM_ERROR_BAD_FNAME;
 			return;
 		}
@@ -325,8 +326,7 @@ static void prv_parse_obj_e(const char *fname)
 
 	specasm_load_e(fname);
 	if (err_type != SPECASM_ERROR_OK) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "Can't open %s", fname);
+		snprintf(error_buf, sizeof(error_buf), "Can't open %s", fname);
 		err_type = SALINK_ERROR_CANT_OPEN;
 		return;
 	}

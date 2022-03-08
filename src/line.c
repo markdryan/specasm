@@ -2178,7 +2178,7 @@ static uint8_t prv_signed_ok(uint8_t flags, uint8_t val)
 }
 
 static uint8_t prv_parse_db_e(const char *args, specasm_line_t *line,
-				const specasm_opcode_t *op_entry)
+			      const specasm_opcode_t *op_entry)
 {
 	uint8_t val;
 	uint8_t flags;
@@ -2246,7 +2246,7 @@ static uint8_t prv_signed_ok_u16(uint8_t flags, uint16_t val)
 }
 
 static uint8_t prv_parse_dw_e(const char *args, specasm_line_t *line,
-				const specasm_opcode_t *op_entry)
+			      const specasm_opcode_t *op_entry)
 {
 	uint16_t val;
 	uint8_t flags;
@@ -3333,7 +3333,7 @@ static uint8_t prv_parse_align_e(const char *args, specasm_line_t *line,
 		return 0;
 
 	valid = 1;
-	target = (uint16_t) lval;
+	target = (uint16_t)lval;
 	for (i = 1; i <= 8; i++) {
 		valid = valid << 1;
 		if (valid == target)
@@ -3433,7 +3433,6 @@ const static specasm_opcode_t opcode_table[] = {
 
 const static uint8_t opcode_table_size =
     sizeof(opcode_table) / sizeof(specasm_opcode_t);
-
 
 void specasm_init_dump_table(void)
 {
