@@ -10,17 +10,14 @@ Download the latest release of Specasm, and unzip the contents of the file into 
 
 Now navigate to the INSTALL file, which is a BASIC program, and press **ENTER** to execute it.  This will use ESXDOS's **.launcher** command to set up some command line short cuts for the tap files in the SPECASM directory.
 
-You may noticed from the screenshot that there are some other files in the SPECASM folder, namely two dotx commands called saimport and saexport.  These commands allow you to convert between Specasm's internal file format, .x files, and assembly language text files, .s files.  I couldn't work out how to install these dotx commands cleanly in BASIC so this needs to be done manually.
+## Reinstalling Specasm
 
-```
-.mkdir /bin/extra
-.cp SAIMPORT /bin
-.cp SAIMPORT.X /bin/extra/SAIMPORT.X
-.cp SAEXPORT /bin
-.cp SAEXPORT.X /bin/extra/SAEXPORT.X
-```
+To upgrade to a new version of Specasm perform the following steps.
 
-Note this step is optional and only necessary if you need to convert between .x and .s files on the spectrum itself.
+1. Manually remove the old /Specasm directory on your SD card, e.g., rm -rf /Specasm
+2. Download the latest release and unzip its contents to /Specasm on the SD card
+3. Execute the REMOVE BASIC program.  This can be done from the ESXDOS file browser or by loading it from the BASIC prompt.  This will remove the old version of Specasm stored under the /bin folder, and will also de-register the old **.launcher** shortcuts.
+4. Run the INSTALL BASIC program.  This will install the new version of Specasm.
 
 ## Assembling your First Program
 
@@ -69,7 +66,7 @@ Specasm is built with [z88dk](https://github.com/z88dk/z88dk) and GNU Make.  Ins
 
 ```
 cd build
-make -j -f Makefile.spec
+make -j
 ```
 
 And then wait.   All the tap and dotx files will be created in the build directory.
