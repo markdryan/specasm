@@ -16,6 +16,11 @@ if [ "$offset" != "08 81" ]; then
     exit 1
 fi
 
+offset=`od -An -j203 -t x1 -N1 align | xargs`
+if [ "$offset" != "fd" ]; then
+    exit 1
+fi
+
 offset=`od -An -j212 -t x1 -N2 align | xargs`
 if [ "$offset" != "08 81" ]; then
     exit 1

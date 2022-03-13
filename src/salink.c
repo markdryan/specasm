@@ -652,25 +652,26 @@ static void prv_label_subtraction_byte_e(salink_obj_t *obj,
 	}
 }
 
-static void prv_align_e(specasm_handle_t f, uint16_t align)
+static uint16_t prv_align_e(specasm_handle_t f, uint16_t align)
 {
 	unsigned int mask = align - 1;
 	unsigned int adjust = (start_address + bin_size + buf_count) & mask;
 
 	if (adjust == 0)
-		return;
+		return 0;
 
 	adjust = align - adjust;
 
 	if (buf_count + adjust > MAX_BUFFER_SIZE) {
 		specasm_file_write_e(f, buf.file_buf, buf_count);
 		if (err_type != SPECASM_ERROR_OK)
-			return;
+			return 0;
 		bin_size += buf_count;
 		buf_count = 0;
 	}
 	memset(&buf.file_buf[buf_count], 0, adjust);
 	buf_count += adjust;
+	return adjust;
 }
 
 static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
@@ -690,7 +691,7 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 		line = &state.lines.lines[i];
 		switch (line->type) {
 		case SPECASM_LINE_TYPE_ALIGN:
-			prv_align_e(f, 1 << line->data.op_code[0]);
+			offset += prv_align_e(f, 1 << line->data.op_code[0]);
 			break;
 		case SPECASM_LINE_TYPE_DW:
 		case SPECASM_LINE_TYPE_CALL:
