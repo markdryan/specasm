@@ -28,6 +28,8 @@
 #define EDITOR_STATIC static
 #endif
 
+#define MAX_FNAME 28
+
 unsigned int line;
 uint8_t col;
 uint8_t quitting;
@@ -38,7 +40,9 @@ EDITOR_STATIC uint8_t editing;
 EDITOR_STATIC uint8_t mode;
 EDITOR_STATIC unsigned int select_start;
 EDITOR_STATIC unsigned int select_end;
+static char current_fname[MAX_FNAME + 1];
 char line_buf[SPECASM_MAX_SCRATCH];
+
 
 static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 {
@@ -499,6 +503,7 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 	switch (ch) {
 	case 'n':
 		reset = 1;
+		current_fname[0] = 0;
 		break;
 	case 'q':
 		quitting = 1;
@@ -523,6 +528,13 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 	case 'a':
 		select_start = 0;
 		select_end = state.lines.num_lines;
+		break;
+	case 's':
+		if (!current_fname[0]) {
+			err_type = SPECASM_ERROR_BAD_FNAME;
+			return 0;
+		}
+		specasm_save_e(current_fname);
 		break;
 	default:
 		err_type = SPECASM_ERROR_BAD_COMMAND;
@@ -597,17 +609,22 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 		if ((err_type != SPECASM_ERROR_OK) &&
 		    (err_type != SPECASM_ERROR_OPEN)) {
 			reset = 1;
+			current_fname[0] = 0;
 		} else {
 			line = row = col = select_end = select_start = 0;
 			specasm_cls(SPECASM_CODE_COLOUR |
 				    SPECASM_LABEL_BACKGROUND);
 			prv_draw_screen(0);
+			if (err_type == SPECASM_ERROR_OK)
+				strcpy(current_fname, com);
 		}
 	} else if (com[0] == 's' && com[1] == ' ') {
 		com = prv_complete_filename_e(com, len);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 		specasm_save_e(com);
+		if (err_type == SPECASM_ERROR_OK)
+			strcpy(current_fname, com);
 	} else if (com[0] == 'g' && com[1] == ' ') {
 		prv_goto(&com[2]);
 	} else if (com[0] == 'f' && com[1] == ' ') {

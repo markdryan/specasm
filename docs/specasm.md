@@ -56,7 +56,7 @@ On entering command mode, a '>' prompt appears at the bottom of the screen.  Fro
 | sel     | Enters selection mode.  See below |
 | ver     | Displays the current version of Specasm |
 | l *filename* | Loads *filename* into the editor.  *filename* should not be surrounded by quotes.  The .x extension is optional |
-| s *filename* | Saves the contents of the editor to *filename*.  The .x extension is optional |
+| s *filename* | Saves the contents of the editor to *filename*.  The .x extension is optional.  If the name of the current file being edited is known to Specasm, the file name can be ommitted, i.e., **> s** saves the current file. |
 | g *line number* | Moves the cursor to the specified line number|
 | f *string* | Searches for the first instance of *string* starting from the current line.  There's no wrap around. |
 
