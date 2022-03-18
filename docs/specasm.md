@@ -56,7 +56,7 @@ On entering command mode, a '>' prompt appears at the bottom of the screen.  Fro
 | sel     | Enters selection mode.  See below |
 | ver     | Displays the current version of Specasm |
 | l *filename* | Loads *filename* into the editor.  *filename* should not be surrounded by quotes.  The .x extension is optional |
-| s *filename* | Saves the contents of the editor to *filename*.  The .x extension is optional |
+| s *filename* | Saves the contents of the editor to *filename*.  The .x extension is optional.  If the name of the current file being edited is known to Specasm, the file name can be ommitted, i.e., **> s** saves the current file. |
 | g *line number* | Moves the cursor to the specified line number|
 | f *string* | Searches for the first instance of *string* starting from the current line.  There's no wrap around. |
 
@@ -94,7 +94,7 @@ Here are some valid examples
 ```
 ld (ix+0), a
 ld (ix+-1), a
-ld (iy+&7f), a
+ld (iy+$7f), a
 ```
 
 and here are some invalid examples
@@ -106,10 +106,10 @@ ld (ix-1), a
 
 #### Numbers
 
-Numbers can be specified in decimal, hex or as characters.  Decimal numbers require no prefix, hex numbers use the '&' prefix and characters are enclosed with single quotes.  For example,
+Numbers can be specified in decimal, hex or as characters.  Decimal numbers require no prefix, hex numbers use the '$' prefix and characters are enclosed with single quotes.  For example,
 
 ```
-org &8000
+org $8000
 ld ix, -32768
 ld a, 'c'
 ld l, (ix+-100)
@@ -126,7 +126,7 @@ ld ix, -1
 and
 
 ```
-ld ix, &ffff
+ld ix, $ffff
 ```
 
 Both statements will assemble to the same opcode.  However, there are certain places where this is not allowed, namely when dereferencing an absolute address or specifying an offset to one of the index registers.  For example, the follow two statements will not assemble.
@@ -170,8 +170,8 @@ Specasm does not support expressions in the general sense.  There is one excepti
 |--------------------------|--------------------------------------------------------|
 | ld [a-l], end-start      | 8 bit immediate loads into a, b, c, d, e, h and l      |
 | ld [bc/de/hl], end-start | 16 bit immediate loads to bc, de and hl                |
-| equb end-start           | 8 bit data directive                                   |
-| equw end-start           | 16 bit data directive                                  |
+| db end-start             | 8 bit data directive                                   |
+| dw end-start             | 16 bit data directive                                  |
 
 An error will be generated at link time if the 8 bit versions of the mnemonics specify two labels
 that are more than 255 bytes apart.
@@ -184,9 +184,9 @@ Here's an example of label subtraction
 ld bc, end-start
 ret
 .start
-equb 10, 10
+db 10, 10
 "hello"
-repb ' ', 12
+ds 12, ' '
 .end
 ```
 
@@ -212,72 +212,72 @@ or 8                  ; or with 8
 
 #### Data directives
 
-The assembler provides two directives that can be used to store numeric constant data directly in machine code programs.  These are
+The assembler provides three directives that can be used to store numeric constant data directly in machine code programs.  These are
 
 | Directive | Description                                                               |
 |-----------|---------------------------------------------------------------------------|
-| equb      | Used to encode up to 1 to 4 bytes.  Multiple bytes are comma separated.   |
-| equw      | Used to encode 1 or 2 16 bit words.  Multiple words are comma separated. Can also be used to encode the address of a label resolved at link time|
-| repb      | Encodes 1 or more copies of a given byte |
+| db        | Used to encode up to 1 to 4 bytes.  Multiple bytes are comma separated.   |
+| dw        | Used to encode 1 or 2 16 bit words.  Multiple words are comma separated. Can also be used to encode the address of a label resolved at link time|
+| ds        | Encodes 1 or more copies of a given byte |
 
 
 Numbers can be specified as hex digits, signed and unsigned numbers or as characters.  There's one restriction here though.  If you specify multiple numbers on the same line the numbers must be of the same format, e.g., all hex digits or all characters.  Unsigned and singed numbers can be mixed as long as all the numbers can be represented by a signed number.  Here are some examples that are allowed
 
 ```
-equb 10
-equw &1000
-equb 10, -10, 11, -11
-equb 'a', 'b', 'c'
-equw 'c'
-equb 255, 255
+db 10
+dw $1000
+db 10, -10, 11, -11
+db 'a', 'b', 'c'
+dw 'c'
+db 255, 255
 ```
 
 And here are some examples that aren't
 
 ```
 ; Both numbers cannot be represented by a signed byte
-equb -1, 255
+db -1, 255
 ; Mixing hex and signed decimals
-equb -1, -2, -3, &20
+db -1, -2, -3, $20
 ; Mixing characters and decimals
-equb 'A', 1, 2
+db 'A', 1, 2
 ```
-In addition to encoding numbers the **equw** directive can be used to encode the address of a label and also the difference between the addresses of two labels.  When used in this format, the **equw** directive can only contain a single argument.
+In addition to encoding numbers the **dw** directive can be used to encode the address of a label and also the difference between the addresses of two labels.  When used in this format, the **dw** directive can only contain a single argument.
 
 For example,
 
 ```
-equw data
+dw data
 ```
 
 will encode the address of the label data directly into the program.  The address is encoded at link time when salink has figured out the final address of the label.
 
 ```
-equw end-start
+dw end-start
 .start
-equw 10, 10
-equb 1
+dw 10, 10
+db 1
 .end
 ```
 
 will store the value 5 in a 16 bit word in the final program.
 
-The **equb** directive cannot be used to encode the address of a label as the address is unlikely to fit into a single byte.  It can however, be used to encode the difference between two labels providing the difference does fit into a byte.  If the labels are too far apart an error will be generated at link time.  When used in this form, no other numbers can follow the label subtraction on the same line.  For example,
+The **db** directive cannot be used to encode the address of a label as the address is unlikely to fit into a single byte.  It can however, be used to encode the difference between two labels providing the difference does fit into a byte.  If the labels are too far apart an error will be generated at link time.  When used in this form, no other numbers can follow the label subtraction on the same line.  For example,
 
 ```
-equb end-start
+db end-start
 .start
-equw 10, 10
-equb 1
+dw 10, 10
+db 1
 .end
 ```
 
 Will store the byte 5 in memory followed by 5 bytes of data.
 
-The **repb** directive can be used to store multiple copies of them same byte value directly into the program code.  **repb** requires two parameters separated by a comma.  The first is the byte value to store.  This can be specified as a signed or unsigned decimal number, a hexidecimal number of a character.  The second value is 16 bit integer that specifies the number of copies of the first parameter to be encoded.  For example,
+The **ds** directive can be used to store multiple copies of the same byte value directly into the program code.  **ds** requires two parameters separated by a comma.  The first is 16 bit integer that specifies the number of copies of the first parameter to be encoded.  The second value is the byte value to store.  This can be specified as a signed or unsigned decimal number, a hexadecimal number or a character.   It is mandatory.  For example,
 
 ```
-repb 'A', 12
+ds 12, 'A'
 ```
 
 encodes 12 copies of the ASCII value of 'A' directly in the program.  The size of this mnemonic will be reported as 12 in the editor.
@@ -309,6 +309,19 @@ The @ and # directives output the length of the string, as a byte, before output
 ```
 
 Actually outputs 6 bytes; 5, 'H', 'e', 'l', 'l', 'o'.  Again two different directives are provided so that both the # and @ characters can be encoded.
+
+#### Align
+
+Specasm supports one more directive, **align**, that can be used to align the code or data that follows the **align** directive to a given power of 2.  The **align** directive takes one argument that must be a power of 2, greater than or equal to 2 and less and or equal to 256.  It inserts null bytes into the binary until the requested alignment is achieved.  Consider the following, simple program
+
+```
+.Main
+org $800a
+align 16
+db 1
+```
+
+Once assembled and linked our binary would be 7 bytes in size.  The first 6 bytes would be 0s and the final byte would contain a 1.
 
 ## Limitations
 
@@ -365,23 +378,23 @@ This will generate a map file in the current directory.  The name of the map fil
 ```
 Globals
 -------
-&8000 - SINSCRL.X:Main
+$8000 - SINSCRL.X:Main
 
 SINSCRL.X
 -------
-&8000 - Main
-&8003 - l1
-&801E - l2
-&8054 - stack
-&8065 - data
-&806A - roll
-&806F - l3
-&80B0 - l4
-&80B6 - down
-&80B9 - l5
+$8000 - Main
+$8003 - l1
+$801E - l2
+$8054 - stack
+$8065 - data
+$806A - roll
+$806F - l3
+$80B0 - l4
+$80B6 - down
+$80B9 - l5
 ```
 
-By default, the entry point of a Specasm program is &8000 hex, or 32768 decimal.  This can be modified by using the **org** directive.  The **org** directive can only appear in one .x file in a directory.  That file does not need to be the file that contains the **Main** label but, by convention, the **org** statement follows or precedes the **Main** label.  The parameter to the **org** statement can be specified in decimal or hex, e.g.,
+By default, the entry point of a Specasm program is $8000 hex, or 32768 decimal.  This can be modified by using the **org** directive.  The **org** directive can only appear in one .x file in a directory.  That file does not need to be the file that contains the **Main** label but, by convention, the **org** statement follows or precedes the **Main** label.  The parameter to the **org** statement can be specified in decimal or hex, e.g.,
 
 ```
 org 23760
@@ -390,4 +403,29 @@ org 23760
 will cause the linked program to be assembled at 23760.
 
 The linker doesn't currently create a loader program or a tap file so this needs to be done manually.  It can be scripted using BASIC and the relevant ESXDOS commands.
+
+### Libraries
+
+Specasm supports two directives that allow the user to include .x files from other directories in the final executable.
+
+| Directive    | Description                                                                                |
+|--------------|--------------------------------------------------------------------------------------------|
+| - <filename> | Here filename is either an absolute or a relative path (relative to the current .x file)   |
+| + <filename> | Here filename is a path relative /specasm/.                                                |
+
+These are both linker directives rather than assembler directives.  The target of these directives are not included directly into the current source file.  Instead they are added to the final binary when it is linked.  The '-' directive is intended to be used to create custom libraries or to split your program into multiple folders.  The '+' directive is intended to be used to include .x files from a future Specasm standard library.  The trailing '.x' extension in <filename> is optional.
+
+Here are some examples of their use
+
+```
+; include /specasm/gr/rows.x
++gr/rows
+
+; include ./lib/math.x
+-lib/math.x
+```
+
+
+
+
 

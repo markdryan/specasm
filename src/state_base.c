@@ -133,7 +133,7 @@ uint16_t specasm_compute_line_size(specasm_line_t *line)
 	if (line->type <= SPECASM_LINE_TYPE_SIMPLE_MAX)
 		return (uint16_t)specasm_line_get_size(line) + 1;
 
-	if (line->type == SPECASM_LINE_TYPE_REPB)
+	if (line->type == SPECASM_LINE_TYPE_DS)
 		return *((uint16_t *)&line->data.op_code[1]);
 
 	if ((line->type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&

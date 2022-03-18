@@ -86,16 +86,18 @@
 #define SPECASM_LINE_TYPE_SRL 64
 #define SPECASM_LINE_TYPE_SUB 65
 #define SPECASM_LINE_TYPE_XOR 66
-#define SPECASM_LINE_TYPE_EQUB 67
-#define SPECASM_LINE_TYPE_EQUW 68
-#define SPECASM_LINE_TYPE_EQUB_SUB 69
-#define SPECASM_LINE_TYPE_EQUW_SUB 70
+#define SPECASM_LINE_TYPE_DB 67
+#define SPECASM_LINE_TYPE_DW 68
+#define SPECASM_LINE_TYPE_DB_SUB 69
+#define SPECASM_LINE_TYPE_DW_SUB 70
 #define SPECASM_LINE_TYPE_LD_IMM_16_SUB 71
 #define SPECASM_LINE_TYPE_LD_IMM_8_SUB 72
 #define SPECASM_LINE_TYPE_SIMPLE_MAX SPECASM_LINE_TYPE_LD_IMM_8_SUB
-#define SPECASM_LINE_TYPE_REPB SPECASM_LINE_TYPE_SIMPLE_MAX + 1
-#define SPECASM_LINE_TYPE_ORG SPECASM_LINE_TYPE_SIMPLE_MAX + 2
-#define SPECASM_LINE_TYPE_MAP SPECASM_LINE_TYPE_SIMPLE_MAX + 3
+#define SPECASM_LINE_TYPE_DS (SPECASM_LINE_TYPE_SIMPLE_MAX + 1)
+#define SPECASM_LINE_TYPE_ORG (SPECASM_LINE_TYPE_SIMPLE_MAX + 2)
+#define SPECASM_LINE_TYPE_MAP (SPECASM_LINE_TYPE_SIMPLE_MAX + 3)
+#define SPECASM_LINE_TYPE_ALIGN (SPECASM_LINE_TYPE_SIMPLE_MAX + 4)
+#define SPECASM_LINE_TYPE_MAX (SPECASM_LINE_TYPE_ALIGN + 1)
 
 #define SPECASM_LINE_TYPE_EMPTY 128
 #define SPECASM_LINE_TYPE_LL 129
@@ -104,7 +106,8 @@
 #define SPECASM_LINE_TYPE_SC 132
 
 // These need to stay sequential and the short types
-// need to be even, the longs odd.
+// need to be even, the longs odd.  The LINE_TYPE
+// need to be sequential as well.
 #define SPECASM_LINE_TYPE_STR_SIN_SHORT 134
 #define SPECASM_LINE_TYPE_STR_SIN_LONG 135
 #define SPECASM_LINE_TYPE_STR_DBL_SHORT 136
@@ -113,8 +116,12 @@
 #define SPECASM_LINE_TYPE_STR_HSH_LONG 139
 #define SPECASM_LINE_TYPE_STR_AMP_SHORT 140
 #define SPECASM_LINE_TYPE_STR_AMP_LONG 141
+#define SPECASM_LINE_TYPE_INC_SHORT 142
+#define SPECASM_LINE_TYPE_INC_LONG 143
+#define SPECASM_LINE_TYPE_INC_SYS_SHORT 144
+#define SPECASM_LINE_TYPE_INC_SYS_LONG 145
 
-#define SPECASM_MAX_MNEMOM 4
+#define SPECASM_MAX_MNEMOM 5
 #define SPECASM_MAX_LINES 512
 #define SPECASM_MAX_ROWS 23
 #define SPECASM_LINE_MAX_LEN 32
@@ -170,6 +177,7 @@ struct specasm_lines_t_ {
 
 typedef struct specasm_lines_t_ specasm_lines_t;
 
+void specasm_init_dump_table(void);
 char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags);
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 				 specasm_line_t *line);

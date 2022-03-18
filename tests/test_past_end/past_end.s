@@ -1,4 +1,4 @@
-org &fffe
+org $fffe
 .Main
-  repb 0, 8
+  ds 8, 0
   ret

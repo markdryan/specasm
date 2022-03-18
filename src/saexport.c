@@ -119,6 +119,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	specasm_init_dump_table();
+
 	for (int i = 1; i < argc; i++) {
 		if (prv_check_file(argv[i]))
 			return 1;

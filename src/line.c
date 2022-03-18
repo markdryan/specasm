@@ -70,7 +70,7 @@ typedef uint8_t (*specasm_dump_opcode_fn_t)(const specasm_line_t *line,
 
 struct specasm_line_opcode_dump_t_ {
 	specasm_dump_opcode_fn_t fn;
-	const char name[4];
+	uint8_t index;
 };
 
 typedef struct specasm_line_opcode_dump_t_ specasm_line_opcode_dump_t;
@@ -81,7 +81,7 @@ typedef uint8_t (*specasm_parse_fn_t)(const char *args, specasm_line_t *line,
 				      const specasm_opcode_t *op_code);
 
 struct specasm_opcode_t_ {
-	const char mnemomic[SPECASM_MAX_MNEMOM + 1];
+	const char *mnemomic;
 	specasm_parse_fn_t fn;
 	uint8_t line_type;
 	uint8_t op_code[2];
@@ -97,7 +97,7 @@ char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags)
 	while (*str == ' ')
 		++str;
 
-	if (*str == '&') {
+	if (*str == '$') {
 		base = 16;
 		++str;
 	}
@@ -484,7 +484,7 @@ static uint8_t prv_dump_byte(char *buf, uint8_t v, uint8_t flags)
 
 	start = buf;
 	if (flags == SPECASM_FLAGS_NUM_HEX) {
-		*buf++ = '&';
+		*buf++ = '$';
 		radix = 16;
 		iv = v;
 	} else {
@@ -516,7 +516,7 @@ static uint8_t prv_dump_word(char *buf, uint16_t v, uint8_t flags)
 		(void)itoa(v, buf, 10);
 	} else {
 		if (flags == SPECASM_FLAGS_NUM_HEX) {
-			*buf++ = '&';
+			*buf++ = '$';
 			radix = 16;
 		} else {
 			radix = 10;
@@ -1503,7 +1503,7 @@ static uint8_t prv_dump_xor_e(const specasm_line_t *line, char *buf)
 	return prv_dump_arith_e(line, buf, 0xEE, 0xA8) - start;
 }
 
-static uint8_t prv_dump_equb_e(const specasm_line_t *line, char *buf)
+static uint8_t prv_dump_db_e(const specasm_line_t *line, char *buf)
 {
 	uint8_t i;
 	unsigned int len;
@@ -1549,20 +1549,20 @@ static uint8_t prv_dump_equws_e(const specasm_line_t *line, char *buf)
 	return prv_dump_subtraction_e(line, buf, 0);
 }
 
-static uint8_t prv_dump_repb_e(const specasm_line_t *line, char *buf)
+static uint8_t prv_dump_ds_e(const specasm_line_t *line, char *buf)
 {
 	uint16_t *count;
 	char *start = buf;
 	const uint8_t *op_code = line->data.op_code;
 
-	buf += prv_dump_byte(buf, op_code[0], specasm_line_get_format(line));
+	count = (uint16_t *)&op_code[1];
+	buf += prv_dump_word(buf, *count, specasm_line_get_format2(line));
+
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
 
-	count = (uint16_t *)&op_code[1];
-	buf += prv_dump_word(buf, *count, specasm_line_get_format2(line));
-
+	buf += prv_dump_byte(buf, op_code[0], specasm_line_get_format(line));
 	return buf - start;
 }
 
@@ -1572,85 +1572,92 @@ static uint8_t prv_dump_org_e(const specasm_line_t *line, char *buf)
 	return prv_dump_word(buf, addr, specasm_line_get_format(line));
 }
 
+static uint8_t prv_dump_align_e(const specasm_line_t *line, char *buf)
+{
+	return prv_dump_word(buf, 1 << line->data.op_code[0],
+			     specasm_line_get_format(line));
+}
+
 /* clang-format off */
 
-static const specasm_line_opcode_dump_t dump_opcodes[] = {
-	{ prv_dump_adc_e, {'a', 'd', 'c' } },       /* SPECASM_LINE_TYPE_ADC */
-	{ prv_dump_add_e, {'a', 'd', 'd' } },       /* SPECASM_LINE_TYPE_ADD */
-	{ prv_dump_and_e, { 'a', 'n', 'd'} },       /* SPECASM_LINE_TYPE_AND */
-	{ prv_dump_bit_e, { 'b', 'i', 't'} },       /* SPECASM_LINE_TYPE_BIT */
-	{ prv_dump_call_e, { 'c', 'a', 'l', 'l'} }, /* SPECASM_LINE_TYPE_CALL */
-	{ NULL, { 'c', 'c', 'f' } },                /* SPECASM_LINE_TYPE_CCF */
-	{ prv_dump_cp_e, {'c', 'p' } },             /* SPECASM_LINE_TYPE_CP */
-	{ NULL, { 'c', 'p', 'd' } },                /* SPECASM_LINE_TYPE_CPD */
-	{ NULL, { 'c', 'p', 'd', 'r'} },            /* SPECASM_LINE_TYPE_CPDR */
-	{ NULL, { 'c', 'p', 'i' } },                /* SPECASM_LINE_TYPE_CPI */
-	{ NULL, { 'c', 'p', 'i', 'r' } },           /* SPECASM_LINE_TYPE_CPIR */
-	{ NULL, { 'c', 'p', 'l' } },                /* SPECASM_LINE_TYPE_CPL */
-	{ NULL, { 'd', 'a', 'a' } },                /* SPECASM_LINE_TYPE_DAA */
-	{ prv_dump_dec_e, { 'd', 'e', 'c' } },      /* SPECASM_LINE_TYPE_DEC */
-	{ NULL, { 'd', 'i' } },                     /* SPECASM_LINE_TYPE_DI */
-	{ prv_dump_djnz_e, { 'd', 'j', 'n', 'z'} }, /* SPECASM_LINE_TYPE_DJNZ */
-	{ NULL, { 'e', 'i' } },                     /* SPECASM_LINE_TYPE_EI */
-	{ prv_dump_ex_e, { 'e', 'x' } },            /* SPECASM_LINE_TYPE_EX */
-	{ NULL, { 'e', 'x', 'x' } },                /* SPECASM_LINE_TYPE_EXX */
-	{ NULL, { 'h', 'a', 'l', 't'} },            /* SPECASM_LINE_TYPE_HALT */
-	{ prv_dump_im_e, { 'i', 'm'} },             /* SPECASM_LINE_TYPE_IM */
-	{ prv_dump_in_e, { 'i', 'n'} },             /* SPECASM_LINE_TYPE_IN */
-	{ prv_dump_inc_e, { 'i', 'n', 'c'} },       /* SPECASM_LINE_TYPE_INC */
-	{ NULL, { 'i', 'n', 'd'} },                 /* SPECASM_LINE_TYPE_IND */
-	{ NULL, { 'i', 'n', 'd', 'r'} },            /* SPECASM_LINE_TYPE_INDR */
-	{ NULL, { 'i', 'n', 'i'} },                 /* SPECASM_LINE_TYPE_INI */
-	{ NULL, {'i', 'n', 'i', 'r'} },             /* SPECASM_LINE_TYPE_INIR */
-	{ prv_dump_jp_e, {'j', 'p'} },              /* SPECASM_LINE_TYPE_JP */
-	{ prv_dump_jr_e, {'j', 'r'} },              /* SPECASM_LINE_TYPE_JR */
-	{ prv_dump_ld_e, { 'l', 'd'} },             /* SPECASM_LINE_TYPE_LD */
-	{ NULL, { 'l', 'd', 'd'} },                 /* SPECASM_LINE_TYPE_LDD */
-	{ NULL, { 'l', 'd', 'd', 'r'} },            /* SPECASM_LINE_TYPE_LDDR */
-	{ NULL, { 'l', 'd', 'i'} },                 /* SPECASM_LINE_TYPE_LDI */
-	{ NULL, { 'l', 'd', 'i', 'r'} },            /* SPECASM_LINE_TYPE_LDIR */
-	{ NULL, { 'n', 'e', 'g'} },                 /* SPECASM_LINE_TYPE_NEG */
-	{ NULL, { 'n', 'o', 'p'} },                 /* SPECASM_LINE_TYPE_NOP */
-	{ prv_dump_or_e, {'o', 'r'} },              /* SPECASM_LINE_TYPE_OR */
-	{ NULL, {'o', 't', 'd', 'r'} },             /* SPECASM_LINE_TYPE_OTDR */
-	{ NULL, {'o', 't', 'i', 'r'} },             /* SPECASM_LINE_TYPE_OTIR */
-	{ prv_dump_out_e, {'o', 'u', 't'} },        /* SPECASM_LINE_TYPE_OUT */
-	{ NULL, {'o', 'u', 't', 'd'} },             /* SPECASM_LINE_TYPE_OUTD */
-	{ NULL, {'o', 'u', 't', 'i'} },             /* SPECASM_LINE_TYPE_OUTI */
-	{ prv_dump_stack, {'p', 'o', 'p'} },        /* SPECASM_LINE_TYPE_POP */
-	{ prv_dump_stack, {'p', 'u', 's', 'h'} },   /* SPECASM_LINE_TYPE_PUSH */
-	{ prv_dump_bit_e, {'r', 'e', 's'} },        /* SPECASM_LINE_TYPE_RES */
-	{ prv_dump_ret_e, {'r', 'e', 't'} },        /* SPECASM_LINE_TYPE_RET */
-	{ NULL, {'r', 'e', 't', 'i'} },             /* SPECASM_LINE_TYPE_RETI */
-	{ NULL, {'r', 'e', 't', 'n'} },             /* SPECASM_LINE_TYPE_RETN */
-	{ prv_dump_shift_e, {'r', 'l' } },          /* SPECASM_LINE_TYPE_RL */
-	{ NULL, {'r', 'l', 'a'} },                  /* SPECASM_LINE_TYPE_RLA */
-	{ prv_dump_shift_e, {'r', 'l', 'c'} },      /* SPECASM_LINE_TYPE_RLC */
-	{ NULL, {'r', 'l', 'c', 'a'} },             /* SPECASM_LINE_TYPE_RLCA */
-	{ NULL, {'r', 'l', 'd'} },                  /* SPECASM_LINE_TYPE_RLD */
-	{ prv_dump_shift_e, {'r', 'r'} },           /* SPECASM_LINE_TYPE_RR */
-	{ NULL, {'r', 'r', 'a'} },                  /* SPECASM_LINE_TYPE_RRA */
-	{ prv_dump_shift_e, {'r', 'r', 'c'} },      /* SPECASM_LINE_TYPE_RRC */
-	{ NULL, {'r', 'r', 'c', 'a'} },             /* SPECASM_LINE_TYPE_RRCA */
-	{ NULL, {'r', 'r', 'd'} },                  /* SPECASM_LINE_TYPE_RRD */
-	{ prv_dump_rst_e, {'r', 's', 't'} },        /* SPECASM_LINE_TYPE_RST */
-	{ prv_dump_sbc_e, {'s', 'b', 'c'} },        /* SPECASM_LINE_TYPE_SBC */
-	{ NULL, {'s', 'c', 'f'} },                  /* SPECASM_LINE_TYPE_SCF */
-	{ prv_dump_bit_e, {'s', 'e', 't'} },        /* SPECASM_LINE_TYPE_SET */
-	{ prv_dump_shift_e, {'s', 'l', 'a'} },      /* SPECASM_LINE_TYPE_SLA */
-	{ prv_dump_shift_e, {'s', 'r', 'a'} },      /* SPECASM_LINE_TYPE_SRA */
-	{ prv_dump_shift_e, {'s', 'r', 'l'}},       /* SPECASM_LINE_TYPE_SRL */
-	{ prv_dump_sub_e, {'s', 'u', 'b'} },        /* SPECASM_LINE_TYPE_SUB */
-	{ prv_dump_xor_e, {'x', 'o', 'r'} },        /* SPECASM_LINE_TYPE_XOR */
-	{ prv_dump_equb_e, { 'e', 'q', 'u', 'b'} }, /* SPECASM_LINE_TYPE_EQUB */
-	{ prv_dump_equw_e, { 'e', 'q', 'u', 'w'} }, /* SPECASM_LINE_TYPE_EQUW */
-	{ prv_dump_equws_e, { 'e', 'q', 'u', 'b'} }, /* SPECASM_LINE_TYPE_EQUB_SUB */
-	{ prv_dump_equws_e, { 'e', 'q', 'u', 'w'} }, /* SPECASM_LINE_TYPE_EQUW_SUB */
-	{ prv_dump_ld_imm_16_sub_e, {'l', 'd' } }, /*SPECASM_LINE_TYPE_LD_IMM_16_SUB */
-	{ prv_dump_ld_imm_8_sub_e, {'l', 'd' } }, /*SPECASM_LINE_TYPE_LD_IMM_8_SUB */
-	{ prv_dump_repb_e, {'r', 'e', 'p', 'b' } }, /*SPECASM_LINE_TYPE_REPB */
-	{ prv_dump_org_e, {'o', 'r', 'g'} },        /* SPECASM_LINE_TYPE_ORG */
-	{ NULL, {'m', 'a', 'p'} },                  /* SPECASM_LINE_TYPE_MAP */
+static specasm_line_opcode_dump_t dump_opcodes[] = {
+	{ prv_dump_adc_e },           /* SPECASM_LINE_TYPE_ADC */
+	{ prv_dump_add_e },           /* SPECASM_LINE_TYPE_ADD */
+	{ prv_dump_and_e },           /* SPECASM_LINE_TYPE_AND */
+	{ prv_dump_bit_e },           /* SPECASM_LINE_TYPE_BIT */
+	{ prv_dump_call_e },          /* SPECASM_LINE_TYPE_CALL */
+	{ NULL },                     /* SPECASM_LINE_TYPE_CCF */
+	{ prv_dump_cp_e  },           /* SPECASM_LINE_TYPE_CP */
+	{ NULL },                     /* SPECASM_LINE_TYPE_CPD */
+	{ NULL },                     /* SPECASM_LINE_TYPE_CPDR */
+	{ NULL },                     /* SPECASM_LINE_TYPE_CPI */
+	{ NULL },                     /* SPECASM_LINE_TYPE_CPIR */
+	{ NULL },                     /* SPECASM_LINE_TYPE_CPL */
+	{ NULL },                     /* SPECASM_LINE_TYPE_DAA */
+	{ prv_dump_dec_e },           /* SPECASM_LINE_TYPE_DEC */
+	{ NULL },                     /* SPECASM_LINE_TYPE_DI */
+	{ prv_dump_djnz_e },          /* SPECASM_LINE_TYPE_DJNZ */
+	{ NULL },                     /* SPECASM_LINE_TYPE_EI */
+	{ prv_dump_ex_e },            /* SPECASM_LINE_TYPE_EX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_EXX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_HALT */
+	{ prv_dump_im_e },            /* SPECASM_LINE_TYPE_IM */
+	{ prv_dump_in_e },            /* SPECASM_LINE_TYPE_IN */
+	{ prv_dump_inc_e },           /* SPECASM_LINE_TYPE_INC */
+	{ NULL },                     /* SPECASM_LINE_TYPE_IND */
+	{ NULL },                     /* SPECASM_LINE_TYPE_INDR */
+	{ NULL },                     /* SPECASM_LINE_TYPE_INI */
+	{ NULL },                     /* SPECASM_LINE_TYPE_INIR */
+	{ prv_dump_jp_e },            /* SPECASM_LINE_TYPE_JP */
+	{ prv_dump_jr_e },            /* SPECASM_LINE_TYPE_JR */
+	{ prv_dump_ld_e },            /* SPECASM_LINE_TYPE_LD */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDD */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDDR */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDI */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDIR */
+	{ NULL },                     /* SPECASM_LINE_TYPE_NEG */
+	{ NULL },                     /* SPECASM_LINE_TYPE_NOP */
+	{ prv_dump_or_e },            /* SPECASM_LINE_TYPE_OR */
+	{ NULL },                     /* SPECASM_LINE_TYPE_OTDR */
+	{ NULL },                     /* SPECASM_LINE_TYPE_OTIR */
+	{ prv_dump_out_e },           /* SPECASM_LINE_TYPE_OUT */
+	{ NULL },                     /* SPECASM_LINE_TYPE_OUTD */
+	{ NULL },                     /* SPECASM_LINE_TYPE_OUTI */
+	{ prv_dump_stack },           /* SPECASM_LINE_TYPE_POP */
+	{ prv_dump_stack },           /* SPECASM_LINE_TYPE_PUSH */
+	{ prv_dump_bit_e },           /* SPECASM_LINE_TYPE_RES */
+	{ prv_dump_ret_e },           /* SPECASM_LINE_TYPE_RET */
+	{ NULL },                     /* SPECASM_LINE_TYPE_RETI */
+	{ NULL },                     /* SPECASM_LINE_TYPE_RETN */
+	{ prv_dump_shift_e },         /* SPECASM_LINE_TYPE_RL */
+	{ NULL },                     /* SPECASM_LINE_TYPE_RLA */
+	{ prv_dump_shift_e },         /* SPECASM_LINE_TYPE_RLC */
+	{ NULL },                     /* SPECASM_LINE_TYPE_RLCA */
+	{ NULL },                     /* SPECASM_LINE_TYPE_RLD */
+	{ prv_dump_shift_e },         /* SPECASM_LINE_TYPE_RR */
+	{ NULL },                     /* SPECASM_LINE_TYPE_RRA */
+	{ prv_dump_shift_e },         /* SPECASM_LINE_TYPE_RRC */
+	{ NULL },                     /* SPECASM_LINE_TYPE_RRCA */
+	{ NULL },                     /* SPECASM_LINE_TYPE_RRD */
+	{ prv_dump_rst_e },           /* SPECASM_LINE_TYPE_RST */
+	{ prv_dump_sbc_e },           /* SPECASM_LINE_TYPE_SBC */
+	{ NULL },                     /* SPECASM_LINE_TYPE_SCF */
+	{ prv_dump_bit_e },           /* SPECASM_LINE_TYPE_SET */
+	{ prv_dump_shift_e },         /* SPECASM_LINE_TYPE_SLA */
+	{ prv_dump_shift_e },         /* SPECASM_LINE_TYPE_SRA */
+	{ prv_dump_shift_e },         /* SPECASM_LINE_TYPE_SRL */
+	{ prv_dump_sub_e },           /* SPECASM_LINE_TYPE_SUB */
+	{ prv_dump_xor_e },           /* SPECASM_LINE_TYPE_XOR */
+	{ prv_dump_db_e },            /* SPECASM_LINE_TYPE_DB */
+	{ prv_dump_equw_e },          /* SPECASM_LINE_TYPE_DW */
+	{ prv_dump_equws_e },         /* SPECASM_LINE_TYPE_DB_SUB */
+	{ prv_dump_equws_e },         /* SPECASM_LINE_TYPE_DW_SUB */
+	{ prv_dump_ld_imm_16_sub_e }, /* SPECASM_LINE_TYPE_LD_IMM_16_SUB */
+	{ prv_dump_ld_imm_8_sub_e },  /* SPECASM_LINE_TYPE_LD_IMM_8_SUB */
+	{ prv_dump_ds_e },            /* SPECASM_LINE_TYPE_REPB */
+	{ prv_dump_org_e },           /* SPECASM_LINE_TYPE_ORG */
+	{ NULL },                     /* SPECASM_LINE_TYPE_MAP */
+	{ prv_dump_align_e },         /* SPECASM_LINE_TYPE_ALIGN */
 };
 
 /* clang-format on */
@@ -2170,8 +2177,8 @@ static uint8_t prv_signed_ok(uint8_t flags, uint8_t val)
 	       ((flags == SPECASM_FLAGS_NUM_UNSIGNED) && (val < 128));
 }
 
-static uint8_t prv_parse_equb_e(const char *args, specasm_line_t *line,
-				const specasm_opcode_t *op_entry)
+static uint8_t prv_parse_db_e(const char *args, specasm_line_t *line,
+			      const specasm_opcode_t *op_entry)
 {
 	uint8_t val;
 	uint8_t flags;
@@ -2200,7 +2207,7 @@ static uint8_t prv_parse_equb_e(const char *args, specasm_line_t *line,
 			return 0;
 		}
 
-		line->type = SPECASM_LINE_TYPE_EQUB_SUB;
+		line->type = SPECASM_LINE_TYPE_DB_SUB;
 		return args - start;
 	}
 	line->data.op_code[0] = val;
@@ -2238,8 +2245,8 @@ static uint8_t prv_signed_ok_u16(uint8_t flags, uint16_t val)
 	       ((flags == SPECASM_FLAGS_NUM_UNSIGNED) && (val < 32768));
 }
 
-static uint8_t prv_parse_equw_e(const char *args, specasm_line_t *line,
-				const specasm_opcode_t *op_entry)
+static uint8_t prv_parse_dw_e(const char *args, specasm_line_t *line,
+			      const specasm_opcode_t *op_entry)
 {
 	uint16_t val;
 	uint8_t flags;
@@ -2286,7 +2293,7 @@ static uint8_t prv_parse_equw_e(const char *args, specasm_line_t *line,
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 		if (label_count == 2)
-			line->type = SPECASM_LINE_TYPE_EQUW_SUB;
+			line->type = SPECASM_LINE_TYPE_DW_SUB;
 	}
 
 	specasm_line_set_size(line, sz);
@@ -3187,19 +3194,36 @@ static uint8_t prv_parse_rst_e(const char *args, specasm_line_t *line,
 	return args - start;
 }
 
-static uint8_t prv_parse_repb_e(const char *args, specasm_line_t *line,
-				const specasm_opcode_t *op_entry)
+static uint8_t prv_parse_ds_e(const char *args, specasm_line_t *line,
+			      const specasm_opcode_t *op_entry)
 {
 	uint16_t *count;
 	uint8_t flags;
 	const char *args2;
 	uint8_t *op_code = &line->data.op_code[0];
 
-	args2 = prv_get_byte_imm_e(args, op_code, &flags);
+	/*
+	 * We're storing the count and val in the opcode in
+	 * reverse order to which they are parsed.  This is
+	 * to maintain backward compatibility with Specasm v1,
+	 * which had the repb directive that expected its
+	 * arguments in the reverse order.
+	 *
+	 * So val is stored in the first byte and count in the
+	 * second and third.
+	 */
+
+	count = (uint16_t *)(&op_code[1]);
+	args2 = prv_get_uword_imm_e(args, count, &flags);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	specasm_line_set_format(line, flags);
+	if (*count == 0) {
+		err_type = SPECASM_ERROR_BAD_NUM;
+		return 0;
+	}
+	specasm_line_set_format2(line, flags);
+
 	while (*args2 == ' ')
 		++args2;
 
@@ -3208,17 +3232,11 @@ static uint8_t prv_parse_repb_e(const char *args, specasm_line_t *line,
 		return 0;
 	}
 
-	count = (uint16_t *)(&op_code[1]);
-	args2 = prv_get_uword_imm_e(args2 + 1, count, &flags);
+	args2 = prv_get_byte_imm_e(args2 + 1, op_code, &flags);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	if (*count == 0) {
-		err_type = SPECASM_ERROR_BAD_NUM;
-		return 0;
-	}
-
-	specasm_line_set_format2(line, flags);
+	specasm_line_set_format(line, flags);
 
 	return args2 - args;
 }
@@ -3300,11 +3318,45 @@ end:
 	return read;
 }
 
+static uint8_t prv_parse_align_e(const char *args, specasm_line_t *line,
+				 const specasm_opcode_t *op_entry)
+{
+	long lval;
+	uint8_t flags;
+	uint16_t target;
+	uint8_t i;
+	uint16_t valid;
+	const char *start = args;
+
+	args = specasm_get_long_imm_e(args, &lval, &flags);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	valid = 1;
+	target = (uint16_t)lval;
+	for (i = 1; i <= 8; i++) {
+		valid = valid << 1;
+		if (valid == target)
+			break;
+	}
+
+	if (i > 8) {
+		err_type = SPECASM_ERROR_BAD_NUM;
+		return 0;
+	}
+
+	specasm_line_set_format(line, flags);
+	line->data.op_code[0] = i;
+
+	return args - start;
+}
+
 /* clang-format off */
 
 const static specasm_opcode_t opcode_table[] = {
 	{ "adc", prv_parse_adc_sbc_e, SPECASM_LINE_TYPE_ADC, {0x4A, 0x88} },
 	{ "add", prv_parse_add_e, SPECASM_LINE_TYPE_ADD, },
+	{ "align", prv_parse_align_e, SPECASM_LINE_TYPE_ALIGN, },
 	{ "and", prv_parse_arith_e, SPECASM_LINE_TYPE_AND, {0xE6, 0xA0} },
 	{ "bit", prv_parse_bit_e, SPECASM_LINE_TYPE_BIT, { 0x40 } },
 	{ "call", prv_parse_call_e, SPECASM_LINE_TYPE_CALL, {0xC4, 0xCD} },
@@ -3316,12 +3368,13 @@ const static specasm_opcode_t opcode_table[] = {
 	{ "cpir", NULL, SPECASM_LINE_TYPE_CPIR, {0xED, 0xB1} },
 	{ "cpl", NULL, SPECASM_LINE_TYPE_CPL, {0x2F} },
 	{ "daa", NULL, SPECASM_LINE_TYPE_DAA, {0x27} },
+	{ "db", prv_parse_db_e, SPECASM_LINE_TYPE_DB, },
 	{ "dec", prv_parse_16bit_unary_e, SPECASM_LINE_TYPE_DEC, { 0xB, 0x35} },
 	{ "di", NULL, SPECASM_LINE_TYPE_DI, {0xF3} },
 	{ "djnz", prv_parse_djnz_e, SPECASM_LINE_TYPE_DJNZ, },
+	{ "ds", prv_parse_ds_e, SPECASM_LINE_TYPE_DS, },
+	{ "dw", prv_parse_dw_e, SPECASM_LINE_TYPE_DW, },
 	{ "ei", NULL, SPECASM_LINE_TYPE_EI, {0xFB} },
-	{ "equb", prv_parse_equb_e, SPECASM_LINE_TYPE_EQUB, },
-	{ "equw", prv_parse_equw_e, SPECASM_LINE_TYPE_EQUW, },
 	{ "ex", prv_parse_ex_e, SPECASM_LINE_TYPE_EX, },
 	{ "exx", NULL, SPECASM_LINE_TYPE_EXX, {0xD9} },
 	{ "halt", NULL, SPECASM_LINE_TYPE_HALT, {0x76} },
@@ -3351,7 +3404,6 @@ const static specasm_opcode_t opcode_table[] = {
 	{ "outi", NULL, SPECASM_LINE_TYPE_OUTI, {0xED, 0xA3} },
 	{ "pop", prv_parse_push_pop_e, SPECASM_LINE_TYPE_POP, {0x1} },
 	{ "push", prv_parse_push_pop_e, SPECASM_LINE_TYPE_PUSH, {0x5} },
-	{ "repb", prv_parse_repb_e, SPECASM_LINE_TYPE_REPB, },
 	{ "res", prv_parse_bit_e, SPECASM_LINE_TYPE_RES, {0x80} },
 	{ "ret", prv_parse_ret_e, SPECASM_LINE_TYPE_RET, },
 	{ "reti", NULL, SPECASM_LINE_TYPE_RETI, {0xED, 0x4D} },
@@ -3381,6 +3433,24 @@ const static specasm_opcode_t opcode_table[] = {
 
 const static uint8_t opcode_table_size =
     sizeof(opcode_table) / sizeof(specasm_opcode_t);
+
+void specasm_init_dump_table(void)
+{
+	uint8_t line_type;
+
+	for (uint8_t i = 0; i < opcode_table_size; i++) {
+		line_type = opcode_table[i].line_type;
+		dump_opcodes[line_type].index = i;
+		if (line_type == SPECASM_LINE_TYPE_LD) {
+			dump_opcodes[SPECASM_LINE_TYPE_LD_IMM_16_SUB].index = i;
+			dump_opcodes[SPECASM_LINE_TYPE_LD_IMM_8_SUB].index = i;
+		} else if (line_type == SPECASM_LINE_TYPE_DB) {
+			dump_opcodes[SPECASM_LINE_TYPE_DB_SUB].index = i;
+		} else if (line_type == SPECASM_LINE_TYPE_DW) {
+			dump_opcodes[SPECASM_LINE_TYPE_DW_SUB].index = i;
+		}
+	}
+}
 
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 				 specasm_line_t *line)
@@ -3434,11 +3504,11 @@ uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 
 uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf)
 {
-	uint8_t i;
 	char *start = buf;
-	const char *name = dump_opcodes[line->type].name;
+	uint8_t index = dump_opcodes[line->type].index;
+	const char *name = opcode_table[index].mnemomic;
 
-	for (i = 0; i < 4 && *name; i++)
+	while (*name)
 		*buf++ = *name++;
 	if (dump_opcodes[line->type].fn) {
 		if (line->type != SPECASM_LINE_TYPE_RET)
