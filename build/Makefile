@@ -64,5 +64,6 @@ release:
 	mkdir -p release/specasm
 	cp *.tap release/specasm
 	cp SAIMPORT SAEXPORT *.X release/specasm
-	cp ../bas/* release/specasm
+	cp ../bas/INSTALL release/specasm
+	cp ../bas/REMOVE release/specasm
 	cd release && zip -r specasm.zip specasm
