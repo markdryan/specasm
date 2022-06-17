@@ -441,7 +441,8 @@ static void prv_complete_absolutes_e(void)
 				align = 1 << label->id;
 				mask = align - 1;
 				adjust = (real_off + label->off) & mask;
-				real_off += align - adjust;
+				if (adjust > 0)
+					real_off += align - adjust;
 				continue;
 			}
 			if (label->off > 0xffff - real_off) {
