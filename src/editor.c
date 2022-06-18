@@ -787,7 +787,7 @@ static void prv_find(const char *needle)
 {
 	unsigned int l;
 
-	for (l = line; l < SPECASM_MAX_LINES; l++) {
+	for (l = line; l < state.lines.num_lines; l++) {
 		specasm_format_line_e(scratch, l);
 		if (err_type != SPECASM_ERROR_OK)
 			return;
