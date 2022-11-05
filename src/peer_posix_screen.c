@@ -86,9 +86,9 @@ void specasm_screen_flush(uint16_t peer_last_row)
 
 int itoa(int n, char *s, unsigned char radix)
 {
-	return sprintf(s, radix == 16 ? "%" PRIx16 : "%" PRId16, (int16_t)n);
+	return sprintf(s, radix == 16 ? "%" PRIX16 : "%" PRId16, (int16_t)n);
 }
 int utoa(int n, char *s, unsigned char radix)
 {
-	return sprintf(s, radix == 16 ? "%" PRIx16 : "%" PRIu16, (uint16_t)n);
+	return sprintf(s, radix == 16 ? "%" PRIX16 : "%" PRIu16, (uint16_t)n);
 }
