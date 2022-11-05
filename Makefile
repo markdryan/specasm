@@ -13,6 +13,7 @@ SRCS =\
 	editor_tests.c \
 	peer_unit.c \
 	peer_posix_screen.c \
+	test_content.c \
 	unittests.c
 
 POSIX = \
