@@ -1276,7 +1276,7 @@ const test_t opcode_tests[] = {
 	{"ldd", "ldd", 2, {0xED, 0xA8}},
 	{"lddr", "lddr", 2, {0xED, 0xB8}},
 	{"ldi", "ldi", 2, {0xED, 0xA0}},
-	{"map", "map", 1, {}},
+	{"map", "map", 1, {0x0}},
 	{"neg", "neg", 2, {0xED, 0x44}},
 	{"nop", "nop", 1, {0x0}},
 
