@@ -30,6 +30,10 @@ SAEXPORT =\
 SALINK =\
 	salink.c
 
+TEST_CONTENT_ZX =\
+	test_content.c \
+	test_content_zx.c
+
 CFLAGS += -Wall -MMD -DUNITTESTS -Isrc
 
 all: unittests saimport saexport salink
@@ -46,6 +50,9 @@ saexport: $(BASE:%.c=%.o) $(COMMON:%.c=%.o) $(POSIX:%.c=%.o) $(SAEXPORT:%.c=%.o)
 salink: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SALINK:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
+test_content_zx: $(TEST_CONTENT_ZX:%.c=%.o)
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
 	- rm *.d *.o unittests saimport saexport salink
 
@@ -56,3 +63,4 @@ clean:
 -include $(SAIMPORT:%.c=%.d)
 -include $(SAEXPORT:%.c=%.d)
 -include $(SALINK:%.c=%.d)
+-include $(TEST_CONTENT_ZX:%.c=%.d)
