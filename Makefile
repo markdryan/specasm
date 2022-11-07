@@ -11,6 +11,7 @@ COMMON =\
 SRCS =\
 	editor.c \
 	editor_tests.c \
+	editor_test_content.c \
 	peer_unit.c \
 	peer_posix_screen.c \
 	test_content.c \
