@@ -4,7 +4,7 @@ VPATH=../src
 all: specasm.tap salink.tap SAEXPORT SAIMPORT
 
 CC=zcc
-CFLAGS=+zx -SO2 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy
+CFLAGS=+zx -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy
 
 include Make.include
 

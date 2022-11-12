@@ -4,7 +4,7 @@ VPATH=../src
 all: unitzx.tap
 
 CC=zcc
-CFLAGS=+zx -SO2 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DUNITTESTS
+CFLAGS=+zx -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DUNITTESTS
 
 include Make.include
 
