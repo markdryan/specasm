@@ -14,13 +14,15 @@ SRCS =\
 	editor_test_content.c \
 	peer_unit.c \
 	peer_posix_screen.c \
+	peer_text_screen.c \
 	test_content.c \
 	unittests.c
 
 POSIX = \
 	peer_posix.c \
 	peer_file_posix.c \
-	peer_posix_screen.c
+	peer_posix_screen.c \
+	peer_text_screen.c
 
 SAIMPORT =\
 	saimport.c
