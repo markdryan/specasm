@@ -6,16 +6,21 @@ state.o: ../src/state.c ../src/state.h ../src/state_base.h ../src/line.h ../src/
 line.o: ../src/line.c ../src/peer.h ../src/error.h ../src/peer_zx.h ../src/line.h \
 	../src/state.h ../src/state_base.h ../src/strings.h
 editor.o: ../src/editor.c ../src/editor.h ../src/peer.h ../src/error.h \
-  ../src/peer_zx.h ../src/line.h ../src/state.h ../src/state_base.h ../src/strings.h
+  ../src/peer_zx.h ../src/line.h ../src/state.h ../src/state_base.h ../src/strings.h \
+  ../src/util_print_zx.h
 saimport.o: ../src/saimport.c ../src/peer.h ../src/error.h ../src/peer_zx.h \
-  ../src/line.h ../src/peer_file.h ../src/state.h ../src/state_base.h ../src/strings.h
+  ../src/line.h ../src/peer_file.h ../src/state.h ../src/state_base.h ../src/strings.h \
+  ../src/util_print_zx.h
 saexport.o: ../src/saexport.c ../src/peer.h ../src/error.h ../src/peer_zx.h \
-  ../src/line.h ../src/peer_file.h ../src/state.h ../src/state_base.h ../src/strings.h
+  ../src/line.h ../src/peer_file.h ../src/state.h ../src/state_base.h ../src/strings.h \
+  ../src/util_print_zx.h
 salink.o: ../src/salink.c ../src/peer.h ../src/error.h ../src/peer_zx.h ../src/line.h \
-	  ../src/peer_file.h ../src/state_base.h ../src/strings.h
+	  ../src/peer_file.h ../src/state_base.h ../src/strings.h \
+	  ../src/util_print_zx.h
 peer_zx.o: ../src/peer_zx.c ../src/peer.h ../src/state.h ../src/state_base.h ../src/line.h \
-	   ../src/strings.h ../src/error.h
+	   ../src/strings.h ../src/error.h ../src/util_print_zx.h
 peer_file_zx.o: ../src/peer_file_zx.c ../src/error.h ../src/peer_file.h
+util_print_zx.o: ../src/util_print_zx.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

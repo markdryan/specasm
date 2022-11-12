@@ -1,0 +1,34 @@
+VPATH=../src
+
+.PHONY: all
+all: unitzx.tap
+
+CC=zcc
+CFLAGS=+zx -SO2 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DUNITTESTS
+
+include Make.include
+
+UNITZX = \
+	error.o \
+	state_base.o \
+	line.o \
+	state.o \
+	peer_file_zx.o \
+	util_print_zx.o \
+	peer_unit.o \
+	unittests_zx.o
+
+unitzx.tap: $(UNITZX)
+	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o unitzx $^ -create-app
+
+clean:
+	- rm -rf unitzx
+	- rm *.X *.o *.bin *.tap
+
+.PHONY: tests
+tests:
+	- rm -rf unitzx
+	mkdir unitzx
+	cd .. && make -f Makefile test_content_zx
+	../test_content_zx unitzx
+	cp unitzx.tap unitzx

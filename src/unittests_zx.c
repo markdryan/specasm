@@ -17,12 +17,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <arch/zx.h>
+
 #include "error.h"
 #include "peer.h"
 #include "peer_file.h"
 #include "state.h"
 #include "test_content.h"
 #include "test_content_zx.h"
+#include "util_print_zx.h"
 
 #define UNITTEST_ZX_TEST_LINE 0
 #define UNITTEST_ZX_FORMAT_LINE 1
@@ -39,36 +42,36 @@ static int prv_test_opcode(const test_zx_t *t)
 	specasm_line_t line = {0};
 	uint8_t parsed;
 
-	specasm_text_clear(0, UNITTEST_ZX_TEST_LINE,
+	specasm_util_clear(0, UNITTEST_ZX_TEST_LINE,
 			   SPECASM_LINE_MAX_LEN, PAPER_WHITE|INK_BLACK);
-	(void) specasm_text_print(t->source, 0,
+	(void) specasm_util_print(t->source, 0,
 				  UNITTEST_ZX_TEST_LINE,
 				  PAPER_WHITE|INK_BLACK);
 
 	parsed = specasm_parse_mnemomic_e(t->source, 0, &line);
 	if (err_type != SPECASM_ERROR_OK) {
-		(void) specasm_text_print(error_msgs[err_type], 0,
+		(void) specasm_util_print(error_msgs[err_type], 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
 	}
 
 	if (parsed != strlen(t->source)) {
-		(void) specasm_text_print("mismatched length", 0,
+		(void) specasm_util_print("mismatched length", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
 	}
 
 	if (t->size != specasm_line_get_size(&line) + 1) {
-		(void) specasm_text_print("mismatched opcode length", 0,
+		(void) specasm_util_print("mismatched opcode length", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
 	}
 
 	if (memcmp(line.data.op_code, t->op_code, 4)) {
-		(void) specasm_text_print("mismatched opcode", 0,
+		(void) specasm_util_print("mismatched opcode", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 			return 1;
@@ -76,16 +79,16 @@ static int prv_test_opcode(const test_zx_t *t)
 
 	parsed = specasm_dump_opcode_e(&line, buf);
 	if (err_type != SPECASM_ERROR_OK) {
-		(void) specasm_text_print(error_msgs[err_type], 0,
+		(void) specasm_util_print(error_msgs[err_type], 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
 	}
 	buf[parsed] = 0;
 	if (strcmp(t->str, buf)) {
-		(void) specasm_text_print(buf, 0, UNITTEST_ZX_FORMAT_LINE,
+		(void) specasm_util_print(buf, 0, UNITTEST_ZX_FORMAT_LINE,
 					  PAPER_RED|INK_BLACK);
-		(void) specasm_text_print("bad format", 0,
+		(void) specasm_util_print("bad format", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
@@ -106,29 +109,29 @@ static int prv_test_format(const test_zx_t *t)
 	buf[sizeof(buf) - 1] = 0;
 	memcpy(buf, t->source, strlen(t->source));
 
-	specasm_text_clear(0, UNITTEST_ZX_TEST_LINE,
+	specasm_util_clear(0, UNITTEST_ZX_TEST_LINE,
 			   SPECASM_LINE_MAX_LEN, PAPER_WHITE|INK_BLACK);
-	(void) specasm_text_print(t->source, 0,
+	(void) specasm_util_print(t->source, 0,
 				  UNITTEST_ZX_TEST_LINE,
 				  PAPER_WHITE|INK_BLACK);
 
 	specasm_parse_line_e(0, buf);
 	if (err_type != SPECASM_ERROR_OK) {
-		(void) specasm_text_print(error_msgs[err_type], 0,
+		(void) specasm_util_print(error_msgs[err_type], 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
 	}
 
 	if (t->size != specasm_line_get_size(line) + 1) {
-		(void) specasm_text_print("mismatched opcode length", 0,
+		(void) specasm_util_print("mismatched opcode length", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
 	}
 
 	if (memcmp(line->data.op_code, t->op_code, 4)) {
-		(void) specasm_text_print("mismatched opcode", 0,
+		(void) specasm_util_print("mismatched opcode", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 			return 1;
@@ -148,21 +151,21 @@ static int prv_test_format(const test_zx_t *t)
 		memcpy(buf2, t->str, strlen(t->str));
 	specasm_format_line_e(buf, 0);
 	if (err_type != SPECASM_ERROR_OK) {
-		(void) specasm_text_print("dump: ", 0,
+		(void) specasm_util_print("dump: ", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
-		(void) specasm_text_print(error_msgs[err_type], 6,
+		(void) specasm_util_print(error_msgs[err_type], 6,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
 	}
 
 	if (strcmp(buf, buf2)) {
-		(void) specasm_text_print(buf, 0, UNITTEST_ZX_FORMAT_LINE,
+		(void) specasm_util_print(buf, 0, UNITTEST_ZX_FORMAT_LINE,
 					  PAPER_RED|INK_BLACK);
-		(void) specasm_text_print(buf2, 0, UNITTEST_ZX_FORMAT_LINE2,
+		(void) specasm_util_print(buf2, 0, UNITTEST_ZX_FORMAT_LINE2,
 					  PAPER_RED|INK_BLACK);
-		(void) specasm_text_print("bad format", 0,
+		(void) specasm_util_print("bad format", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
@@ -177,21 +180,21 @@ static int prv_test_bad(const bad_test_zx_t *t)
 	specasm_line_t line = {0};
 
 	err_type = SPECASM_ERROR_OK;
-	specasm_text_clear(0, UNITTEST_ZX_TEST_LINE,
+	specasm_util_clear(0, UNITTEST_ZX_TEST_LINE,
 			   SPECASM_LINE_MAX_LEN, PAPER_WHITE|INK_BLACK);
-	(void) specasm_text_print(t->source, 0,
+	(void) specasm_util_print(t->source, 0,
 				  UNITTEST_ZX_TEST_LINE,
 				  PAPER_WHITE|INK_BLACK);
 
 	(void)specasm_parse_mnemomic_e(t->source, 0, &line);
 	if (err_type != t->error) {
-		(void) specasm_text_print(error_msgs[err_type], 0,
+		(void) specasm_util_print(error_msgs[err_type], 0,
 					  UNITTEST_ZX_FORMAT_LINE,
 					  PAPER_RED|INK_BLACK);
-		(void) specasm_text_print(error_msgs[t->error], 0,
+		(void) specasm_util_print(error_msgs[t->error], 0,
 					  UNITTEST_ZX_FORMAT_LINE2,
 					  PAPER_RED|INK_BLACK);
-		(void) specasm_text_print("bad error", 0,
+		(void) specasm_util_print("bad error", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
@@ -226,7 +229,7 @@ static int prv_opcode_tests(void)
 		}
 	}
 
-	(void) specasm_text_print("opcode tests [ok]", 0,
+	(void) specasm_util_print("opcode tests [ok]", 0,
 				  UNITTEST_ZX_OPCODE_OK_LINE,
 				  PAPER_WHITE|INK_BLACK);
 
@@ -238,7 +241,7 @@ close_file:
 	specasm_file_close_e(h);
 
 on_error:
-	(void) specasm_text_print(error_msgs[err_type], 0,
+	(void) specasm_util_print(error_msgs[err_type], 0,
 				  UNITTEST_ZX_ERROR_LINE,
 				  PAPER_RED|INK_BLACK);
 	return 1;
@@ -269,7 +272,7 @@ static int prv_format_tests(void)
 		}
 	}
 
-	(void) specasm_text_print("format tests [ok]", 0,
+	(void) specasm_util_print("format tests [ok]", 0,
 				  UNITTEST_ZX_FORMAT_OK_LINE,
 				  PAPER_WHITE|INK_BLACK);
 
@@ -281,7 +284,7 @@ close_file:
 	specasm_file_close_e(h);
 
 on_error:
-	(void) specasm_text_print(error_msgs[err_type], 0,
+	(void) specasm_util_print(error_msgs[err_type], 0,
 				  UNITTEST_ZX_ERROR_LINE,
 				  PAPER_RED|INK_BLACK);
 	return 1;
@@ -312,7 +315,7 @@ static int prv_bad_tests(void)
 		}
 	}
 
-	(void) specasm_text_print("bad tests [ok]", 0,
+	(void) specasm_util_print("bad tests [ok]", 0,
 				  UNITTEST_ZX_BAD_OK_LINE,
 				  PAPER_WHITE|INK_BLACK);
 
@@ -324,7 +327,7 @@ close_file:
 	specasm_file_close_e(h);
 
 on_error:
-	(void) specasm_text_print(error_msgs[err_type], 0,
+	(void) specasm_util_print(error_msgs[err_type], 0,
 				  UNITTEST_ZX_ERROR_LINE,
 				  PAPER_RED|INK_BLACK);
 	return 1;
@@ -334,9 +337,9 @@ static int prv_test_old_version(void)
 {
 	err_type = SPECASM_ERROR_OK;
 
-	specasm_text_clear(0, UNITTEST_ZX_TEST_LINE,
+	specasm_util_clear(0, UNITTEST_ZX_TEST_LINE,
 			   SPECASM_LINE_MAX_LEN, PAPER_WHITE|INK_BLACK);
-	(void) specasm_text_print("version check", 0,
+	(void) specasm_util_print("version check", 0,
 				  UNITTEST_ZX_TEST_LINE,
 				  PAPER_WHITE|INK_BLACK);
 
@@ -345,19 +348,19 @@ static int prv_test_old_version(void)
 	specasm_save_e("hello");
 	specasm_load_e("hello");
 	if (err_type != SPECASM_ERROR_SPECASM_TOO_OLD) {
-		(void) specasm_text_print(
+		(void) specasm_util_print(
 			error_msgs[SPECASM_ERROR_SPECASM_TOO_OLD], 0,
 			UNITTEST_ZX_FORMAT_LINE, PAPER_RED|INK_BLACK);
-		(void) specasm_text_print(error_msgs[err_type], 0,
+		(void) specasm_util_print(error_msgs[err_type], 0,
 					  UNITTEST_ZX_FORMAT_LINE2,
 					  PAPER_RED|INK_BLACK);
-		(void) specasm_text_print("bad error", 0,
+		(void) specasm_util_print("bad error", 0,
 					  UNITTEST_ZX_ERROR_LINE,
 					  PAPER_RED|INK_BLACK);
 		return 1;
 	}
 
-	(void) specasm_text_print("version test [ok]", 0,
+	(void) specasm_util_print("version test [ok]", 0,
 				  UNITTEST_ZX_VERSION_OK_LINE,
 				  PAPER_WHITE|INK_BLACK);
 

@@ -20,6 +20,8 @@
 #include <arch/zx.h>
 #include <z80.h>
 
+#include "util_print_zx.h"
+
 #define SPECASM_SALINK_BACKGROUND PAPER_WHITE
 #define SPECASM_SALINK_BORDER INK_WHITE
 #define SPECASM_LABEL_BORDER INK_BLACK
@@ -38,5 +40,7 @@
 #define specasm_cls(a) zx_cls(a)
 #define specasm_border(a) zx_border(a)
 #define specasm_sleep_ms(a) z80_delay_ms(a)
+#define specasm_text_print specasm_util_print
+#define specasm_text_clear specasm_util_clear
 
 #endif
