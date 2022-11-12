@@ -71,8 +71,44 @@ make -j
 
 And then wait.   All the tap and dotx files will be created in the build directory.
 
+To create a zip file with all the files that need to be copied onto the spectrum, type
+
+```
+make release
+```
+
+from the same directory.  The specasm.zip file can be found in the build/release folder.
+
 The saexport, saimport and salink commands can be built and run on POSIX compatible systems.  Simply type make from the main Specasm directory.  The saimport is essentially the assembler without the editor, so can be used in conjunction with salink to assemble and build Spectrum programs directly on a modern machine, but where's the fun in that?
 
+## Tests
+
+To run the unit tests simply type
+
+```
+make
+./unittests
+```
+
+from the project's top level folder.
+
+To run the linker tests perform the following steps
+
+```
+make
+cd tests
+./tests.sh
+```
+
+A large proportion (but not all) of the unit tests can be run on the spectrum itself.  To build these tests type
+
+```
+cd unitzx
+make
+make tests
+```
+
+This will create a folder called unitzx in the unitzx folder.  Inside this folder are 3 files that need to be copied to the same directory on your spectrum.  Run the unizx.tap file to run the tests.
 
 
 
