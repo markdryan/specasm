@@ -47,7 +47,8 @@ SAIMPORT = \
 	saimport.o
 
 specasm.tap: $(SPECASM)
-	$(CC) $(CFLAGS) -zorg=24550 -startup=31 -o specasm $^ -create-app -Cz--merge=../bas/SPECLD.TAP
+	$(CC) $(CFLAGS) -zorg=24310 -startup=31 -o specasm-bare $^ -create-app
+	cat ../bas/SPECLD.TAP specasm-bare.tap > specasm.tap
 
 salink.tap: $(SALINK)
 	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o salink $^ -create-app
@@ -66,7 +67,7 @@ clean:
 release:
 	- rm -rf release
 	mkdir -p release/specasm
-	cp *.tap release/specasm
+	cp specasm.tap salink.tap release/specasm
 	cp SAIMPORT SAEXPORT *.X release/specasm
 	cp ../bas/INSTALL release/specasm
 	cp ../bas/REMOVE release/specasm

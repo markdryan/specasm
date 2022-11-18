@@ -8,6 +8,7 @@ unittests
 salink
 saimport
 saexport
+specasm-bare
 test_content_zx
 SAIMPORT
 SAEXPORT
