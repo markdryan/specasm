@@ -14,35 +14,26 @@
  * limitations under the License.
 */
 
-#ifndef SPECASM_STATE_READ_H
-#define SPECASM_STATE_READ_H
-
-#define SPECASM_VERSION 4
-#define SPECASM_VERSION_STR "v4"
+#ifndef TEST_CONTENT_ZX_H
+#define TEST_CONTENT_ZX_H
 
 #include <stdint.h>
 
 #include "line.h"
-#include "strings.h"
 
-struct specasm_state_t_ {
-	specasm_lines_t lines;
-	specasm_short_strings_t short_strs;
-	specasm_long_strings_t long_strs;
-	uint16_t version;
+struct test_zx_t_ {
+	char source[SPECASM_LINE_MAX_LEN + 1];
+	char str[SPECASM_LINE_MAX_LEN + 1];
+	uint8_t size;
+	uint8_t op_code[4];
 };
-typedef struct specasm_state_t_ specasm_state_t;
+typedef struct test_zx_t_ test_zx_t;
 
-extern specasm_state_t state;
+struct bad_test_zx_t_ {
+	char source[SPECASM_LINE_MAX_LEN + 1];
+	specasm_error_t error;
+};
+typedef struct bad_test_zx_t_ bad_test_zx_t;
 
-void specasm_state_reset(void);
-
-const char *specasm_state_get_short_e(uint8_t i);
-const char *specasm_state_get_long_e(uint8_t i);
-
-void specasm_load_e(const char *fname);
-void specasm_save_e(const char *fname);
-
-uint16_t specasm_compute_line_size(specasm_line_t *line);
 
 #endif

@@ -44,7 +44,4 @@ extern uint8_t peer_unit_atts[SPECASM_UNIT_BUF_SZ];
 void specasm_cls(uint8_t a);
 void specasm_border(uint8_t a);
 
-int itoa(int n, char *s, unsigned char radix);
-int utoa(int n, char *s, unsigned char radix);
-
 #endif

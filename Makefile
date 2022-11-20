@@ -11,14 +11,18 @@ COMMON =\
 SRCS =\
 	editor.c \
 	editor_tests.c \
+	editor_test_content.c \
 	peer_unit.c \
 	peer_posix_screen.c \
+	peer_text_screen.c \
+	test_content.c \
 	unittests.c
 
 POSIX = \
 	peer_posix.c \
 	peer_file_posix.c \
-	peer_posix_screen.c
+	peer_posix_screen.c \
+	peer_text_screen.c
 
 SAIMPORT =\
 	saimport.c
@@ -28,6 +32,10 @@ SAEXPORT =\
 
 SALINK =\
 	salink.c
+
+TEST_CONTENT_ZX =\
+	test_content.c \
+	test_content_zx.c
 
 CFLAGS += -Wall -MMD -DUNITTESTS -Isrc
 
@@ -45,6 +53,9 @@ saexport: $(BASE:%.c=%.o) $(COMMON:%.c=%.o) $(POSIX:%.c=%.o) $(SAEXPORT:%.c=%.o)
 salink: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SALINK:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
+test_content_zx: $(TEST_CONTENT_ZX:%.c=%.o)
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
 	- rm *.d *.o unittests saimport saexport salink
 
@@ -55,3 +66,4 @@ clean:
 -include $(SAIMPORT:%.c=%.d)
 -include $(SAEXPORT:%.c=%.d)
 -include $(SALINK:%.c=%.d)
+-include $(TEST_CONTENT_ZX:%.c=%.d)

@@ -8,11 +8,14 @@ unittests
 salink
 saimport
 saexport
+specasm-bare
+test_content_zx
 SAIMPORT
 SAEXPORT
 SAIMPORT.X
 SAEXPORT.X
 build.sh
 compile.sh
-build/specasm
+build/release
+build/unitzx
 .DS_Store

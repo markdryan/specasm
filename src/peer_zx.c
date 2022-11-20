@@ -94,57 +94,6 @@ void specasm_text_printch(char ch, uint8_t x, uint8_t y, uint8_t attr)
 	} while (i != 0);
 }
 
-uint8_t specasm_text_print(const char *str, uint8_t x, uint8_t y, uint8_t attr)
-{
-	uint8_t *cptr;
-	uint8_t *aptr = zx_cxy2aaddr(x, y);
-	uint8_t *bsptr;
-	uint8_t *sptr;
-	uint8_t i;
-	uint8_t old_x = x;
-
-	bsptr = zx_cxy2saddr(x, y);
-	while (*str) {
-		*aptr++ = attr;
-		cptr = (uint8_t *)15360 + (*((uint8_t *)str) * 8);
-		sptr = bsptr;
-		i = 8;
-		do {
-			*sptr = *cptr++;
-			sptr += 256;
-			i--;
-		} while (i != 0);
-		str++;
-		x++;
-		bsptr++;
-	}
-
-	return x - old_x;
-}
-
-void specasm_text_clear(uint8_t x, uint8_t y, uint8_t l, uint8_t attr)
-{
-	uint8_t *aptr = zx_cxy2aaddr(x, y);
-	uint8_t *sptr;
-	uint8_t *bsptr;
-	uint8_t i;
-
-	bsptr = zx_cxy2saddr(x, y);
-	while (l > 0) {
-		*aptr++ = attr;
-		sptr = bsptr;
-		i = 8;
-		do {
-			*sptr = 0;
-			sptr += 256;
-			i--;
-		} while (i != 0);
-		x++;
-		l--;
-		bsptr++;
-	}
-}
-
 void specasm_screen_flush(uint16_t peer_last_row)
 {
 	uint8_t *posn_x = (uint8_t *)23688;

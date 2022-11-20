@@ -20,58 +20,6 @@
 
 #include "peer.h"
 
-char peer_unit_screen[SPECASM_UNIT_BUF_SZ];
-uint8_t peer_unit_atts[SPECASM_UNIT_BUF_SZ];
-
-void specasm_text_set_flash(uint8_t x, uint8_t y, uint8_t attr)
-{
-	uint8_t *aptr = &peer_unit_atts[(y * SPECASM_LINE_MAX_LEN) + x];
-
-	*aptr &= ~((uint8_t)SPECASM_FLASH);
-	*aptr |= attr;
-}
-
-void specasm_text_printch(char ch, uint8_t x, uint8_t y, uint8_t attr)
-{
-	size_t offset = (y * SPECASM_LINE_MAX_LEN) + x;
-	char *cptr = &peer_unit_screen[offset];
-	uint8_t *aptr = &peer_unit_atts[offset];
-
-	*cptr = ch;
-	*aptr = attr;
-}
-
-uint8_t specasm_text_print(const char *str, uint8_t x, uint8_t y, uint8_t attr)
-{
-	size_t offset = (y * SPECASM_LINE_MAX_LEN) + x;
-	size_t len = strlen(str);
-	char *cptr = &peer_unit_screen[offset];
-	uint8_t *aptr = &peer_unit_atts[offset];
-
-	memcpy(cptr, str, len);
-	memset(aptr, attr, len);
-
-	return (uint8_t)len;
-}
-
-void specasm_text_clear(uint8_t x, uint8_t y, uint8_t l, uint8_t attr)
-{
-	size_t offset = (y * SPECASM_LINE_MAX_LEN) + x;
-	char *cptr = &peer_unit_screen[offset];
-	uint8_t *aptr = &peer_unit_atts[offset];
-
-	memset(cptr, ' ', l);
-	memset(aptr, attr, l);
-}
-
-void specasm_cls(uint8_t a)
-{
-	memset(peer_unit_screen, ' ', sizeof(peer_unit_screen) - 1);
-	memset(peer_unit_atts, a, sizeof(peer_unit_atts) - 1);
-}
-
-void specasm_border(uint8_t a) {}
-
 void specasm_screen_flush(uint16_t peer_last_row)
 {
 	char line[SPECASM_LINE_MAX_LEN + 1];
@@ -86,9 +34,10 @@ void specasm_screen_flush(uint16_t peer_last_row)
 
 int itoa(int n, char *s, unsigned char radix)
 {
-	return sprintf(s, radix == 16 ? "%" PRIx16 : "%" PRId16, (int16_t)n);
+	return sprintf(s, radix == 16 ? "%" PRIX16 : "%" PRId16, (int16_t)n);
 }
 int utoa(int n, char *s, unsigned char radix)
 {
-	return sprintf(s, radix == 16 ? "%" PRIx16 : "%" PRIu16, (uint16_t)n);
+	return sprintf(s, radix == 16 ? "%" PRIX16 : "%" PRIu16, (uint16_t)n);
 }
+

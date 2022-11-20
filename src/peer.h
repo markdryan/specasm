@@ -21,10 +21,10 @@
 
 #include "error.h"
 
-#ifdef SPECTRUM
-#include "peer_zx.h"
-#elif defined(UNITTESTS)
+#ifdef UNITTESTS
 #include "peer_unit.h"
+#elif defined(SPECTRUM)
+#include "peer_zx.h"
 #endif
 
 void specasm_peer_write_state_e(const char *fname, uint16_t checksum);
@@ -34,6 +34,12 @@ uint16_t specasm_peer_read_state_e(const char *fname);
 void specasm_text_set_flash(uint8_t x, uint8_t y, uint8_t attr);
 
 void specasm_text_printch(char ch, uint8_t x, uint8_t y, uint8_t attr);
+
+#ifndef SPECTRUM
+int itoa(int n, char *s, unsigned char radix);
+int utoa(int n, char *s, unsigned char radix);
+#endif
+
 uint8_t specasm_text_print(const char *str, uint8_t x, uint8_t y, uint8_t attr);
 void specasm_text_clear(uint8_t x, uint8_t y, uint8_t l, uint8_t attr);
 
