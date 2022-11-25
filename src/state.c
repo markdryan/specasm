@@ -248,8 +248,10 @@ static uint8_t prv_parse_include_e(const char *str, char type, uint8_t i,
 	for (; i < SPECASM_LINE_MAX_LEN && str[i] <= ' '; i++)
 		;
 
-	if (i == SPECASM_LINE_MAX_LEN)
-		return i;
+	if (i == SPECASM_LINE_MAX_LEN) {
+		err_type = SPECASM_ERROR_BAD_MNENOMIC;
+		return 0;
+	}
 
 	for (k = SPECASM_LINE_MAX_LEN - 1; k > i && str[k] <= ' '; k--)
 		;

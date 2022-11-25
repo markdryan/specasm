@@ -177,7 +177,7 @@ static int prv_test_format(const test_zx_t *t)
 static int prv_test_bad(const bad_test_zx_t *t)
 {
 	size_t i;
-	specasm_line_t line = {0};
+	char buf[SPECASM_LINE_MAX_LEN + 1];
 
 	err_type = SPECASM_ERROR_OK;
 	specasm_util_clear(0, UNITTEST_ZX_TEST_LINE,
@@ -185,8 +185,11 @@ static int prv_test_bad(const bad_test_zx_t *t)
 	(void) specasm_util_print(t->source, 0,
 				  UNITTEST_ZX_TEST_LINE,
 				  PAPER_WHITE|INK_BLACK);
+	memset(buf, ' ', sizeof(buf) - 1);
+	buf[sizeof(buf) - 1] = 0;
+	memcpy(buf, t->source, strlen(t->source));
 
-	(void)specasm_parse_mnemomic_e(t->source, 0, &line);
+	(void)specasm_parse_line_e(0, buf);
 	if (err_type != t->error) {
 		(void) specasm_util_print(error_msgs[err_type], 0,
 					  UNITTEST_ZX_FORMAT_LINE,

@@ -218,12 +218,21 @@ static int prv_test_bad_opcodes()
 	size_t i;
 
 	for (i = 0; i < bad_tests_count; i++) {
-		specasm_line_t line = {0};
+		char buf[SPECASM_LINE_MAX_LEN + 1];
 		const bad_test_t *t = &bad_tests[i];
 		err_type = SPECASM_ERROR_OK;
 
 		printf("bad opcode: %s : ", t->source);
-		(void)specasm_parse_mnemomic_e(t->source, 0, &line);
+
+		memset(buf, ' ', sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = 0;
+		if (strlen(t->source) > SPECASM_LINE_MAX_LEN) {
+			printf("[ASSERT] test string too long\n");
+			return 1;
+		}
+		memcpy(buf, t->source, strlen(t->source));
+
+		(void)specasm_parse_line_e(0, buf);
 		if (err_type != t->error) {
 			printf("[FAIL]\n\t>expected %s got %s\n",
 			       error_msgs[t->error], error_msgs[err_type]);

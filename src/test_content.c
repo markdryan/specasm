@@ -2257,7 +2257,7 @@ const format_test_t format_tests[] = {
 	 SPECASM_LINE_TYPE_INC_LONG},
 	{"+  sub.x", "+sub.x", SPECASM_LINE_TYPE_INC_SYS_SHORT},
 	{"+a/very/long/path", "+a/very/long/path",
-	 SPECASM_LINE_TYPE_INC_SYS_LONG}
+	 SPECASM_LINE_TYPE_INC_SYS_LONG},
 };
 
 const size_t format_tests_count = sizeof(format_tests) / sizeof(format_test_t);
@@ -2267,6 +2267,7 @@ const bad_test_t bad_tests[] = {
 	{"markus", SPECASM_ERROR_BAD_MNENOMIC },
 	{"addd", SPECASM_ERROR_BAD_MNENOMIC },
 	{"-", SPECASM_ERROR_BAD_MNENOMIC },
+	{"+", SPECASM_ERROR_BAD_MNENOMIC },
 	{"$", SPECASM_ERROR_BAD_MNENOMIC },
 	{"ADD", SPECASM_ERROR_BAD_MNENOMIC },
 
@@ -2364,7 +2365,7 @@ const bad_test_t bad_tests[] = {
 	{"call poe, label", SPECASM_ERROR_CONDITION_CODE },
 	{"call poe , label", SPECASM_ERROR_CONDITION_CODE },
 	{"call pc , label", SPECASM_ERROR_CONDITION_CODE },
-	{"call nz", SPECASM_ERROR_CONDITION_CODE },
+	{"call nz", SPECASM_ERROR_COMMA_EXPECTED },
 	{"call nz ", SPECASM_ERROR_COMMA_EXPECTED },
 	{"call nz,", SPECASM_ERROR_BAD_LABEL },
 	{"call nz ,", SPECASM_ERROR_BAD_LABEL },
@@ -2436,7 +2437,7 @@ const bad_test_t bad_tests[] = {
 
 	{"jp", SPECASM_ERROR_BAD_LABEL },
 	{"jp nzc, label", SPECASM_ERROR_CONDITION_CODE },
-	{"jp nz", SPECASM_ERROR_CONDITION_CODE },
+	{"jp nz", SPECASM_ERROR_COMMA_EXPECTED },
 	{"jp nz ", SPECASM_ERROR_COMMA_EXPECTED },
 	{"jp nz,", SPECASM_ERROR_BAD_LABEL },
 	{"jp 100", SPECASM_ERROR_BAD_LABEL },
