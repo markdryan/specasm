@@ -108,7 +108,7 @@ make
 make tests
 ```
 
-This will create a folder called unitzx in the unitzx folder.  Inside this folder are 3 files that need to be copied to the same directory on your spectrum.  Run the unizx.tap file to run the tests.
+This will create a folder called tests in the unitzx folder.  Inside this folder are 3 files that need to be copied to the same directory on your spectrum.  Run the unizx.tap file to run the tests.
 
 
 

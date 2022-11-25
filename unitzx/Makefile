@@ -27,8 +27,8 @@ clean:
 
 .PHONY: tests
 tests:
-	- rm -rf unitzx
-	mkdir unitzx
+	- rm -rf tests
+	mkdir tests
 	cd .. && make -f Makefile test_content_zx
-	../test_content_zx unitzx
-	cp unitzx.tap unitzx
+	../test_content_zx tests
+	cp unitzx.tap tests
