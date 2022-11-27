@@ -75,8 +75,10 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
-	if ((line->type == SPECASM_LINE_TYPE_LL) ||
-	    (line->type == SPECASM_LINE_TYPE_SL)) {
+	if (line->type == SPECASM_LINE_TYPE_EQU) {
+		col = SPECASM_EQU_COLOUR;
+	} else if ((line->type == SPECASM_LINE_TYPE_LL) ||
+		   (line->type == SPECASM_LINE_TYPE_SL)) {
 		col = label_col;
 	} else if ((line->type == SPECASM_LINE_TYPE_LC) ||
 		   (line->type == SPECASM_LINE_TYPE_SC)) {

@@ -64,6 +64,9 @@ const test_t opcode_tests[] = {
 	{"adc  hl,  hl", "adc hl, hl", 2, { 0xed, 0x6a }},
 	{"adc hl, sp", "adc hl, sp", 2, { 0xed, 0x7a }},
 	{"adc  hl, sp", "adc hl, sp", 2, { 0xed, 0x7a }},
+	{"adc a, =label", "adc a, =label", 2, { 0xCE, 0x0 }},
+	{"adc a,=label", "adc a, =label", 2, { 0xCE, 0x0 }},
+	{"adc a,=  label", "adc a, =label", 2, { 0xCE, 0x0 }},
 
 	{"add a, (hl)", "add a, (hl)", 1, { 0x86 }},
 	{"add  a,  ( hl )", "add a, (hl)", 1, { 0x86 }},
@@ -114,6 +117,9 @@ const test_t opcode_tests[] = {
 	{"add iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 	{"add  iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 
+	{"add a , =label", "add a, =label", 2, { 0xC6, 0x00 }},
+	{"add a , =verylonglabel", "add a, =verylonglabel", 2, { 0xC6, 0x00 }},
+
 	{"align 4", "align 4", 1, {0x2}},
 	{"align    16", "align 16", 1, {0x4}},
 	{"align $20", "align $20", 1, {0x5}},
@@ -154,6 +160,9 @@ const test_t opcode_tests[] = {
 	{"and 'A'", "and 'A'", 2, { 0xE6, 0x41 }},
 	{"and  'A'", "and 'A'", 2, { 0xE6, 0x41 }},
 
+	{"and =label", "and =label", 2, { 0xE6, 0x0 }},
+	{"and =verylonglabel", "and =verylonglabel", 2, { 0xE6, 0x0 }},
+
 	{"bit 0, (hl)", "bit 0, (hl)", 2, { 0xCB, 0x46 }},
 	{"bit 0 , (hl)", "bit 0, (hl)", 2, { 0xCB, 0x46 }},
 	{"bit 0,  ( hl )", "bit 0, (hl)", 2, { 0xCB, 0x46 }},
@@ -179,6 +188,10 @@ const test_t opcode_tests[] = {
 	{"bit 0, l", "bit 0, l", 2, { 0xCB, 0X45 }},
 	{"bit 0,   l", "bit 0, l", 2, { 0xCB, 0X45 }},
 	{"bit $0,   l", "bit 0, l", 2, { 0xCB, 0X45 }},
+	{"bit =label,   l", "bit =label, l", 2, { 0xCB, 0X45 }},
+	{"bit =label, (hl)", "bit =label, (hl)", 2, { 0xCB, 0X46 }},
+	{"bit =label,( hl )", "bit =label, (hl)", 2, { 0xCB, 0X46 }},
+	{"bit =verylonglabel,( hl )", "bit =verylonglabel, (hl)", 2, { 0xCB, 0X46 }},
 
 	{"bit 1, (hl)", "bit 1, (hl)", 2, { 0xCB, 0x4E }},
 	{"bit 1,  ( hl )", "bit 1, (hl)", 2, { 0xCB, 0x4E }},
@@ -383,6 +396,15 @@ const test_t opcode_tests[] = {
 	{"call   c  , 4096", "call c, 4096", 3, {0xDC, 0x00, 0x10} },
 	{"call 60000", "call 60000", 3, {0xCD, 0x60, 0xEA} },
 
+	{"call =label", "call =label", 3, {0xCD, 0x00, 0x00}},
+	{"call =  label", "call =label", 3, {0xCD, 0x00, 0x00}},
+	{"call nz, =label", "call nz, =label", 3, {0xC4, 0x00, 0x00}},
+	{"call nz   ,  =label", "call nz, =label", 3, {0xC4, 0x00, 0x00}},
+	{"call =verylonglabel", "call =verylonglabel", 3, {0xCD, 0x00, 0x00}},
+	{"call =  verylonglabel", "call =verylonglabel", 3, {0xCD, 0x00, 0x00}},
+	{"call nz, =verylonglabel", "call nz, =verylonglabel", 3, {0xC4, 0x00, 0x00}},
+	{"call nz   ,  =verylonglabel", "call nz, =verylonglabel", 3, {0xC4, 0x00, 0x00}},
+
 	{"ccf", "ccf", 1, {0x3F}},
 
 	{"cp (hl)", "cp (hl)", 1, {0xBE}},
@@ -417,6 +439,12 @@ const test_t opcode_tests[] = {
 	{"cp  $65", "cp $65", 2, {0xFE, 0x65}},
 	{"cp -128", "cp -128", 2, {0xFE, 0x80}},
 	{"cp  -128", "cp -128", 2, {0xFE, 0x80}},
+
+	{"cp =label", "cp =label", 2, {0xFE, 0x0}},
+	{"cp  =  label", "cp =label", 2, {0xFE, 0x0}},
+	{"cp =verylonglabel", "cp =verylonglabel", 2, {0xFE, 0x0}},
+	{"cp  =  verylonglabel", "cp =verylonglabel", 2, {0xFE, 0x0}},
+
 
 	{"cpd", "cpd", 2, {0xED, 0xA9}},
 
@@ -464,6 +492,11 @@ const test_t opcode_tests[] = {
 	{"djnz label", "djnz label", 2, {0x10,0x0}},
 	{"djnz    label", "djnz label", 2, {0x10,0x0}},
 
+	{"djnz =label", "djnz =label", 2, {0x10,0x0}},
+	{"djnz    =label", "djnz =label", 2, {0x10,0x0}},
+	{"djnz =verylonglabel", "djnz =verylonglabel", 2, {0x10,0x0}},
+	{"djnz    = verylonglabel", "djnz =verylonglabel", 2, {0x10,0x0}},
+
 	{"ei", "ei", 1, {0xFB}},
 
 	{"ex (sp), hl", "ex (sp), hl", 1, {0xE3}},
@@ -489,6 +522,8 @@ const test_t opcode_tests[] = {
 	{"im   2", "im 2", 2, {0xED, 0x5E}},
 	{"im $2", "im 2", 2, {0xED, 0x5E}},
 	{"im   $2", "im 2", 2, {0xED, 0x5E}},
+	{"im =label", "im =label", 2, {0xED, 0x46}},
+	{"im   =  label", "im =label", 2, {0xED, 0x46}},
 
 	{"in a, (c)", "in a, (c)", 2, {0xED, 0x78}},
 	{"in a ,( c )", "in a, (c)", 2, {0xED, 0x78}},
@@ -510,6 +545,9 @@ const test_t opcode_tests[] = {
 	{"in h ,( c )", "in h, (c)", 2, {0xED, 0x60}},
 	{"in l, (c)", "in l, (c)", 2, {0xED, 0x68}},
 	{"in l ,( c )", "in l, (c)", 2, {0xED, 0x68}},
+
+	{"in a, (=label)", "in a, (=label)", 2, {0xDB, 0x0}},
+	{"in a,( = label )", "in a, (=label)", 2, {0xDB, 0x0}},
 
 	{"inc (hl)", "inc (hl)", 1, {0x34}},
 	{"inc  ( hl)", "inc (hl)", 1, {0x34}},
@@ -581,6 +619,11 @@ const test_t opcode_tests[] = {
 	{"jp no", "jp no", 3, {0xC3, 0x01, 0x00}},
 	{"jp   no", "jp no", 3, {0xC3, 0x01, 0x00}},
 
+	{"jp =clabel", "jp =clabel", 3, {0xc3, 0x03, 0x00}},
+	{"jp   =  clabel", "jp =clabel", 3, {0xc3, 0x03, 0x00}},
+	{"jp  nc,=label", "jp nc, =label", 3, {0xd2, 0x00, 0x00}},
+	{"jp  nc, =  label", "jp nc, =label", 3, {0xd2, 0x00, 0x00}},
+
 	{"jr c, label", "jr c, label", 2, {0x38, 0x00}},
 	{"jr   c,  label", "jr c, label", 2, {0x38, 0x00}},
 	{"jr label", "jr label", 2, {0x18, 0x00}},
@@ -591,6 +634,9 @@ const test_t opcode_tests[] = {
 	{"jr  nz,label", "jr nz, label", 2, {0x20, 0x00}},
 	{"jr clabel", "jr clabel", 2, {0x18, 0x03}},
 	{"jr nzo", "jr nzo", 2, {0x18, 0x04}},
+
+	{"jr =clabel", "jr =clabel", 2, {0x18, 0x03}},
+	{"jr  nc,=label", "jr nc, =label", 2, {0x30, 0x00}},
 
 	{"ld (bc), a", "ld (bc), a", 1, {0x2}},
 	{"ld ( bc ) ,  a", "ld (bc), a", 1, {0x2}},
@@ -1309,6 +1355,9 @@ const test_t opcode_tests[] = {
 	{"or 'A'", "or 'A'", 2, { 0xF6, 0x41 }},
 	{"or   'A'", "or 'A'", 2, { 0xF6, 0x41 }},
 
+	{"or =label", "or =label", 2, { 0xF6, 0x0 }},
+	{"or = label", "or =label", 2, { 0xF6, 0x0 }},
+
 	/*
 	 * The size here is wrong, but org statements
 	 * don't have a size.  It's easier to test
@@ -1345,6 +1394,8 @@ const test_t opcode_tests[] = {
 	{"out  ( 128 ), a", "out (128), a", 2, {0xD3, 0x80}},
 	{"out ($FF), a", "out ($FF), a", 2, {0xD3, 0xFF}},
 	{"out  ( $FF ), a", "out ($FF), a", 2, {0xD3, 0xFF}},
+	{"out  ( =label ), a", "out (=label), a", 2, {0xD3, 0x0}},
+	{"out  ( =  label  ), a", "out (=label), a", 2, {0xD3, 0x0}},
 
 	{"outd", "outd", 2, {0xED, 0xAB}},
 	{"outi", "outi", 2, {0xED, 0xA3}},
@@ -1575,6 +1626,11 @@ const test_t opcode_tests[] = {
 	{"res 7,   l", "res 7, l", 2, { 0xCB, 0XBD }},
 	{"res $7,   l", "res 7, l", 2, { 0xCB, 0XBD }},
 
+	{"res =label, a", "res =label, a", 2, { 0xCB, 0x87 }},
+	{"res =label, (hl)", "res =label, (hl)", 2, { 0xCB, 0x86 }},
+	{"res =label,( hl )", "res =label, (hl)", 2, { 0xCB, 0x86 }},
+	{"res =verylonglabel,( hl )", "res =verylonglabel, (hl)", 2, { 0xCB, 0X86 }},
+
 	{"ret", "ret", 1, {0xc9}},
 	{"ret c", "ret c", 1, {0xd8}},
 	{"ret  c", "ret c", 1, {0xd8}},
@@ -1729,6 +1785,8 @@ const test_t opcode_tests[] = {
 	{"rst   56", "rst 56", 1, { 0xFF }},
 	{"rst $38", "rst $38", 1, { 0xFF }},
 	{"rst   $38", "rst $38", 1, { 0xFF }},
+	{"rst =label", "rst =label", 1, { 0xC7 }},
+	{"rst   = label", "rst =label", 1, { 0xC7 }},
 
 	{"sbc a, (hl)", "sbc a, (hl)", 1, { 0x9e }},
 	{"sbc a,( hl)", "sbc a, (hl)", 1, { 0x9e }},
@@ -1774,6 +1832,9 @@ const test_t opcode_tests[] = {
 	{"sbc  hl,  hl", "sbc hl, hl", 2, { 0xed, 0x62 }},
 	{"sbc hl, sp", "sbc hl, sp", 2, { 0xed, 0x72 }},
 	{"sbc  hl, sp", "sbc hl, sp", 2, { 0xed, 0x72 }},
+
+	{"sbc a, =label", "sbc a, =label", 2, { 0xDE, 0x00 }},
+	{"sbc a,=  label", "sbc a, =label", 2, { 0xDE, 0x00 }},
 
 	{"scf", "scf", 1, { 0x37 }},
 
@@ -1969,6 +2030,11 @@ const test_t opcode_tests[] = {
 	{"set 7, l", "set 7, l", 2, { 0xCB, 0XFD }},
 	{"set 7,   l", "set 7, l", 2, { 0xCB, 0XFD }},
 
+	{"set =label, a", "set =label, a", 2, { 0xCB, 0xC7 }},
+	{"set =label, (hl)", "set =label, (hl)", 2, { 0xCB, 0xC6 }},
+	{"set =label,( hl )", "set =label, (hl)", 2, { 0xCB, 0xC6 }},
+	{"set =verylonglabel,( hl )", "set =verylonglabel, (hl)", 2, { 0xCB, 0XC6 }},
+
 	{"sla (hl)", "sla (hl)", 2, { 0xCB, 0x26 }},
 	{"sla  ( hl )", "sla (hl)", 2, { 0xCB, 0x26 }},
 	{"sla (ix+$FF)", "sla (ix+$FF)", 4, { 0xDD, 0xCB, 0xff, 0x26 }},
@@ -2067,6 +2133,9 @@ const test_t opcode_tests[] = {
 	{"sub 'A'", "sub 'A'", 2, { 0xD6, 0x41 }},
 	{"sub  'A'", "sub 'A'", 2, { 0xD6, 0x41 }},
 
+	{"sub =label", "sub =label", 2, { 0xD6, 0x0 }},
+	{"sub  =  label", "sub =label", 2, { 0xD6, 0x0 }},
+
 	{"xor (hl)", "xor (hl)", 1, { 0xAE }},
 	{"xor  ( hl )", "xor (hl)", 1, { 0xAE }},
 	{"xor (ix+$FF)", "xor (ix+$FF)", 3, { 0xDD, 0xAE, 0xff }},
@@ -2095,6 +2164,8 @@ const test_t opcode_tests[] = {
 	{"xor   255", "xor 255", 2, { 0xEE, 0xff }},
 	{"xor 'A'", "xor 'A'", 2, { 0xEE, 0x41 }},
 	{"xor   'A'", "xor 'A'", 2, { 0xEE, 0x41 }},
+	{"xor =label", "xor =label", 2, { 0xEE, 0x0 }},
+	{"xor  =  label", "xor =label", 2, { 0xEE, 0x0 }},
 
 	{"ld a, $DD", "ld a, $DD", 2, {0x3E, 0xDD}},
 
@@ -2258,6 +2329,12 @@ const format_test_t format_tests[] = {
 	{"+  sub.x", "+sub.x", SPECASM_LINE_TYPE_INC_SYS_SHORT},
 	{"+a/very/long/path", "+a/very/long/path",
 	 SPECASM_LINE_TYPE_INC_SYS_LONG},
+	{".size equ 10 * 10", ".size EQU 10 * 10", SPECASM_LINE_TYPE_EQU},
+	{".size  equ  10  *  10", ".size EQU 10  *  10", SPECASM_LINE_TYPE_EQU},
+	{".longlabel1234 equ longlabel1234", ".longlabel1234 EQU longlabel1234",
+	 SPECASM_LINE_TYPE_EQU},
+	{".longlabel1234 equ shortlal + 1 ", ".longlabel1234 EQU shortlal + 1",
+	 SPECASM_LINE_TYPE_EQU}
 };
 
 const size_t format_tests_count = sizeof(format_tests) / sizeof(format_test_t);
@@ -2304,6 +2381,8 @@ const bad_test_t bad_tests[] = {
 	{ "adc hl, 10", SPECASM_ERROR_BAD_REG },
 	{ "adc hl, ix", SPECASM_ERROR_BAD_REG },
 	{ "adc de, hl", SPECASM_ERROR_BAD_REG },
+	{ "adc hl, =label", SPECASM_ERROR_BAD_REG },
+	{ "adc a, (ix+=label)", SPECASM_ERROR_BAD_NUM },
 
 	{ "add a", SPECASM_ERROR_COMMA_EXPECTED },
 	{ "add a, (bc)", SPECASM_ERROR_BAD_REG },
@@ -2322,6 +2401,7 @@ const bad_test_t bad_tests[] = {
 	{ "add", SPECASM_ERROR_BAD_REG },
 	{ "add a, ", SPECASM_ERROR_BAD_REG },
 	{ "add , 10", SPECASM_ERROR_BAD_REG },
+	{ "add hl, =label", SPECASM_ERROR_BAD_REG },
 
 	{"align 512", SPECASM_ERROR_BAD_NUM },
 	{"align 1", SPECASM_ERROR_BAD_NUM },
@@ -2329,6 +2409,7 @@ const bad_test_t bad_tests[] = {
 	{"align -1", SPECASM_ERROR_BAD_NUM },
 	{"align 'c'", SPECASM_ERROR_BAD_NUM },
 	{"align ", SPECASM_ERROR_BAD_NUM },
+	{"align =label", SPECASM_ERROR_BAD_NUM },
 
 	{"and", SPECASM_ERROR_BAD_REG },
 	{"and (bc)", SPECASM_ERROR_BAD_REG },
@@ -2343,6 +2424,7 @@ const bad_test_t bad_tests[] = {
 	{"and $100", SPECASM_ERROR_NUM_TOO_BIG },
 	{"and hl", SPECASM_ERROR_BAD_REG },
 	{"and f", SPECASM_ERROR_BAD_REG },
+	{"and (ix+=label)", SPECASM_ERROR_BAD_NUM },
 
 	{"bit 'A', (hl)", SPECASM_ERROR_BAD_NUM },
 	{"bit 9, (hl)", SPECASM_ERROR_BAD_NUM },
@@ -2358,6 +2440,9 @@ const bad_test_t bad_tests[] = {
 	{"bit 0, $bc", SPECASM_ERROR_BAD_REG },
 	{"bit a, a", SPECASM_ERROR_BAD_NUM },
 	{"bit 0", SPECASM_ERROR_COMMA_EXPECTED },
+	{"bit =label, (ix + 10)", SPECASM_ERROR_BAD_EXPRESSION },
+	{"bit =label, (iy + 10)", SPECASM_ERROR_BAD_EXPRESSION },
+	{"bit 0, (ix + =label)", SPECASM_ERROR_BAD_NUM },
 
 	{"call", SPECASM_ERROR_BAD_LABEL },
 	{"call nzc, label", SPECASM_ERROR_CONDITION_CODE },
@@ -2382,6 +2467,7 @@ const bad_test_t bad_tests[] = {
 	{"cp (ix+300)", SPECASM_ERROR_NUM_TOO_BIG },
 	{"cp 300", SPECASM_ERROR_NUM_TOO_BIG },
 	{"cp bc", SPECASM_ERROR_BAD_REG },
+	{"cp (ix+=label)", SPECASM_ERROR_BAD_NUM },
 
 	{"dec (bc)", SPECASM_ERROR_BAD_REG },
 	{"dec hl)", SPECASM_ERROR_BAD_REG },
@@ -2392,6 +2478,8 @@ const bad_test_t bad_tests[] = {
 	{"dec (ix+1000)", SPECASM_ERROR_NUM_TOO_BIG },
 	{"dec af", SPECASM_ERROR_BAD_REG },
 	{"dec 10", SPECASM_ERROR_BAD_REG },
+	{"dec =10+10", SPECASM_ERROR_BAD_REG },
+	{"dec (ix+=label)", SPECASM_ERROR_BAD_NUM },
 
 	{"djnz", SPECASM_ERROR_BAD_LABEL },
 	{"djnz bc", SPECASM_ERROR_BAD_LABEL },
@@ -2405,6 +2493,8 @@ const bad_test_t bad_tests[] = {
 	{"ex (sp), bc", SPECASM_ERROR_BAD_REG },
 	{"ex bc, hl", SPECASM_ERROR_BAD_REG },
 	{"ex 10, hl", SPECASM_ERROR_BAD_REG },
+	{"ex =label, hl", SPECASM_ERROR_BAD_REG },
+	{"ex de, =label", SPECASM_ERROR_BAD_REG },
 
 	{"im", SPECASM_ERROR_BAD_NUM },
 	{"im , ", SPECASM_ERROR_BAD_NUM },
@@ -2424,6 +2514,7 @@ const bad_test_t bad_tests[] = {
 	{"in a, (-100)", SPECASM_ERROR_NUM_NEG },
 	{"in b, (100)", SPECASM_ERROR_BAD_REG },
 	{"in b, ('A')", SPECASM_ERROR_BAD_REG },
+	{"in a, (=)", SPECASM_ERROR_BAD_EXPRESSION },
 
 	{"inc (bc)", SPECASM_ERROR_BAD_REG },
 	{"inc hl)", SPECASM_ERROR_BAD_REG },
@@ -2445,6 +2536,8 @@ const bad_test_t bad_tests[] = {
 	{"jp c, bc", SPECASM_ERROR_BAD_LABEL },
 	{"jp bc", SPECASM_ERROR_BAD_REG },
 	{"jp (bc)", SPECASM_ERROR_BAD_REG },
+	{"jp c, =", SPECASM_ERROR_BAD_EXPRESSION },
+	{"jp =", SPECASM_ERROR_BAD_EXPRESSION },
 
 	{"jr", SPECASM_ERROR_BAD_LABEL },
 	{"jr c, ", SPECASM_ERROR_BAD_LABEL },
@@ -2536,6 +2629,7 @@ const bad_test_t bad_tests[] = {
 	{"or $100", SPECASM_ERROR_NUM_TOO_BIG },
 	{"or hl", SPECASM_ERROR_BAD_REG },
 	{"or f", SPECASM_ERROR_BAD_REG },
+	{"or (ix+=label)", SPECASM_ERROR_BAD_NUM },
 
 	{"org", SPECASM_ERROR_BAD_NUM },
 	{"org aa", SPECASM_ERROR_BAD_NUM },
@@ -2562,6 +2656,7 @@ const bad_test_t bad_tests[] = {
 	{"out (660), c", SPECASM_ERROR_NUM_TOO_BIG },
 	{"out (10), xx", SPECASM_ERROR_BAD_REG },
 	{"out (ix+10), xx", SPECASM_ERROR_BAD_REG },
+	{"out (=), a", SPECASM_ERROR_BAD_EXPRESSION },
 
 	{"pop", SPECASM_ERROR_BAD_REG },
 	{"pop a", SPECASM_ERROR_BAD_REG },
@@ -2591,6 +2686,9 @@ const bad_test_t bad_tests[] = {
 	{"res 0, bc", SPECASM_ERROR_BAD_REG },
 	{"res 0, gg", SPECASM_ERROR_BAD_REG },
 	{"res 0, $bc", SPECASM_ERROR_BAD_REG },
+	{"res =label, (ix + 10)", SPECASM_ERROR_BAD_EXPRESSION },
+	{"res =label, (iy + 10)", SPECASM_ERROR_BAD_EXPRESSION },
+	{"res 0, (ix + =label)", SPECASM_ERROR_BAD_NUM },
 
 	{"ret pp", SPECASM_ERROR_CONDITION_CODE },
 	{"ret pop", SPECASM_ERROR_CONDITION_CODE },
@@ -2656,6 +2754,7 @@ const bad_test_t bad_tests[] = {
 	{"rst 'A'", SPECASM_ERROR_BAD_NUM },
 	{"rst label", SPECASM_ERROR_BAD_NUM },
 	{"rst a", SPECASM_ERROR_BAD_NUM },
+	{"rst =", SPECASM_ERROR_BAD_EXPRESSION },
 
 	{ "sbc", SPECASM_ERROR_BAD_REG },
 	{ "sbc a", SPECASM_ERROR_COMMA_EXPECTED },
@@ -2689,6 +2788,7 @@ const bad_test_t bad_tests[] = {
 	{ "sbc hl, 10", SPECASM_ERROR_BAD_REG },
 	{ "sbc hl, ix", SPECASM_ERROR_BAD_REG },
 	{ "sbc de, hl", SPECASM_ERROR_BAD_REG },
+	{ "sbc a, =", SPECASM_ERROR_BAD_EXPRESSION },
 
 	{"set 9, (hl)", SPECASM_ERROR_BAD_NUM },
 	{"set $ff, (hl)", SPECASM_ERROR_BAD_NUM },
@@ -2701,6 +2801,9 @@ const bad_test_t bad_tests[] = {
 	{"set 0, bc", SPECASM_ERROR_BAD_REG },
 	{"set 0, gg", SPECASM_ERROR_BAD_REG },
 	{"set 0, $bc", SPECASM_ERROR_BAD_REG },
+	{"set =label, (ix + 10)", SPECASM_ERROR_BAD_EXPRESSION },
+	{"set =label, (iy + 10)", SPECASM_ERROR_BAD_EXPRESSION },
+	{"set 0, (ix + =label)", SPECASM_ERROR_BAD_NUM },
 
 	{"sla", SPECASM_ERROR_BAD_REG },
 	{"sla,", SPECASM_ERROR_BAD_MNENOMIC },
@@ -2771,6 +2874,7 @@ const bad_test_t bad_tests[] = {
 	{"xor $100", SPECASM_ERROR_NUM_TOO_BIG },
 	{"xor hl", SPECASM_ERROR_BAD_REG },
 	{"xor f", SPECASM_ERROR_BAD_REG },
+	{"xor (ix+=label)", SPECASM_ERROR_BAD_NUM },
 
 	{"db label", SPECASM_ERROR_BAD_LABEL },
 	{"db 256", SPECASM_ERROR_NUM_TOO_BIG },
@@ -2795,6 +2899,10 @@ const bad_test_t bad_tests[] = {
 	{"ds", SPECASM_ERROR_BAD_NUM },
 	{"ds 10", SPECASM_ERROR_COMMA_EXPECTED },
 	{"ds 10,", SPECASM_ERROR_BAD_NUM },
+
+	{".label equ", SPECASM_ERROR_BAD_EXPRESSION},
+	{"equ 10", SPECASM_ERROR_BAD_MNENOMIC},
+	{".label equd", SPECASM_ERROR_LONG_LABEL_EX},
 };
 
 const size_t bad_tests_count = sizeof(bad_tests) / sizeof(bad_test_t);

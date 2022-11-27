@@ -65,6 +65,9 @@
 #define SPECASM_CC_M 7
 #define SPECASM_CC_NONE 8
 
+static char *prv_dump_exp_e(const specasm_line_t *line, char *buf,
+			    uint8_t id);
+
 typedef uint8_t (*specasm_dump_opcode_fn_t)(const specasm_line_t *line,
 					    char *buf);
 
@@ -263,10 +266,14 @@ static const char *prv_get_word_imm_ind_e(const char *args, uint16_t *val,
 	return args + 1;
 }
 
-static const char *prv_get_byte_imm_ind_e(const char *args, uint8_t *val,
-					  uint8_t *flags)
+static const char *prv_get_byte_imm_ind_e(specasm_line_t *line,
+					  const char *args,
+					  uint8_t *val)
 {
 	long v;
+	uint8_t flags;
+	uint8_t label_type;
+	uint8_t read;
 
 	while (*args == ' ')
 		++args;
@@ -276,16 +283,30 @@ static const char *prv_get_byte_imm_ind_e(const char *args, uint8_t *val,
 		return NULL;
 	}
 
-	args = specasm_get_long_imm_e(args + 1, &v, flags);
-	if (err_type != SPECASM_ERROR_OK)
-		return NULL;
-	if (*flags == SPECASM_FLAGS_NUM_SIGNED) {
-		err_type = SPECASM_ERROR_NUM_NEG;
-		return NULL;
-	}
-	if (v > 0xff) {
-		err_type = SPECASM_ERROR_NUM_TOO_BIG;
-		return NULL;
+	++args;
+	while (*args == ' ')
+		++args;
+
+	if (*args == '=') {
+		read = specasm_parse_exp_e(args + 1, &line->data.op_code[2],
+					   &label_type);
+		specasm_line_set_addr_type(line, label_type);
+		args += read + 1;
+		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
+		v = 0;
+	} else {
+		args = specasm_get_long_imm_e(args, &v, &flags);
+		if (err_type != SPECASM_ERROR_OK)
+			return NULL;
+		if (flags == SPECASM_FLAGS_NUM_SIGNED) {
+			err_type = SPECASM_ERROR_NUM_NEG;
+			return NULL;
+		}
+		if (v > 0xff) {
+			err_type = SPECASM_ERROR_NUM_TOO_BIG;
+			return NULL;
+		}
+		specasm_line_set_format(line, flags);
 	}
 
 	while (*args == ' ')
@@ -564,8 +585,12 @@ static char *prv_dump_arith_e(const specasm_line_t *line, char *buf,
 		buf =
 		    prv_dump_index(op_code, buf, specasm_line_get_format(line));
 	} else if (op_code[0] == imm) {
-		buf += prv_dump_byte(buf, op_code[1],
-				     specasm_line_get_format(line));
+
+		if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+			buf = prv_dump_exp_e(line, buf, op_code[1]);
+		else
+			buf += prv_dump_byte(buf, op_code[1],
+					     specasm_line_get_format(line));
 	} else if ((op_code[0] & reg) == reg) {
 		buf = prv_byte_and_hl_ind(op_code[0], buf);
 	} else {
@@ -658,6 +683,18 @@ static char *prv_dump_jump_label_e(const specasm_line_t *line, char *buf,
 				   uint16_t id)
 {
 	uint8_t fmt = specasm_line_get_addr_type(line);
+
+	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+		*buf++ = '=';
+
+	return prv_dump_jump_label_fmt_e(line, buf, id, fmt);
+}
+
+static char *prv_dump_exp_e(const specasm_line_t *line, char *buf,
+			    uint8_t id)
+{
+	uint8_t fmt = specasm_line_get_addr_type(line);
+	*buf++ = '=';
 	return prv_dump_jump_label_fmt_e(line, buf, id, fmt);
 }
 
@@ -757,10 +794,13 @@ static uint8_t prv_dump_bit_e(const specasm_line_t *line, char *buf)
 	const uint8_t *op_code = line->data.op_code;
 	uint8_t index = op_code[0] == 0xDD || op_code[0] == 0xFD;
 
-	val = (index) ? op_code[3] : op_code[1];
-
-	(void)itoa((val >> 3) & 7, buf, 10);
-	buf += strlen(buf);
+	if (line->type >= SPECASM_FLAGS_EXP_LONG) {
+		buf = prv_dump_exp_e(line, buf, op_code[2]);
+	} else {
+		val = (index) ? op_code[3] : op_code[1];
+		(void)itoa((val >> 3) & 7, buf, 10);
+		buf += strlen(buf);
+	}
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
@@ -854,7 +894,14 @@ static uint8_t prv_dump_ex_e(const specasm_line_t *line, char *buf)
 static uint8_t prv_dump_im_e(const specasm_line_t *line, char *buf)
 {
 	char ch;
+	char *start;
 	const uint8_t *op_code = line->data.op_code;
+
+	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ) {
+		start = buf;
+		buf = prv_dump_exp_e(line, buf, op_code[2]);
+		return buf - start;
+	}
 
 	switch (op_code[1]) {
 	case 0x46:
@@ -875,6 +922,17 @@ static uint8_t prv_dump_im_e(const specasm_line_t *line, char *buf)
 	return 1;
 }
 
+static char* prv_dump_byte_imm_ind_e(const specasm_line_t *line, char *buf)
+{
+	const uint8_t *op_code = line->data.op_code;
+
+	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+		return prv_dump_exp_e(line, buf, op_code[2]);
+
+	return buf + prv_dump_byte(buf, op_code[1],
+				   specasm_line_get_format(line));
+}
+
 static uint8_t prv_dump_in_e(const specasm_line_t *line, char *buf)
 {
 	uint8_t code;
@@ -889,12 +947,10 @@ static uint8_t prv_dump_in_e(const specasm_line_t *line, char *buf)
 	buf[2] = ' ';
 	buf[3] = '(';
 	buf += 4;
-	if (op_code[0] == 0xDB) {
-		buf += prv_dump_byte(buf, op_code[1],
-				     specasm_line_get_format(line));
-	} else {
+	if (op_code[0] == 0xDB)
+		buf = prv_dump_byte_imm_ind_e(line, buf);
+	else
 		*buf++ = 'c';
-	}
 	buf[0] = ')';
 
 	return (buf + 1) - start;
@@ -1395,12 +1451,10 @@ static uint8_t prv_dump_out_e(const specasm_line_t *line, char *buf)
 	    (op_code[0] == 0xD3) ? SPECASM_BYTE_REG_A : (op_code[1] >> 3) & 7;
 
 	*buf++ = '(';
-	if (op_code[0] == 0xD3) {
-		buf += prv_dump_byte(buf, op_code[1],
-				     specasm_line_get_format(line));
-	} else {
+	if (op_code[0] == 0xD3)
+		buf = prv_dump_byte_imm_ind_e(line, buf);
+	else
 		*buf++ = 'c';
-	}
 	buf[0] = ')';
 	buf[1] = ',';
 	buf[2] = ' ';
@@ -1411,8 +1465,15 @@ static uint8_t prv_dump_out_e(const specasm_line_t *line, char *buf)
 
 static uint8_t prv_dump_rst_e(const specasm_line_t *line, char *buf)
 {
+	char *start;
 	const uint8_t *op_code = line->data.op_code;
 	uint8_t val = op_code[0] & 0x38;
+
+	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ) {
+		start = buf;
+		buf = prv_dump_exp_e(line, buf, op_code[2]);
+		return buf - start;
+	}
 
 	return prv_dump_byte(buf, val, specasm_line_get_format(line));
 }
@@ -1760,6 +1821,58 @@ static const char *prv_parse_jump_label_e(const char *args,
 	return args;
 }
 
+static const char *prv_parse_label_or_exp_e(const char *args,
+					    specasm_line_t *line,
+					    uint8_t *label)
+{
+	const char *args2;
+	uint8_t read;
+	uint8_t label_type;
+
+	if (*args == '=') {
+		read = specasm_parse_exp_e(args + 1, label, &label_type);
+		specasm_line_set_addr_type(line, label_type);
+		args2 = args + read + 1;
+		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
+	} else {
+		args2 = prv_parse_jump_label_e(args, line, label);
+	}
+
+	return args2;
+}
+
+static const char* prv_parse_byte_imm_or_exp_e(const char *args,
+					       specasm_line_t *line,
+					       uint8_t *val,
+					       uint8_t *label)
+{
+	uint8_t flags;
+	uint8_t label_type;
+	uint8_t read;
+
+	while (*args == ' ')
+		++args;
+
+	if (*args == '=') {
+		read = specasm_parse_exp_e(args + 1, label, &label_type);
+		if (err_type != SPECASM_ERROR_OK)
+			return NULL;
+		specasm_line_set_addr_type(line, label_type);
+		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
+		args += read + 1;
+		*val = 0;
+		return args;
+	}
+
+	args = prv_get_byte_imm_e(args, val, &flags);
+	if (err_type != SPECASM_ERROR_OK)
+		return NULL;
+
+	specasm_line_set_format(line, flags);
+
+	return args;
+}
+
 static const char *prv_get_label_ind_e(const char *args, specasm_line_t *line,
 				       uint8_t *val)
 {
@@ -1795,28 +1908,33 @@ static uint8_t prv_parse_arith_gen_e(const char *args, specasm_line_t *line,
 	uint8_t reg;
 	uint8_t off;
 	uint8_t read;
+	const char *start;
 	const char *args2;
 	uint8_t flags;
 	uint8_t *op_code;
+	uint8_t *byte1;
 	uint8_t sz = 0;
 
-	args2 = prv_get_byte_imm_e(args, &off, &flags);
+	start = args;
+
+	op_code = &line->data.op_code[0];
+	byte1 = &op_code[1];
+	args2 = prv_parse_byte_imm_or_exp_e(args, line, byte1, byte1);
 	if (err_type == SPECASM_ERROR_OK) {
-		specasm_line_set_format(line, flags);
-		op_code = &line->data.op_code[0];
 		op_code[0] = aimm;
-		op_code[1] = off;
-		read = args2 - args;
 		sz = 1;
+		read = args2 - start;
 		goto end;
-	}
-	if (err_type == SPECASM_ERROR_NUM_TOO_BIG)
+	} else if ((err_type == SPECASM_ERROR_NUM_TOO_BIG) ||
+		   (err_type == SPECASM_ERROR_BAD_EXPRESSION)) {
 		return 0;
+	}
 
 	err_type = SPECASM_ERROR_OK;
 	read = prv_parse_reg_e(args, &reg, &off, &flags);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
+	read += args - start;
 	if (reg <= SPECASM_BYTE_REG_A) {
 		line->data.op_code[0] = areg | reg;
 		goto end;
@@ -1842,6 +1960,7 @@ static uint8_t prv_parse_arith_gen_e(const char *args, specasm_line_t *line,
 	sz = 2;
 
 end:
+
 	specasm_line_set_size(line, sz);
 	return read;
 }
@@ -1984,19 +2103,35 @@ static uint8_t prv_parse_bit_e(const char *args, specasm_line_t *line,
 	uint8_t off;
 	uint8_t val;
 	uint8_t flags;
+	uint8_t read;
+	uint8_t label_type;
 	uint8_t *op_code;
 	uint8_t sz = 1;
 	const char *start = args;
 	uint8_t rind = op_entry->op_code[0];
 	uint8_t hl_ind = 0xCB;
 
-	args = prv_get_byte_imm_e(args, &val, &flags);
-	if (err_type != SPECASM_ERROR_OK)
-		return 0;
+	while (*args == ' ')
+		++args;
 
-	if (val > 7) {
-		err_type = SPECASM_ERROR_BAD_NUM;
-		return 0;
+	if (*args == '=') {
+		op_code = &line->data.op_code[0];
+		read = specasm_parse_exp_e(args + 1, &op_code[2], &label_type);
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		specasm_line_set_addr_type(line, label_type);
+		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
+		args += read + 1;
+		val = 0;
+	} else {
+		args = prv_get_byte_imm_e(args, &val, &flags);
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+
+		if (val > 7) {
+			err_type = SPECASM_ERROR_BAD_NUM;
+			return 0;
+		}
 	}
 
 	while (*args == ' ')
@@ -2011,6 +2146,13 @@ static uint8_t prv_parse_bit_e(const char *args, specasm_line_t *line,
 	args += prv_parse_reg_e(args, &reg, &off, &flags);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
+
+	if ((reg > SPECASM_BYTE_REG_A) &&
+	    (reg != SPECASM_BYTE_REG_HL_IND) &&
+	    (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)) {
+		err_type = SPECASM_ERROR_BAD_EXPRESSION;
+		return 0;
+	}
 
 	switch (reg) {
 	case SPECASM_BYTE_REG_HL_IND:
@@ -2115,7 +2257,7 @@ static uint8_t prv_parse_djnz_e(const char *args, specasm_line_t *line,
 	while (*args == ' ')
 		++args;
 
-	args = prv_parse_jump_label_e(args, line, &line->data.op_code[1]);
+	args = prv_parse_label_or_exp_e(args, line, &line->data.op_code[1]);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 	line->data.op_code[0] = 0x10;
@@ -2355,17 +2497,13 @@ bad_reg:
 static uint8_t prv_parse_im_e(const char *args, specasm_line_t *line,
 			      const specasm_opcode_t *op_entry)
 {
-	const char *args2;
 	uint8_t val;
-	uint8_t flags;
+	const char *args2;
 
-	args2 = prv_get_byte_imm_e(args, &val, &flags);
-	if (err_type != SPECASM_ERROR_OK) {
-		err_type = SPECASM_ERROR_BAD_NUM;
+	args2 = prv_parse_byte_imm_or_exp_e(args, line, &val,
+					    &line->data.op_code[2]);
+	if (err_type != SPECASM_ERROR_OK)
 		return 0;
-	}
-
-	specasm_line_set_format(line, flags);
 
 	switch (val) {
 	case 0:
@@ -2414,11 +2552,9 @@ static uint8_t prv_parse_in_e(const char *args, specasm_line_t *line,
 		if (reg != SPECASM_BYTE_REG_A)
 			return 0;
 		err_type = SPECASM_ERROR_OK;
-
-		args = prv_get_byte_imm_ind_e(args, &val, &flags);
+		args = prv_get_byte_imm_ind_e(line, args, &val);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
-		specasm_line_set_format(line, flags);
 		op_code = &line->data.op_code[0];
 		op_code[0] = 0xDB;
 		op_code[1] = val;
@@ -2503,7 +2639,7 @@ static uint8_t prv_parse_jp_e(const char *args, specasm_line_t *line,
 	while (*args == ' ')
 		++args;
 
-	args = prv_parse_jump_label_e(args, line, &line->data.op_code[1]);
+	args = prv_parse_label_or_exp_e(args, line, &line->data.op_code[1]);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
@@ -2559,9 +2695,9 @@ static uint8_t prv_parse_relative_jmp_e(const char *args, specasm_line_t *line,
 	while (*args == ' ')
 		++args;
 
-	args2 = prv_parse_jump_label_e(args, line, &label);
+	args2 = prv_parse_label_or_exp_e(args, line, &label);
 
-	/* If the labels bad we might have a 16 bit offset so return
+	/* If the label's bad we might have a 16 bit offset so return
 	 * an error but skip past the condition code if any.
 	 */
 
@@ -3082,10 +3218,9 @@ static uint8_t prv_parse_out_e(const char *args, specasm_line_t *line,
 	args2 = args + prv_parse_reg_e(args, &reg, &off, &flags);
 	if (err_type != SPECASM_ERROR_OK) {
 		err_type = SPECASM_ERROR_OK;
-		args = prv_get_byte_imm_ind_e(args, &val, &flags);
+		args = prv_get_byte_imm_ind_e(line, args, &val);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
-		specasm_line_set_format(line, flags);
 		n = 1;
 	} else {
 		args = args2;
@@ -3176,10 +3311,10 @@ static uint8_t prv_parse_rst_e(const char *args, specasm_line_t *line,
 			       const specasm_opcode_t *op_entry)
 {
 	uint8_t val;
-	uint8_t flags;
 	const char *start = args;
 
-	args = prv_get_byte_imm_e(args, &val, &flags);
+	args = prv_parse_byte_imm_or_exp_e(args, line, &val,
+					   &line->data.op_code[1]);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
@@ -3187,7 +3322,6 @@ static uint8_t prv_parse_rst_e(const char *args, specasm_line_t *line,
 		err_type = SPECASM_ERROR_BAD_NUM;
 		return 0;
 	}
-	specasm_line_set_format(line, flags);
 
 	line->data.op_code[0] = 0xC7 | val;
 
@@ -3452,6 +3586,43 @@ void specasm_init_dump_table(void)
 	}
 }
 
+uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
+			    uint8_t *label1_type)
+{
+	uint8_t j;
+	uint8_t len;
+	uint8_t i;
+	uint8_t end = SPECASM_LINE_MAX_LEN - 1;
+
+	for (i = 0; str[i] == ' '; i++);
+	for (end = i; str[end] && str[end] != ')' && str[end] != ',' &&
+		     str[end] != ';'; end++);
+	if (i == end) {
+		err_type = SPECASM_ERROR_BAD_EXPRESSION;
+		return 0;
+	}
+
+	end--;
+
+	while ((end > i) && (str[end] == ' '))
+		end--;
+
+	len = ((end -i) +  1);
+	for (j = 0; j < len; j++)
+		scratch[j] = str[i+j];
+	scratch[j] = 0;
+
+	if (len <= SPECASM_MAX_SHORT_LEN) {
+		*label1 = specasm_state_add_short_e(scratch);
+		*label1_type = SPECASM_FLAGS_ADDR_SHORT;
+	} else {
+		*label1 = specasm_state_add_long_e(scratch);
+		*label1_type = SPECASM_FLAGS_ADDR_LONG;
+	}
+
+	return end + 1;
+}
+
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 				 specasm_line_t *line)
 {
@@ -3504,16 +3675,22 @@ uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 
 uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf)
 {
+	uint8_t index;
+	const char *name;
 	char *start = buf;
-	uint8_t index = dump_opcodes[line->type].index;
-	const char *name = opcode_table[index].mnemomic;
+	uint8_t type = line->type;
 
+	if (type >= SPECASM_LINE_TYPE_EXP_ADJ)
+		type -= SPECASM_LINE_TYPE_EXP_ADJ;
+
+	index = dump_opcodes[type].index;
+	name = opcode_table[index].mnemomic;
 	while (*name)
 		*buf++ = *name++;
-	if (dump_opcodes[line->type].fn) {
-		if (line->type != SPECASM_LINE_TYPE_RET)
+	if (dump_opcodes[type].fn) {
+		if (type != SPECASM_LINE_TYPE_RET)
 			*buf++ = ' ';
-		buf += dump_opcodes[line->type].fn(line, buf);
+		buf += dump_opcodes[type].fn(line, buf);
 	}
 	return buf - start;
 }

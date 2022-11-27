@@ -97,7 +97,8 @@
 #define SPECASM_LINE_TYPE_ORG (SPECASM_LINE_TYPE_SIMPLE_MAX + 2)
 #define SPECASM_LINE_TYPE_MAP (SPECASM_LINE_TYPE_SIMPLE_MAX + 3)
 #define SPECASM_LINE_TYPE_ALIGN (SPECASM_LINE_TYPE_SIMPLE_MAX + 4)
-#define SPECASM_LINE_TYPE_MAX (SPECASM_LINE_TYPE_ALIGN + 1)
+#define SPECASM_LINE_TYPE_EQU (SPECASM_LINE_TYPE_SIMPLE_MAX + 5)
+#define SPECASM_LINE_TYPE_MAX (SPECASM_LINE_TYPE_EQU + 1)
 
 #define SPECASM_LINE_TYPE_EMPTY 128
 #define SPECASM_LINE_TYPE_LL 129
@@ -121,6 +122,8 @@
 #define SPECASM_LINE_TYPE_INC_SYS_SHORT 144
 #define SPECASM_LINE_TYPE_INC_SYS_LONG 145
 
+#define SPECASM_LINE_TYPE_EXP_ADJ 160
+
 #define SPECASM_MAX_MNEMOM 5
 #define SPECASM_MAX_LINES 512
 #define SPECASM_MAX_ROWS 23
@@ -140,6 +143,53 @@
 #define SPECASM_FLAGS_NUM_UNSIGNED 0x40
 #define SPECASM_FLAGS_NUM_HEX 0x80
 #define SPECASM_FLAGS_NUM_SIGNED 0xC0
+
+/*
+ *
+ * The way this is encoded is a bit hacky.
+ * We don't support expressions when specifying offsets using the
+ * ix and iy registers, e.g.,
+ *
+ * add a, (ix + =10*10)
+ *
+ * isn't supported.
+ *
+ * Opcodes that are supported include
+ *
+ * adc a, =expression
+ * add a, =expression
+ * and =expression
+ * call =expression
+ * cp =expression
+ * djnz =expression
+ * sbc a, =expression
+ * jr =expression
+ * jp =expression
+ * in a, (=expression)
+ * out (=expression), a
+ * or =expression
+ * rst =expression
+ * sub a, expression
+ * xor =expression
+ *
+ * In these cases we store the label id in op_code[1] and set the addr flag
+ * to indicate whether it's a long or short label.
+ *
+ * bit =expression, [a-l]
+ * bit =expression, (hl)
+ * im =expression
+ * res =expression, [a-l]
+ * res =expression, (hl)
+ * set =expression, [a-l]
+ * set =expression, (hl)
+
+ *
+ * In these cases the label id in op_code[2] and set the addr flag
+ * to indicate whether it's a long or short label.  op_code[1] is
+ * set as though the integer was 0.
+ */
+
+#define SPECASM_FLAGS_EXP_LONG 0x80
 
 #define specasm_line_set_size(l, s) ((l)->flags |= s)
 #define specasm_line_get_size(l) ((l)->flags & 0x3)
@@ -181,7 +231,8 @@ void specasm_init_dump_table(void);
 char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags);
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 				 specasm_line_t *line);
-
+uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
+			    uint8_t *label1_type);
 uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf);
 
 #endif

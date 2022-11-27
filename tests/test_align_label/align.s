@@ -3,9 +3,10 @@ org $8037
 ld hl, label
 ld hl, Global
 ret
-align 256 
-.label ; 201
-db $66 ; 201
+align 256
+ ; 201	
+.label
+db $66
 jr label ; 202
 	
 

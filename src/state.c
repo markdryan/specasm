@@ -111,6 +111,24 @@ void specasm_state_check_label_e(const char *str)
 		err_type = SPECASM_ERROR_BAD_LABEL;
 }
 
+static void prv_parse_equ_e(specasm_line_t *line, const char *str, uint8_t i)
+{
+	uint8_t label1;
+	uint8_t label1_type;
+	uint8_t label = line->data.label;
+	uint8_t label_type = line->type;
+
+	line->type = SPECASM_LINE_TYPE_EQU;
+	line->data.op_code[0] = label_type;
+	line->data.op_code[1] = label;
+
+	(void) specasm_parse_exp_e(&str[i], &label1, &label1_type);
+
+	line->data.op_code[2] = (label1_type == SPECASM_FLAGS_ADDR_SHORT) ?
+		SPECASM_LINE_TYPE_SL : SPECASM_LINE_TYPE_LL;
+	line->data.op_code[3] = label1;
+}
+
 static void prv_parse_label_e(const char *str, uint8_t i, specasm_line_t *line)
 {
 	uint8_t j;
@@ -133,17 +151,21 @@ static void prv_parse_label_e(const char *str, uint8_t i, specasm_line_t *line)
 		if (err_type != SPECASM_ERROR_OK)
 			return;
 		line->type = SPECASM_LINE_TYPE_SL;
+	} else {
+		line->data.label = specasm_state_add_long_e(scratch);
+		if (err_type != SPECASM_ERROR_OK)
 		return;
+		line->type = SPECASM_LINE_TYPE_LL;
 	}
-
-	line->data.label = specasm_state_add_long_e(scratch);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-	line->type = SPECASM_LINE_TYPE_LL;
 	for (; i < SPECASM_LINE_MAX_LEN && str[i] == ' '; i++)
 		;
-	if (i < SPECASM_LINE_MAX_LEN)
-		err_type = SPECASM_ERROR_LONG_LABEL_EX;
+	if (i < SPECASM_LINE_MAX_LEN) {
+		if (i < (SPECASM_LINE_MAX_LEN - 4) &&
+		    !strncmp(str + i, "equ ", 4))
+			prv_parse_equ_e(line, str, i + 4);
+		else
+			err_type = SPECASM_ERROR_LONG_LABEL_EX;
+	}
 }
 
 static void prv_parse_short_comment_e(const char *str, uint8_t i,
@@ -422,6 +444,23 @@ static char *prv_format_string_e(char *buf, uint8_t lng, unsigned int l,
 	return buf;
 }
 
+char* prv_format_equ_e(char *buf, const specasm_line_t *line)
+{
+	const uint8_t *op_code = &line->data.op_code[0];
+	buf = prv_format_string_e(buf, op_code[0] == SPECASM_LINE_TYPE_LL,
+				    op_code[1], '.');
+	if (err_type != SPECASM_ERROR_OK)
+		return NULL;
+
+	buf[0] = ' ';
+	buf[1] = 'E';
+	buf[2] = 'Q';
+	buf[3] = 'U';
+
+	return prv_format_string_e(buf + 4, op_code[2] == SPECASM_LINE_TYPE_LL,
+				    op_code[3], ' ');
+}
+
 void specasm_format_line_e(char *buf, unsigned int l)
 {
 	const char *ptr;
@@ -438,6 +477,12 @@ void specasm_format_line_e(char *buf, unsigned int l)
 		goto clear;
 
 	start = buf;
+
+	if (line->type == SPECASM_LINE_TYPE_EQU) {
+		buf = prv_format_equ_e(buf, line);
+		goto clear;
+	}
+
 	if ((line->type == SPECASM_LINE_TYPE_LL) ||
 	    (line->type == SPECASM_LINE_TYPE_SL)) {
 		buf =
