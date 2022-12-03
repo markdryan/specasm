@@ -5,16 +5,19 @@ BASE =\
 	state_base.c
 
 COMMON =\
-	line.c \
-	state.c
+	line_common.c
 
 SRCS =\
 	editor.c \
 	editor_tests.c \
 	editor_test_content.c \
+	line_parse.c \
+	line_dump.c \
 	peer_unit.c \
 	peer_posix_screen.c \
 	peer_text_screen.c \
+	state_dump.c \
+	state_parse.c \
 	test_content.c \
 	unittests.c
 
@@ -25,9 +28,13 @@ POSIX = \
 	peer_text_screen.c
 
 SAIMPORT =\
-	saimport.c
+	line_parse.c \
+	saimport.c \
+	state_parse.c 
 
 SAEXPORT =\
+	line_dump.c \
+	state_dump.c \
 	saexport.c
 
 SALINK =\

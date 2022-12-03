@@ -10,10 +10,13 @@ include Make.include
 
 SPECASM = \
 	specasm.o \
-	line.o \
+	line_common.o \
+	line_dump.o \
+	line_parse.o \
 	error.o \
 	state_base.o \
-	state.o \
+	state_dump.o \
+	state_parse.o \
 	editor.o \
 	util_print_zx.o \
 	peer_zx.o
@@ -28,9 +31,10 @@ SALINK = \
 
 SAEXPORT = \
 	error.o \
+	line_common.o \
 	state_base.o \
-	line.o \
-	state.o \
+	line_dump.o \
+	state_dump.o \
 	peer_file_zx.o \
 	util_print_zx.o \
 	peer_zx.o \
@@ -39,8 +43,9 @@ SAEXPORT = \
 SAIMPORT = \
 	error.o \
 	state_base.o \
-	line.o \
-	state.o \
+	line_common.o \
+	line_parse.o \
+	state_parse.o \
 	peer_file_zx.o \
 	util_print_zx.o \
 	peer_zx.o \

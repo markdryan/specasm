@@ -11,8 +11,11 @@ include Make.include
 UNITZX = \
 	error.o \
 	state_base.o \
-	line.o \
-	state.o \
+	line_common.o \
+	line_dump.o \
+	line_parse.o \
+	state_dump.o \
+	state_parse.o \
 	peer_file_zx.o \
 	util_print_zx.o \
 	peer_unit.o \
