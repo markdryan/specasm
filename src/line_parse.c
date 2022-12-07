@@ -592,7 +592,7 @@ static const char *prv_get_label_ind_e(const char *args, specasm_line_t *line,
 	while (*args == ' ')
 		++args;
 
-	args = prv_parse_jump_label_e(args, line, val);
+	args = prv_parse_label_or_exp_e(args, line, val);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
@@ -1024,6 +1024,23 @@ static uint8_t prv_signed_ok(uint8_t flags, uint8_t val)
 	       ((flags == SPECASM_FLAGS_NUM_UNSIGNED) && (val < 128));
 }
 
+static const char* prv_parse_data_exp_e(const char *args,
+					   specasm_line_t *line, uint8_t size)
+{
+	uint8_t read;
+	uint8_t label_type;
+
+	read = specasm_parse_exp_e(args, &line->data.op_code[0],
+				   &label_type);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+	specasm_line_set_addr_type(line, label_type);
+	specasm_line_set_size(line, size);
+	line->type += SPECASM_LINE_TYPE_EXP_ADJ;
+
+	return args + read;
+}
+
 static uint8_t prv_parse_db_e(const char *args, specasm_line_t *line,
 			      const specasm_opcode_t *op_entry)
 {
@@ -1036,6 +1053,14 @@ static uint8_t prv_parse_db_e(const char *args, specasm_line_t *line,
 	const char *args2;
 	uint8_t i = 0;
 	const char *start = args;
+
+	while (*args == ' ')
+		++args;
+
+	if (*args == '=') {
+		args = prv_parse_data_exp_e(args + 1, line, 0);
+		return args - start;
+	}
 
 	args = prv_get_byte_imm_e(args, &val, &flags);
 	if (err_type == SPECASM_ERROR_NUM_TOO_BIG)
@@ -1104,6 +1129,14 @@ static uint8_t prv_parse_dw_e(const char *args, specasm_line_t *line,
 	const char *args2 = args;
 	int8_t sz = 1;
 	const char *start = args;
+
+	while (*args == ' ')
+		++args;
+
+	if (*args == '=') {
+		args = prv_parse_data_exp_e(args + 1, line, 1);
+		return args - start;
+	}
 
 	args = prv_get_word_imm_e(args, &val, &flags);
 	if (err_type == SPECASM_ERROR_NUM_TOO_BIG)
@@ -1818,8 +1851,11 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 	uint8_t off2;
 	uint8_t flags;
 	uint8_t flags2;
+	uint8_t read;
 	uint8_t label_count;
 	uint8_t addr_fmt2;
+	uint8_t label_type;
+	uint8_t v;
 	const char *start = args;
 
 	args2 = prv_get_word_imm_ind_e(args, &val, &flags);
@@ -1832,6 +1868,8 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 	} else {
 		err_type = SPECASM_ERROR_OK;
 		args2 = prv_get_label_ind_e(args, line, &label);
+		if (err_type == SPECASM_ERROR_BAD_EXPRESSION)
+			return 0;
 		val = label;
 	}
 	if (err_type == SPECASM_ERROR_OK) {
@@ -1866,6 +1904,8 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 	} else {
 		err_type = SPECASM_ERROR_OK;
 		args2 = prv_get_label_ind_e(args, line, &label);
+		if (err_type == SPECASM_ERROR_BAD_EXPRESSION)
+			return 0;
 		val = label;
 	}
 	if (err_type == SPECASM_ERROR_OK) {
@@ -1873,7 +1913,20 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 		return args2 - start;
 	}
 	err_type = SPECASM_ERROR_OK;
-	args2 = prv_get_word_imm_e(args, &val, &flags2);
+	while (*args == ' ')
+		++args;
+	if (*args == '=') {
+		read = specasm_parse_exp_e(args + 1, &v, &label_type);
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		specasm_line_set_addr_type(line, label_type);
+		args2 = args + read + 1;
+		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
+		flags2 = 0;
+		val = v;
+	} else {
+		args2 = prv_get_word_imm_e(args, &val, &flags2);
+	}
 	if (err_type == SPECASM_ERROR_NUM_TOO_BIG) {
 		return 0;
 	} else if (err_type == SPECASM_ERROR_OK) {

@@ -162,13 +162,30 @@
  * call =expression
  * cp =expression
  * djnz =expression
- * sbc a, =expression
  * jr =expression
  * jp =expression
  * in a, (=expression)
+ * ld a, =expression
+ * ld a, (=expression)
+ * ld (=expression), a
+ * ld b, =expression
+ * ld c, =expression
+ * ld d, =expression
+ * ld e, =expression
+ * ld h, =expression
+ * ld l, =expression
+ * ld bc, =expression
+ * ld de, =expression
+ * ld hl, =expression
+ * ld hl, (=expression)
+ * ld (hl), =expression
+ * ld (=expression), hl
+ * ld sp, =expression
+ * ld sp, (=expression)
  * out (=expression), a
  * or =expression
  * rst =expression
+ * sbc a, =expression
  * sub a, expression
  * xor =expression
  *
@@ -177,6 +194,17 @@
  *
  * bit =expression, [a-l]
  * bit =expression, (hl)
+ * ld ix, =expression
+ * ld iy, =expression
+ * ld bc, (=expression)
+ * ld (=expression), bc
+ * ld de, (=expression)
+ * ld (=expression), de
+ * ld ix, (=expression)
+ * ld (=expression), ix
+ * ld iy, (=expression)
+ * ld (=expression), iy
+ * ld (=expression), sp
  * im =expression
  * res =expression, [a-l]
  * res =expression, (hl)
