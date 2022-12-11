@@ -1265,6 +1265,7 @@ const test_t opcode_tests[] = {
 	{"ld   hl, =verylonglabel1", "ld hl, =verylonglabel1", 3,
 	 {0x21, 0x01, 0x00}},
 	{"ld hl, (=label1)", "ld hl, (=label1)", 3, {0x2A, 0x05, 0x0}},
+	{"ld hl, (=(label1+1))", "ld hl, (=(label1+1))", 3, {0x2A, 0x06, 0x0}},
 	{"ld hl, ( = label1 )", "ld hl, (=label1)", 3, {0x2A, 0x05, 0x0}},
 	{"ld hl, (=verylonglabel1)", "ld hl, (=verylonglabel1)", 3,
 	 {0x2A, 0x01, 0x0}},
@@ -2723,6 +2724,7 @@ const bad_test_t bad_tests[] = {
 	{"ld ix, label1-label2", SPECASM_ERROR_BAD_LABEL },
 	{"ld iy, label1-label2", SPECASM_ERROR_BAD_LABEL },
 	{"ld a, =", SPECASM_ERROR_BAD_EXPRESSION },
+	{"ld hl, (=(label1+1", SPECASM_ERROR_BAD_EXPRESSION },
 
 	{"or", SPECASM_ERROR_BAD_REG },
 	{"or (bc)", SPECASM_ERROR_BAD_REG },

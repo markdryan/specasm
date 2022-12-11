@@ -2332,12 +2332,29 @@ uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 	uint8_t j;
 	uint8_t len;
 	uint8_t i;
+	uint8_t c;
+	uint8_t brackets = 0;
 	uint8_t end = SPECASM_LINE_MAX_LEN - 1;
 
 	for (i = 0; str[i] == ' '; i++);
-	for (end = i; str[end] && str[end] != ')' && str[end] != ',' &&
-		     str[end] != ';'; end++);
-	if (i == end) {
+
+	end = i;
+	c = str[end];
+	while (c) {
+		if ((c == ',') || (c == ';'))
+			break;
+		if (c == ')') {
+			if (brackets == 0)
+				break;
+			else
+				brackets--;
+		} else if (c == '(') {
+			brackets++;
+		}
+		end++;
+		c = str[end];
+	}
+	if ((i == end) || brackets) {
 		err_type = SPECASM_ERROR_BAD_EXPRESSION;
 		return 0;
 	}
