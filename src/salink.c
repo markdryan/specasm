@@ -1218,7 +1218,7 @@ static void prv_write_map_e(void)
 		for (i = obj->label_start; i < obj->label_end; i++) {
 			label = &labels[i];
 			if (label->type > SALINK_LABEL_TYPE_LNG)
-				continue;;
+				continue;
 			str = prv_get_label_str_e(label->id, label->type);
 			if (err_type != SPECASM_ERROR_OK)
 				goto on_error;

@@ -154,7 +154,7 @@ static void prv_parse_label_e(const char *str, uint8_t i, specasm_line_t *line)
 	} else {
 		line->data.label = specasm_state_add_long_e(scratch);
 		if (err_type != SPECASM_ERROR_OK)
-		return;
+			return;
 		line->type = SPECASM_LINE_TYPE_LL;
 	}
 	for (; i < SPECASM_LINE_MAX_LEN && str[i] == ' '; i++)
