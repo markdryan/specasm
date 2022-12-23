@@ -129,15 +129,16 @@ uint16_t specasm_compute_line_size(specasm_line_t *line)
 	const char *str;
 	uint8_t shrt;
 	uint8_t size = 0;
+	uint8_t type = specasm_line_get_adj_type(line);
 
-	if (line->type <= SPECASM_LINE_TYPE_SIMPLE_MAX)
+	if (type <= SPECASM_LINE_TYPE_SIMPLE_MAX)
 		return (uint16_t)specasm_line_get_size(line) + 1;
 
-	if (line->type == SPECASM_LINE_TYPE_DS)
+	if (type == SPECASM_LINE_TYPE_DS)
 		return *((uint16_t *)&line->data.op_code[1]);
 
-	if ((line->type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
-	    (line->type <= SPECASM_LINE_TYPE_STR_AMP_LONG)) {
+	if ((type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
+	    (type <= SPECASM_LINE_TYPE_STR_AMP_LONG)) {
 		id = line->data.label;
 		if (line->type & 1)
 			str = specasm_state_get_long_e(id);
@@ -147,7 +148,7 @@ uint16_t specasm_compute_line_size(specasm_line_t *line)
 
 		/* We need to reserve one byte for the length. */
 
-		shrt = line->type & 0xFE;
+		shrt = type & 0xFE;
 		if ((shrt == SPECASM_LINE_TYPE_STR_AMP_SHORT) ||
 		    (shrt == SPECASM_LINE_TYPE_STR_HSH_SHORT))
 			size++;

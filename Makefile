@@ -38,7 +38,8 @@ SAEXPORT =\
 	saexport.c
 
 SALINK =\
-	salink.c
+	salink.c \
+	expression.c
 
 TEST_CONTENT_ZX =\
 	test_content.c \

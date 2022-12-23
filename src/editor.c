@@ -51,6 +51,7 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 	uint8_t label_col;
 	uint8_t com_col;
 	uint8_t data_col;
+	uint8_t type;
 	const specasm_line_t *line;
 
 	if (inv) {
@@ -66,7 +67,8 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 	}
 
 	line = &state.lines.lines[l];
-	if (line->type == SPECASM_LINE_TYPE_EMPTY) {
+	type = specasm_line_get_adj_type(line);
+	if (type == SPECASM_LINE_TYPE_EMPTY) {
 		specasm_text_clear(0, r, SPECASM_LINE_MAX_LEN, code_col);
 		return;
 	}
@@ -75,22 +77,22 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
-	if (line->type == SPECASM_LINE_TYPE_EQU) {
+	if (type == SPECASM_LINE_TYPE_EQU) {
 		col = SPECASM_EQU_COLOUR;
-	} else if ((line->type == SPECASM_LINE_TYPE_LL) ||
-		   (line->type == SPECASM_LINE_TYPE_SL)) {
+	} else if ((type == SPECASM_LINE_TYPE_LL) ||
+		   (type == SPECASM_LINE_TYPE_SL)) {
 		col = label_col;
-	} else if ((line->type == SPECASM_LINE_TYPE_LC) ||
-		   (line->type == SPECASM_LINE_TYPE_SC)) {
+	} else if ((type == SPECASM_LINE_TYPE_LC) ||
+		   (type == SPECASM_LINE_TYPE_SC)) {
 		if (line->data.bad_comment && !inv)
 			col = SPECASM_ERROR_COLOUR;
 		else
 			col = com_col;
-	} else if (((line->type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
-		    (line->type <= SPECASM_LINE_TYPE_STR_AMP_LONG)) ||
-		   ((line->type >= SPECASM_LINE_TYPE_DB) &&
-		    (line->type <= SPECASM_LINE_TYPE_DW_SUB)) ||
-		   (line->type == SPECASM_LINE_TYPE_DS)) {
+	} else if (((type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
+		    (type <= SPECASM_LINE_TYPE_STR_AMP_LONG)) ||
+		   ((type >= SPECASM_LINE_TYPE_DB) &&
+		    (type <= SPECASM_LINE_TYPE_DW_SUB)) ||
+		   (type == SPECASM_LINE_TYPE_DS)) {
 		col = data_col;
 	} else {
 		col = code_col;
@@ -98,8 +100,8 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 			scratch[SPECASM_LINE_MAX_OPCODE + 1] = 0;
 	}
 	if ((line->comment == SPECASM_NULL) ||
-	    (line->type == SPECASM_LINE_TYPE_LC) ||
-	    (line->type == SPECASM_LINE_TYPE_SC)) {
+	    (type == SPECASM_LINE_TYPE_LC) ||
+	    (type == SPECASM_LINE_TYPE_SC)) {
 		(void)specasm_text_print(scratch, 0, r, col);
 		return;
 	}

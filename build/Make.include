@@ -1,4 +1,6 @@
 error.o: ../src/error.c ../src/error.h
+expression.o: ../src/expression.c ../src/error.h ../src/expression.h ../src/salink.h \
+  ../src/line.h ../src/state_base.h ../src/strings.h
 state_base.o: ../src/state_base.c ../src/peer.h ../src/error.h ../src/peer_zx.h \
 	      ../src/line.h ../src/state_base.h ../src/strings.h
 state_dump.o: ../src/state_dump.c ../src/state.h ../src/state_base.h ../src/line.h \

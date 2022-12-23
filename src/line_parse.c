@@ -26,6 +26,11 @@ typedef struct specasm_opcode_t_ specasm_opcode_t;
 typedef uint8_t (*specasm_parse_fn_t)(const char *args, specasm_line_t *line,
 				      const specasm_opcode_t *op_code);
 
+typedef const char *(*specasm_parse_label_fn_t)(const char *args,
+						specasm_line_t *line,
+						uint8_t *label);
+
+
 struct specasm_opcode_t_ {
 	specasm_parse_fn_t fn;
 	uint8_t op_code[2];
@@ -212,6 +217,7 @@ static const char *prv_get_byte_imm_ind_e(specasm_line_t *line,
 	long v;
 	uint8_t flags;
 	uint8_t label_type;
+	uint8_t label;
 	uint8_t read;
 
 	while (*args == ' ')
@@ -227,12 +233,13 @@ static const char *prv_get_byte_imm_ind_e(specasm_line_t *line,
 		++args;
 
 	if (*args == '=') {
-		read = specasm_parse_exp_e(args + 1, &line->data.op_code[2],
-					   &label_type);
+		read = specasm_parse_exp_e(args + 1, &label, &label_type);
+		if (err_type != SPECASM_ERROR_OK)
+			return NULL;
 		specasm_line_set_addr_type(line, label_type);
 		args += read + 1;
 		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
-		v = 0;
+		v = label;
 	} else {
 		args = specasm_get_long_imm_e(args, &v, &flags);
 		if (err_type != SPECASM_ERROR_OK)
@@ -565,7 +572,8 @@ static const char* prv_parse_byte_imm_or_exp_e(const char *args,
 		specasm_line_set_addr_type(line, label_type);
 		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
 		args += read + 1;
-		*val = 0;
+		if (val != label)
+			*val = 0;
 		return args;
 	}
 
@@ -962,7 +970,7 @@ static uint8_t prv_parse_djnz_e(const char *args, specasm_line_t *line,
 	while (*args == ' ')
 		++args;
 
-	args = prv_parse_label_or_exp_e(args, line, &line->data.op_code[1]);
+	args = prv_parse_jump_label_e(args, line, &line->data.op_code[1]);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 	line->data.op_code[0] = 0x10;
@@ -1401,7 +1409,8 @@ static uint8_t prv_parse_jp_e(const char *args, specasm_line_t *line,
 
 static uint8_t prv_parse_relative_jmp_e(const char *args, specasm_line_t *line,
 					const specasm_opcode_t *op_entry,
-					uint8_t max_cc)
+					uint8_t max_cc,
+					specasm_parse_label_fn_t fn_e)
 {
 	const char *args2;
 	uint8_t label;
@@ -1433,7 +1442,7 @@ static uint8_t prv_parse_relative_jmp_e(const char *args, specasm_line_t *line,
 	while (*args == ' ')
 		++args;
 
-	args2 = prv_parse_label_or_exp_e(args, line, &label);
+	args2 = fn_e(args, line, &label);
 
 	/* If the label's bad we might have a 16 bit offset so return
 	 * an error but skip past the condition code if any.
@@ -1466,7 +1475,8 @@ static uint8_t prv_parse_absolute_jmp_e(const char *args, specasm_line_t *line,
 	uint16_t val;
 	uint8_t flags;
 
-	len = prv_parse_relative_jmp_e(args, line, op_entry, max_cc);
+	len = prv_parse_relative_jmp_e(args, line, op_entry, max_cc,
+				       prv_parse_label_or_exp_e);
 	if (err_type != SPECASM_ERROR_BAD_LABEL)
 		return len;
 
@@ -1495,7 +1505,8 @@ static uint8_t prv_parse_jr_e(const char *args, specasm_line_t *line,
 			      const specasm_opcode_t *op_entry)
 {
 	specasm_line_set_size(line, 1);
-	return prv_parse_relative_jmp_e(args, line, op_entry, SPECASM_CC_C);
+	return prv_parse_relative_jmp_e(args, line, op_entry, SPECASM_CC_C,
+					prv_parse_jump_label_e);
 }
 
 static void prv_set_ld_imm_ind_e(specasm_line_t *line, uint16_t val,
@@ -2369,7 +2380,7 @@ uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 		scratch[j] = str[i+j];
 	scratch[j] = 0;
 
-	if (len <= SPECASM_MAX_SHORT_LEN) {
+	if (len < SPECASM_MAX_SHORT_LEN) {
 		*label1 = specasm_state_add_short_e(scratch);
 		*label1_type = SPECASM_FLAGS_ADDR_SHORT;
 	} else {

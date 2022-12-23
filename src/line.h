@@ -161,8 +161,6 @@
  * and =expression
  * call =expression
  * cp =expression
- * djnz =expression
- * jr =expression
  * jp =expression
  * in a, (=expression)
  * ld a, =expression
@@ -181,7 +179,6 @@
  * ld (hl), =expression
  * ld (=expression), hl
  * ld sp, =expression
- * ld sp, (=expression)
  * out (=expression), a
  * or =expression
  * rst =expression
@@ -205,6 +202,7 @@
  * ld iy, (=expression)
  * ld (=expression), iy
  * ld (=expression), sp
+ * ld sp, (=expression)
  * im =expression
  * res =expression, [a-l]
  * res =expression, (hl)
@@ -215,6 +213,12 @@
  * In these cases the label id in op_code[2] and set the addr flag
  * to indicate whether it's a long or short label.  op_code[1] is
  * set as though the integer was 0.
+ *
+ * db =expression
+ * dw =expression
+ *
+ * In this case the id is stored in op_code[0].  It's not possible to have
+ * multiple expressions in a single db or dw statement.
  */
 
 #define SPECASM_FLAGS_EXP_LONG 0x80
@@ -227,6 +231,17 @@
 #define specasm_line_set_format(l, s) ((l)->flags |= (s))
 #define specasm_line_get_format2(l) ((((l)->flags) & 0x30) << 2)
 #define specasm_line_set_format2(l, s) ((l)->flags |= ((s) >> 2))
+
+
+/*
+ * returns the type of a line but treats instructions with expressions
+ * as normal instructions.  This makes it easier to handle these instructions
+ * in code that doesn't care about expressions.
+ */
+
+#define specasm_line_get_adj_type(l) ((l->type >= SPECASM_LINE_TYPE_EXP_ADJ) ?\
+				      (l->type - SPECASM_LINE_TYPE_EXP_ADJ) :\
+				      l->type)
 
 /*
  * flags bit field

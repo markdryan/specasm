@@ -65,7 +65,7 @@ const test_t opcode_tests[] = {
 	{"adc hl, sp", "adc hl, sp", 2, { 0xed, 0x7a }},
 	{"adc  hl, sp", "adc hl, sp", 2, { 0xed, 0x7a }},
 	{"adc a, =label", "adc a, =label", 2, { 0xCE, 0x0 }},
-	{"adc a,=label", "adc a, =label", 2, { 0xCE, 0x0 }},
+	{"adc a,=no", "adc a, =no", 2, { 0xCE, 0x1 }},
 	{"adc a,=  label", "adc a, =label", 2, { 0xCE, 0x0 }},
 
 	{"add a, (hl)", "add a, (hl)", 1, { 0x86 }},
@@ -118,6 +118,7 @@ const test_t opcode_tests[] = {
 	{"add  iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 
 	{"add a , =label", "add a, =label", 2, { 0xC6, 0x00 }},
+	{"add a , =no", "add a, =no", 2, { 0xC6, 0x01 }},
 	{"add a , =verylonglabel", "add a, =verylonglabel", 2, { 0xC6, 0x00 }},
 
 	{"align 4", "align 4", 1, {0x2}},
@@ -161,6 +162,7 @@ const test_t opcode_tests[] = {
 	{"and  'A'", "and 'A'", 2, { 0xE6, 0x41 }},
 
 	{"and =label", "and =label", 2, { 0xE6, 0x0 }},
+	{"and =no", "and =no", 2, { 0xE6, 0x1 }},
 	{"and =verylonglabel", "and =verylonglabel", 2, { 0xE6, 0x0 }},
 
 	{"bit 0, (hl)", "bit 0, (hl)", 2, { 0xCB, 0x46 }},
@@ -397,6 +399,7 @@ const test_t opcode_tests[] = {
 	{"call 60000", "call 60000", 3, {0xCD, 0x60, 0xEA} },
 
 	{"call =label", "call =label", 3, {0xCD, 0x00, 0x00}},
+	{"call =no", "call =no", 3, {0xCD, 0x01, 0x00}},
 	{"call =  label", "call =label", 3, {0xCD, 0x00, 0x00}},
 	{"call nz, =label", "call nz, =label", 3, {0xC4, 0x00, 0x00}},
 	{"call nz   ,  =label", "call nz, =label", 3, {0xC4, 0x00, 0x00}},
@@ -441,6 +444,7 @@ const test_t opcode_tests[] = {
 	{"cp  -128", "cp -128", 2, {0xFE, 0x80}},
 
 	{"cp =label", "cp =label", 2, {0xFE, 0x0}},
+	{"cp =no", "cp =no", 2, {0xFE, 0x1}},
 	{"cp  =  label", "cp =label", 2, {0xFE, 0x0}},
 	{"cp =verylonglabel", "cp =verylonglabel", 2, {0xFE, 0x0}},
 	{"cp  =  verylonglabel", "cp =verylonglabel", 2, {0xFE, 0x0}},
@@ -492,11 +496,6 @@ const test_t opcode_tests[] = {
 	{"djnz label", "djnz label", 2, {0x10,0x0}},
 	{"djnz    label", "djnz label", 2, {0x10,0x0}},
 
-	{"djnz =label", "djnz =label", 2, {0x10,0x0}},
-	{"djnz    =label", "djnz =label", 2, {0x10,0x0}},
-	{"djnz =verylonglabel", "djnz =verylonglabel", 2, {0x10,0x0}},
-	{"djnz    = verylonglabel", "djnz =verylonglabel", 2, {0x10,0x0}},
-
 	{"ei", "ei", 1, {0xFB}},
 
 	{"ex (sp), hl", "ex (sp), hl", 1, {0xE3}},
@@ -523,6 +522,7 @@ const test_t opcode_tests[] = {
 	{"im $2", "im 2", 2, {0xED, 0x5E}},
 	{"im   $2", "im 2", 2, {0xED, 0x5E}},
 	{"im =label", "im =label", 2, {0xED, 0x46}},
+	{"im =no", "im =no", 2, {0xED, 0x46, 1}},
 	{"im   =  label", "im =label", 2, {0xED, 0x46}},
 
 	{"in a, (c)", "in a, (c)", 2, {0xED, 0x78}},
@@ -548,6 +548,7 @@ const test_t opcode_tests[] = {
 
 	{"in a, (=label)", "in a, (=label)", 2, {0xDB, 0x0}},
 	{"in a,( = label )", "in a, (=label)", 2, {0xDB, 0x0}},
+	{"in a, (=no)", "in a, (=no)", 2, {0xDB, 0x1}},
 
 	{"inc (hl)", "inc (hl)", 1, {0x34}},
 	{"inc  ( hl)", "inc (hl)", 1, {0x34}},
@@ -634,9 +635,6 @@ const test_t opcode_tests[] = {
 	{"jr  nz,label", "jr nz, label", 2, {0x20, 0x00}},
 	{"jr clabel", "jr clabel", 2, {0x18, 0x03}},
 	{"jr nzo", "jr nzo", 2, {0x18, 0x04}},
-
-	{"jr =clabel", "jr =clabel", 2, {0x18, 0x03}},
-	{"jr  nc,=label", "jr nc, =label", 2, {0x30, 0x00}},
 
 	{"ld (bc), a", "ld (bc), a", 1, {0x2}},
 	{"ld ( bc ) ,  a", "ld (bc), a", 1, {0x2}},
@@ -1458,6 +1456,7 @@ const test_t opcode_tests[] = {
 
 	{"or =label", "or =label", 2, { 0xF6, 0x0 }},
 	{"or = label", "or =label", 2, { 0xF6, 0x0 }},
+	{"or = label1", "or =label1", 2, { 0xF6, 0x5 }},
 
 	/*
 	 * The size here is wrong, but org statements
@@ -1497,6 +1496,7 @@ const test_t opcode_tests[] = {
 	{"out  ( $FF ), a", "out ($FF), a", 2, {0xD3, 0xFF}},
 	{"out  ( =label ), a", "out (=label), a", 2, {0xD3, 0x0}},
 	{"out  ( =  label  ), a", "out (=label), a", 2, {0xD3, 0x0}},
+	{"out  ( =label1  ), a", "out (=label1), a", 2, {0xD3, 0x5}},
 
 	{"outd", "outd", 2, {0xED, 0xAB}},
 	{"outi", "outi", 2, {0xED, 0xA3}},
@@ -1728,6 +1728,7 @@ const test_t opcode_tests[] = {
 	{"res $7,   l", "res 7, l", 2, { 0xCB, 0XBD }},
 
 	{"res =label, a", "res =label, a", 2, { 0xCB, 0x87 }},
+	{"res =label1, a", "res =label1, a", 2, { 0xCB, 0x87, 5 }},
 	{"res =label, (hl)", "res =label, (hl)", 2, { 0xCB, 0x86 }},
 	{"res =label,( hl )", "res =label, (hl)", 2, { 0xCB, 0x86 }},
 	{"res =verylonglabel,( hl )", "res =verylonglabel, (hl)", 2, { 0xCB, 0X86 }},
@@ -1887,7 +1888,7 @@ const test_t opcode_tests[] = {
 	{"rst $38", "rst $38", 1, { 0xFF }},
 	{"rst   $38", "rst $38", 1, { 0xFF }},
 	{"rst =label", "rst =label", 1, { 0xC7 }},
-	{"rst   = label", "rst =label", 1, { 0xC7 }},
+	{"rst   = label1", "rst =label1", 1, { 0xC7, 0x5 }},
 
 	{"sbc a, (hl)", "sbc a, (hl)", 1, { 0x9e }},
 	{"sbc a,( hl)", "sbc a, (hl)", 1, { 0x9e }},
@@ -1934,8 +1935,8 @@ const test_t opcode_tests[] = {
 	{"sbc hl, sp", "sbc hl, sp", 2, { 0xed, 0x72 }},
 	{"sbc  hl, sp", "sbc hl, sp", 2, { 0xed, 0x72 }},
 
-	{"sbc a, =label", "sbc a, =label", 2, { 0xDE, 0x00 }},
-	{"sbc a,=  label", "sbc a, =label", 2, { 0xDE, 0x00 }},
+	{"sbc a, =label1", "sbc a, =label1", 2, { 0xDE, 0x05 }},
+	{"sbc a,=  label1", "sbc a, =label1", 2, { 0xDE, 0x05 }},
 
 	{"scf", "scf", 1, { 0x37 }},
 
@@ -2132,6 +2133,7 @@ const test_t opcode_tests[] = {
 	{"set 7,   l", "set 7, l", 2, { 0xCB, 0XFD }},
 
 	{"set =label, a", "set =label, a", 2, { 0xCB, 0xC7 }},
+	{"set =label1, a", "set =label1, a", 2, { 0xCB, 0xC7, 0x5 }},
 	{"set =label, (hl)", "set =label, (hl)", 2, { 0xCB, 0xC6 }},
 	{"set =label,( hl )", "set =label, (hl)", 2, { 0xCB, 0xC6 }},
 	{"set =verylonglabel,( hl )", "set =verylonglabel, (hl)", 2, { 0xCB, 0XC6 }},
@@ -2235,6 +2237,7 @@ const test_t opcode_tests[] = {
 	{"sub  'A'", "sub 'A'", 2, { 0xD6, 0x41 }},
 
 	{"sub =label", "sub =label", 2, { 0xD6, 0x0 }},
+	{"sub =label1", "sub =label1", 2, { 0xD6, 0x5 }},
 	{"sub  =  label", "sub =label", 2, { 0xD6, 0x0 }},
 
 	{"xor (hl)", "xor (hl)", 1, { 0xAE }},
@@ -2267,6 +2270,7 @@ const test_t opcode_tests[] = {
 	{"xor   'A'", "xor 'A'", 2, { 0xEE, 0x41 }},
 	{"xor =label", "xor =label", 2, { 0xEE, 0x0 }},
 	{"xor  =  label", "xor =label", 2, { 0xEE, 0x0 }},
+	{"xor  =  label1", "xor =label1", 2, { 0xEE, 0x5 }},
 
 	{"ld a, $DD", "ld a, $DD", 2, {0x3E, 0xDD}},
 
@@ -2434,11 +2438,11 @@ const format_test_t format_tests[] = {
 	{"+  sub.x", "+sub.x", SPECASM_LINE_TYPE_INC_SYS_SHORT},
 	{"+a/very/long/path", "+a/very/long/path",
 	 SPECASM_LINE_TYPE_INC_SYS_LONG},
-	{".size equ 10 * 10", ".size EQU 10 * 10", SPECASM_LINE_TYPE_EQU},
-	{".size  equ  10  *  10", ".size EQU 10  *  10", SPECASM_LINE_TYPE_EQU},
-	{".longlabel1234 equ longlabel1234", ".longlabel1234 EQU longlabel1234",
+	{".size equ 10 * 10", ".size equ 10 * 10", SPECASM_LINE_TYPE_EQU},
+	{".size  equ  10  *  10", ".size equ 10  *  10", SPECASM_LINE_TYPE_EQU},
+	{".longlabel1234 equ longlabel1234", ".longlabel1234 equ longlabel1234",
 	 SPECASM_LINE_TYPE_EQU},
-	{".longlabel1234 equ shortlal + 1 ", ".longlabel1234 EQU shortlal + 1",
+	{".longlabel1234 equ shortlal + 1 ", ".longlabel1234 equ shortlal + 1",
 	 SPECASM_LINE_TYPE_EQU}
 };
 
@@ -2586,6 +2590,7 @@ const bad_test_t bad_tests[] = {
 	{"dec =10+10", SPECASM_ERROR_BAD_REG },
 	{"dec (ix+=label)", SPECASM_ERROR_BAD_NUM },
 
+	{"djnz =label", SPECASM_ERROR_BAD_LABEL },
 	{"djnz", SPECASM_ERROR_BAD_LABEL },
 	{"djnz bc", SPECASM_ERROR_BAD_LABEL },
 
@@ -2651,6 +2656,7 @@ const bad_test_t bad_tests[] = {
 	{"jr pe, label", SPECASM_ERROR_CONDITION_CODE },
 	{"jr p, label", SPECASM_ERROR_CONDITION_CODE },
 	{"jr m, label", SPECASM_ERROR_CONDITION_CODE },
+	{"jr =clabel", SPECASM_ERROR_BAD_LABEL },
 
 	{"ld", SPECASM_ERROR_BAD_REG },
 	{"ld (a), a", SPECASM_ERROR_BAD_REG },

@@ -96,6 +96,7 @@ static int prv_test_parse_format_bare()
 		char buf2[SPECASM_LINE_MAX_LEN + 1];
 		const test_t *t = &opcode_tests[i];
 		const specasm_line_t *line = &state.lines.lines[0];
+		uint8_t type;
 
 		memset(buf, ' ', sizeof(buf) - 1);
 		buf[sizeof(buf) - 1] = 0;
@@ -130,11 +131,12 @@ static int prv_test_parse_format_bare()
 		memset(buf, 0, sizeof(buf));
 		memset(buf2, ' ', sizeof(buf2) - 1);
 		buf2[sizeof(buf2) - 1] = 0;
-		if (line->type != SPECASM_LINE_TYPE_DB &&
-		    line->type != SPECASM_LINE_TYPE_DW &&
-		    line->type != SPECASM_LINE_TYPE_DB_SUB &&
-		    line->type != SPECASM_LINE_TYPE_DW_SUB &&
-		    line->type != SPECASM_LINE_TYPE_DS)
+		type = specasm_line_get_adj_type(line);
+		if (type != SPECASM_LINE_TYPE_DB &&
+		    type != SPECASM_LINE_TYPE_DW &&
+		    type != SPECASM_LINE_TYPE_DB_SUB &&
+		    type != SPECASM_LINE_TYPE_DW_SUB &&
+		    type != SPECASM_LINE_TYPE_DS)
 			memcpy(buf2 + SPECASM_MAX_INDENT, t->str,
 			       strlen(t->str));
 		else

@@ -340,7 +340,7 @@ static uint8_t prv_dump_bit_e(const specasm_line_t *line, char *buf)
 	const uint8_t *op_code = line->data.op_code;
 	uint8_t index = op_code[0] == 0xDD || op_code[0] == 0xFD;
 
-	if (line->type >= SPECASM_FLAGS_EXP_LONG) {
+	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ) {
 		buf = prv_dump_exp_e(line, buf, op_code[2]);
 	} else {
 		val = (index) ? op_code[3] : op_code[1];
@@ -473,7 +473,7 @@ static char* prv_dump_byte_imm_ind_e(const specasm_line_t *line, char *buf)
 	const uint8_t *op_code = line->data.op_code;
 
 	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
-		return prv_dump_exp_e(line, buf, op_code[2]);
+		return prv_dump_exp_e(line, buf, op_code[1]);
 
 	return buf + prv_dump_byte(buf, op_code[1],
 				   specasm_line_get_format(line));
@@ -1021,7 +1021,7 @@ static uint8_t prv_dump_rst_e(const specasm_line_t *line, char *buf)
 
 	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ) {
 		start = buf;
-		buf = prv_dump_exp_e(line, buf, op_code[2]);
+		buf = prv_dump_exp_e(line, buf, op_code[1]);
 		return buf - start;
 	}
 
@@ -1310,10 +1310,7 @@ uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf)
 	uint8_t index;
 	const char *name;
 	char *start = buf;
-	uint8_t type = line->type;
-
-	if (type >= SPECASM_LINE_TYPE_EXP_ADJ)
-		type -= SPECASM_LINE_TYPE_EXP_ADJ;
+	uint8_t type = specasm_line_get_adj_type(line);
 
 	index = dump_opcodes[type].index;
 	name = mnemomics_table[index].mnemomic;

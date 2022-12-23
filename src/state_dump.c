@@ -46,9 +46,9 @@ static char* prv_format_equ_e(char *buf, const specasm_line_t *line)
 		return NULL;
 
 	buf[0] = ' ';
-	buf[1] = 'E';
-	buf[2] = 'Q';
-	buf[3] = 'U';
+	buf[1] = 'e';
+	buf[2] = 'q';
+	buf[3] = 'u';
 
 	return prv_format_string_e(buf + 4, op_code[2] == SPECASM_LINE_TYPE_LL,
 				    op_code[3], ' ');
@@ -63,46 +63,47 @@ void specasm_format_line_e(char *buf, unsigned int l)
 	uint8_t i;
 	const char str_ids[] = {'\'', '"', '#', '@', '-', '+'};
 	const specasm_line_t *line = &state.lines.lines[l];
+	uint8_t type = specasm_line_get_adj_type(line);
 
 	end_ptr = buf + SPECASM_LINE_MAX_LEN;
 
-	if (line->type == SPECASM_LINE_TYPE_EMPTY)
+	if (type == SPECASM_LINE_TYPE_EMPTY)
 		goto clear;
 
 	start = buf;
 
-	if (line->type == SPECASM_LINE_TYPE_EQU) {
+	if (type == SPECASM_LINE_TYPE_EQU) {
 		buf = prv_format_equ_e(buf, line);
 		goto clear;
 	}
 
-	if ((line->type == SPECASM_LINE_TYPE_LL) ||
-	    (line->type == SPECASM_LINE_TYPE_SL)) {
+	if ((type == SPECASM_LINE_TYPE_LL) ||
+	    (type == SPECASM_LINE_TYPE_SL)) {
 		buf =
-		    prv_format_string_e(buf, line->type == SPECASM_LINE_TYPE_LL,
+		    prv_format_string_e(buf, type == SPECASM_LINE_TYPE_LL,
 					line->data.label, '.');
 		goto clear;
 	}
 
-	if ((line->type == SPECASM_LINE_TYPE_LC) ||
-	    (line->type == SPECASM_LINE_TYPE_SC)) {
+	if ((type == SPECASM_LINE_TYPE_LC) ||
+	    (type == SPECASM_LINE_TYPE_SC)) {
 		buf =
-		    prv_format_string_e(buf, line->type == SPECASM_LINE_TYPE_LC,
+		    prv_format_string_e(buf, type == SPECASM_LINE_TYPE_LC,
 					line->comment, ';');
 		goto clear;
 	}
-	if ((line->type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
-	    (line->type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
-		i = (line->type - SPECASM_LINE_TYPE_STR_SIN_SHORT) >> 1;
+	if ((type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
+	    (type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
+		i = (type - SPECASM_LINE_TYPE_STR_SIN_SHORT) >> 1;
 		i = str_ids[i];
 		buf = prv_format_string_e(buf, line->type & 1, line->data.label,
 					  i);
-		if ((line->type < SPECASM_LINE_TYPE_INC_SHORT) && buf < end_ptr)
+		if ((type < SPECASM_LINE_TYPE_INC_SHORT) && buf < end_ptr)
 			*buf++ = i;
 	} else {
-		if (!((line->type >= SPECASM_LINE_TYPE_DB &&
-		       line->type <= SPECASM_LINE_TYPE_DW_SUB) ||
-		      line->type == SPECASM_LINE_TYPE_DS))
+		if (!((type >= SPECASM_LINE_TYPE_DB &&
+		       type <= SPECASM_LINE_TYPE_DW_SUB) ||
+		      type == SPECASM_LINE_TYPE_DS))
 			for (i = 0; i < SPECASM_MAX_INDENT; i++)
 				*buf++ = ' ';
 

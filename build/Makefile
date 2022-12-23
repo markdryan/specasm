@@ -24,6 +24,7 @@ SPECASM = \
 SALINK = \
 	salink.o \
 	error.o \
+	expression.o \
 	state_base.o \
 	peer_file_zx.o \
 	util_print_zx.o \
