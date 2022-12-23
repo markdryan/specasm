@@ -332,12 +332,17 @@ static const char *prv_exp_priority1_e(const char *str, salink_obj_t *obj,
 
 	while (tok.type == SALINK_TOKEN_OP) {
 		op = (char) tok.data.id;
-		if (op != '*' && op != '/')
+		if (op != '*' && op != '/' && op != '%')
 			break;
 
 		str = prv_exp_priority0_e(next, obj, &e2, depth, is_global);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
+
+		if (op != '*' && e2 == 0) {
+			err_type = SALINK_ERROR_DIV_ZERO;
+			return NULL;
+		}
 
 		switch (op) {
 		case '*':
@@ -345,6 +350,9 @@ static const char *prv_exp_priority1_e(const char *str, salink_obj_t *obj,
 			break;
 		case '/':
 			e1 = e1 / e2;
+			break;
+		case '%':
+			e1 = e1 % e2;
 			break;
 		}
 		next = prv_get_token_e(str, obj, &tok, is_global);
@@ -504,6 +512,12 @@ static int16_t prv_equ_eval_e(salink_obj_t *obj, const char *name,
 	salink_token_t tok;
 
 	str = prv_exp_priority4_e(name, obj, &e, depth, is_global);
+	if (err_type == SALINK_ERROR_DIV_ZERO) {
+		snprintf(error_buf, sizeof(error_buf),
+			 "Divide by zero %s : %s", obj->fname, name);
+		return 0;
+	}
+
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
