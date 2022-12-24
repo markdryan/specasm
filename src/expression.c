@@ -282,12 +282,10 @@ static const char *prv_exp_priority0_e(const char *str, salink_obj_t *obj,
 		switch (label->type) {
 		case SALINK_LABEL_TYPE_SHORT:
 		case SALINK_LABEL_TYPE_LNG:
-		case SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL_SHORT:
-		case SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL_LONG:
+		case SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL:
 			*e = label->data.off;
 			break;
-		case SALINK_LABEL_TYPE_EQU_GLOBAL_SHORT:
-		case SALINK_LABEL_TYPE_EQU_GLOBAL_LONG:
+		case SALINK_LABEL_TYPE_EQU_GLOBAL:
 			if (depth == 8) {
 				err_type = SALINK_ERROR_RECURISVE_EQU;
 				return NULL;
@@ -587,9 +585,6 @@ void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
 		return;
 	}
 
-	if (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL_SHORT)
-		label->type = SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL_SHORT;
-	else
-		label->type = SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL_LONG;
+	label->type = SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL;
 }
 

@@ -297,14 +297,14 @@ static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj)
 		global = &globals[global_count - 1];
 		id = op_code[3];
 		type = op_code[2] == SPECASM_LINE_TYPE_SL ?
-			SALINK_LABEL_TYPE_EQU_GLOBAL_SHORT :
-			SALINK_LABEL_TYPE_EQU_GLOBAL_LONG;
+			SALINK_LABEL_TYPE_EQU_SHORT :
+			SALINK_LABEL_TYPE_EQU_LONG;
 		str = prv_get_label_str_e(id, type);
 		if (err_type != SPECASM_ERROR_OK)
 			return;
 		strcpy(global->name + strlen(global->name) + 1,
 		       str);
-		label->type = type;
+		label->type = SALINK_LABEL_TYPE_EQU_GLOBAL;
 		return;
 	}
 
@@ -491,8 +491,7 @@ static void prv_evaluate_global_equs_e(void)
 		global = &globals[i];
 		label = &labels[global->label_index];
 		obj = &obj_files[global->obj_index];
-		if ((label->type == SALINK_LABEL_TYPE_EQU_GLOBAL_SHORT) ||
-		    (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL_LONG))
+		if (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL)
 			salink_equ_eval_global_e(obj, global, label, 0);
 	}
 }
@@ -538,10 +537,8 @@ unsigned int salink_find_local_label_e(const char* str, int len,
 	for (i = obj->label_start; i < obj->label_end; i++) {
 		label = &labels[i];
 		if ((label->type == SALINK_LABEL_TYPE_ALIGN) ||
-		    (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL_SHORT) ||
-		    (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL_LONG) ||
-		    (label->type == SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL_SHORT) ||
-		    (label->type == SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL_LONG))
+		    (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL) ||
+		    (label->type == SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL))
 			continue;
 		lab_lng = label->type & 1;
 		if (lng != lab_lng)
