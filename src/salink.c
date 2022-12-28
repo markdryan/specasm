@@ -107,7 +107,7 @@ static const char *prv_get_label_str_e(uint8_t id, uint8_t label_type)
 }
 
 static uint8_t prv_add_label_e(salink_obj_t *obj, uint16_t size,
-			       uint8_t type, uint8_t id)
+			       uint8_t type, uint8_t id, uint16_t line_no)
 {
 	char ibuf[16];
 	unsigned int i;
@@ -141,9 +141,10 @@ static uint8_t prv_add_label_e(salink_obj_t *obj, uint16_t size,
 		for (i = 0; i < global_count; i++) {
 			if (!strcmp(str, globals[i].name)) {
 				snprintf(error_buf, sizeof(error_buf),
-					 "%s defined in %s and %s", str,
-					 obj->fname,
-					 obj_files[globals[i].obj_index].fname);
+					 "%s defined in %s:%d and %s:%d", str,
+					 obj->fname, line_no,
+					 obj_files[globals[i].obj_index].fname,
+					 globals[i].line_no);
 				err_type = SALINK_ERROR_MULTIPLE_DEFS;
 				return 0;
 			}
@@ -156,6 +157,7 @@ static uint8_t prv_add_label_e(salink_obj_t *obj, uint16_t size,
 		strcpy(global->name, str);
 		global->obj_index = obj_file_count;
 		global->label_index = label_count;
+		global->line_no = line_no;
 		global_count++;
 		itoa(global_count, ibuf, 10);
 		(void)specasm_text_print(ibuf, SALINK_VAL_COL + 1,
@@ -175,8 +177,8 @@ static uint8_t prv_add_label_e(salink_obj_t *obj, uint16_t size,
 
 			if (!strcmp(str, str1)) {
 				snprintf(error_buf, sizeof(error_buf),
-					 "%s multiply defined in %s", str,
-					 obj->fname);
+					 "%s multiply defined in %s:%d", str,
+					 obj->fname, line_no);
 				err_type = SALINK_ERROR_MULTIPLE_DEFS;
 				return 0;
 			}
@@ -266,7 +268,8 @@ static void prv_add_queued_file_e(const char *base, const char *prefix,
 	}
 }
 
-static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj)
+static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj,
+				uint16_t line_no)
 {
 	uint8_t type;
 	uint8_t *op_code;
@@ -289,7 +292,7 @@ static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj)
 	type = op_code[0] == SPECASM_LINE_TYPE_SL ?
 		SALINK_LABEL_TYPE_EQU_SHORT :
 		SALINK_LABEL_TYPE_EQU_LONG;
-	is_global = prv_add_label_e(obj, 0, type, op_code[1]);
+	is_global = prv_add_label_e(obj, 0, type, op_code[1], line_no);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 	label = &labels[label_count - 1];
@@ -352,9 +355,9 @@ static void prv_parse_obj_e(const char *fname)
 				? SALINK_LABEL_TYPE_LNG
 				: SALINK_LABEL_TYPE_SHORT;
 			(void) prv_add_label_e(obj, size, type,
-					       line->data.label);
+					       line->data.label, i);
 		} else if (line->type == SPECASM_LINE_TYPE_EQU) {
-			prv_add_equ_label_e(line, obj);
+			prv_add_equ_label_e(line, obj, i);
 		} else if (line->type == SPECASM_LINE_TYPE_ORG) {
 			if (got_org) {
 				strcpy(error_buf,
@@ -491,8 +494,11 @@ static void prv_evaluate_global_equs_e(void)
 		global = &globals[i];
 		label = &labels[global->label_index];
 		obj = &obj_files[global->obj_index];
-		if (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL)
+		if (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL) {
 			salink_equ_eval_global_e(obj, global, label, 0);
+			if (err_type != SPECASM_ERROR_OK)
+				return;
+		}
 	}
 }
 
@@ -644,7 +650,7 @@ static int16_t prv_eval_exp_from_id_e(salink_obj_t *obj,
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	exp = salink_equ_eval_e(obj, str);
+	exp = salink_equ_eval_e(obj, str, line_no);
 
 	if ((err_type != SPECASM_ERROR_OK) && (err_type < SPECASM_MAX_ERRORS)) {
 		snprintf(error_buf, sizeof(error_buf),

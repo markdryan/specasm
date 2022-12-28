@@ -97,7 +97,7 @@ typedef struct salink_token_t_ salink_token_t;
 
 static const char *prv_exp_priority4_e(const char *str, salink_obj_t *obj,
 				       int16_t *e, uint8_t depth,
-				       uint8_t is_global);
+				       uint8_t is_global, uint16_t line_no);
 
 
 const char* prv_get_token_e(const char *buf, salink_obj_t *obj,
@@ -198,13 +198,13 @@ const char* prv_get_token_e(const char *buf, salink_obj_t *obj,
 		return buf;
 	}
 
-	err_type = SPECASM_ERROR_BAD_EXPRESSION;
+	err_type = SALINK_ERROR_BAD_EXPRESSION;
 	return NULL;
 }
 
 static const char *prv_exp_priority0_e(const char *str, salink_obj_t *obj,
 				       int16_t *e, uint8_t depth,
-				       uint8_t is_global)
+				       uint8_t is_global, uint16_t line_no)
 {
 	salink_token_t tok;
 	salink_label_t *label;
@@ -217,7 +217,8 @@ static const char *prv_exp_priority0_e(const char *str, salink_obj_t *obj,
 
 	switch (tok.type) {
 	case SALINK_TOKEN_OP:
-		str = prv_exp_priority4_e(str, obj, e, depth, is_global);
+		str = prv_exp_priority4_e(str, obj, e, depth, is_global,
+					  line_no);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 		switch (tok.data.id) {
@@ -235,12 +236,12 @@ static const char *prv_exp_priority0_e(const char *str, salink_obj_t *obj,
 			    (tok.data.id == ')'))
 				break;
 		default:
-			err_type = SPECASM_ERROR_BAD_EXPRESSION;
+			err_type = SALINK_ERROR_BAD_EXPRESSION;
 			return NULL;
 		}
 		break;
 	case SALINK_TOKEN_EOF:
-		err_type = SPECASM_ERROR_BAD_EXPRESSION;
+		err_type = SALINK_ERROR_BAD_EXPRESSION;
 		return NULL;
 	case SALINK_TOKEN_NUM:
 		*e = tok.data.num;
@@ -264,7 +265,7 @@ static const char *prv_exp_priority0_e(const char *str, salink_obj_t *obj,
 				err_type = SALINK_ERROR_RECURISVE_EQU;
 				return NULL;
 			}
-			salink_equ_eval_local_e(obj, label, depth + 1);
+			salink_equ_eval_local_e(obj, label, depth + 1, line_no);
 			if (err_type != SPECASM_ERROR_OK)
 				return NULL;
 			*e = label->data.off;
@@ -312,7 +313,7 @@ static const char *prv_exp_priority0_e(const char *str, salink_obj_t *obj,
 
 static const char *prv_exp_priority1_e(const char *str, salink_obj_t *obj,
 				       int16_t *e, uint8_t depth,
-				       uint8_t is_global)
+				       uint8_t is_global, uint16_t line_no)
 {
 	salink_token_t tok;
 	int16_t e1;
@@ -320,7 +321,7 @@ static const char *prv_exp_priority1_e(const char *str, salink_obj_t *obj,
 	char op;
 	const char* next;
 
-	str = prv_exp_priority0_e(str, obj, &e1, depth, is_global);
+	str = prv_exp_priority0_e(str, obj, &e1, depth, is_global, line_no);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -333,7 +334,8 @@ static const char *prv_exp_priority1_e(const char *str, salink_obj_t *obj,
 		if (op != '*' && op != '/' && op != '%')
 			break;
 
-		str = prv_exp_priority0_e(next, obj, &e2, depth, is_global);
+		str = prv_exp_priority0_e(next, obj, &e2, depth, is_global,
+					  line_no);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 
@@ -365,7 +367,7 @@ static const char *prv_exp_priority1_e(const char *str, salink_obj_t *obj,
 
 static const char *prv_exp_priority2_e(const char *str, salink_obj_t *obj,
 				       int16_t *e, uint8_t depth,
-				       uint8_t is_global)
+				       uint8_t is_global, uint16_t line_no)
 {
 	salink_token_t tok;
 	int16_t e1;
@@ -373,7 +375,7 @@ static const char *prv_exp_priority2_e(const char *str, salink_obj_t *obj,
 	char op;
 	const char* next;
 
-	str = prv_exp_priority1_e(str, obj, &e1, depth, is_global);
+	str = prv_exp_priority1_e(str, obj, &e1, depth, is_global, line_no);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -386,7 +388,8 @@ static const char *prv_exp_priority2_e(const char *str, salink_obj_t *obj,
 		if (op != '+' && op != '-')
 			break;
 
-		str = prv_exp_priority1_e(next, obj, &e2, depth, is_global);
+		str = prv_exp_priority1_e(next, obj, &e2, depth, is_global,
+					  line_no);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 
@@ -410,7 +413,7 @@ static const char *prv_exp_priority2_e(const char *str, salink_obj_t *obj,
 
 static const char *prv_exp_priority3_e(const char *str, salink_obj_t *obj,
 				       int16_t *e, uint8_t depth,
-				       uint8_t is_global)
+				       uint8_t is_global, uint16_t line_no)
 {
 	salink_token_t tok;
 	int16_t e1;
@@ -418,7 +421,7 @@ static const char *prv_exp_priority3_e(const char *str, salink_obj_t *obj,
 	char op;
 	const char* next;
 
-	str = prv_exp_priority2_e(str, obj, &e1, depth, is_global);
+	str = prv_exp_priority2_e(str, obj, &e1, depth, is_global, line_no);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -432,7 +435,8 @@ static const char *prv_exp_priority3_e(const char *str, salink_obj_t *obj,
 		    (op != SALINK_TOKEN_ASR_VAL))
 			break;
 
-		str = prv_exp_priority2_e(next, obj, &e2, depth, is_global);
+		str = prv_exp_priority2_e(next, obj, &e2, depth, is_global,
+					  line_no);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 
@@ -456,7 +460,7 @@ static const char *prv_exp_priority3_e(const char *str, salink_obj_t *obj,
 
 static const char *prv_exp_priority4_e(const char *str, salink_obj_t *obj,
 				       int16_t *e, uint8_t depth,
-				       uint8_t is_global)
+				       uint8_t is_global, uint16_t line_no)
 {
 	salink_token_t tok;
 	int16_t e1;
@@ -464,7 +468,7 @@ static const char *prv_exp_priority4_e(const char *str, salink_obj_t *obj,
 	char op;
 	const char* next;
 
-	str = prv_exp_priority3_e(str, obj, &e1, depth, is_global);
+	str = prv_exp_priority3_e(str, obj, &e1, depth, is_global, line_no);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -477,7 +481,8 @@ static const char *prv_exp_priority4_e(const char *str, salink_obj_t *obj,
 		if (op != '&' && op != '|' && op != '^')
 			break;
 
-		str = prv_exp_priority3_e(next, obj, &e2, depth, is_global);
+		str = prv_exp_priority3_e(next, obj, &e2, depth, is_global,
+					  line_no);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 
@@ -503,36 +508,90 @@ static const char *prv_exp_priority4_e(const char *str, salink_obj_t *obj,
 }
 
 static int16_t prv_equ_eval_e(salink_obj_t *obj, const char *name,
-			       uint8_t depth, uint8_t is_global)
+			      uint8_t depth, uint8_t is_global,
+			      uint16_t line_no)
 {
 	const char *str;
 	int16_t e;
 	salink_token_t tok;
 
-	str = prv_exp_priority4_e(name, obj, &e, depth, is_global);
-	if (err_type == SALINK_ERROR_DIV_ZERO) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "Divide by zero %s : %s", obj->fname, name);
-		return 0;
-	}
-
+	str = prv_exp_priority4_e(name, obj, &e, depth, is_global, line_no);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
 	(void) prv_get_token_e(str, obj, &tok, is_global);
 	if (tok.type != SALINK_TOKEN_EOF)
-		err_type = SPECASM_ERROR_BAD_EXPRESSION;
+		err_type = SALINK_ERROR_BAD_EXPRESSION;
 
 	return e;
 }
 
-int16_t salink_equ_eval_e(salink_obj_t *obj, const char *str)
+/*
+ * There are three places expressions can occur
+ * 1. In the definition of Global labels
+ * 2. In an instruction or data directive
+ * 3. In the definition of a local label
+ *
+ * If there's an error with the expression we want to
+ * print out the line number at fault.  We always have this
+ * informtion for cases 1 and 2 but we don't always have it
+ * for case 3, in the case where the error is in a separate
+ * local label, referenced by the label we're currently
+ * processing.  In this case we can print out the contents
+ * of the invalid equ statement but we can't provide its line
+ * number.  We can only provide the line number of the original
+ * local equ statement that caused the faulty equ statement to be
+ * evaluated.
+ */
+
+static void prv_check_exp_err(salink_obj_t *obj, const char *name,
+			      uint16_t line_no, uint8_t exact_line)
 {
-	return prv_equ_eval_e(obj, str, 0, 0);
+	const char* err_msg;
+	const char* local_msg;
+
+	if (error_buf[0] != 0 || (err_type < SPECASM_MAX_ERRORS))
+		return;
+
+	local_msg = exact_line ? "at" : "used by";
+	switch (err_type) {
+	case SALINK_ERROR_DIV_ZERO:
+		err_msg = "Divide by zero";
+		break;
+	case SALINK_ERROR_RECURISVE_EQU:
+		err_msg = "Recursive definition";
+		break;
+	case SALINK_ERROR_LOCAL_IN_GLOBAL_EQU:
+		err_msg = "Global EQU references local EQU";
+		break;
+	case SALINK_ERROR_BAD_EXPRESSION:
+		err_msg = "Bad expression";
+		break;
+	}
+	snprintf(error_buf, sizeof(error_buf), "%s '%s' %s %s:%d", err_msg,
+		 name, local_msg, obj->fname, line_no);
+}
+
+static void prv_check_equ_err(salink_obj_t *obj, const char *name,
+			      const char *equ, uint16_t line_no,
+			      uint8_t exact_line)
+{
+	snprintf(scratch, sizeof(scratch),"%s = %s", name, equ);
+	prv_check_exp_err(obj, scratch, line_no, exact_line);
+}
+
+int16_t salink_equ_eval_e(salink_obj_t *obj, const char *str, uint16_t line_no)
+{
+	int16_t e;
+
+	e = prv_equ_eval_e(obj, str, 0, 0, line_no);
+	prv_check_exp_err(obj, str, line_no, 1);
+
+	return e;
 }
 
 void salink_equ_eval_local_e(salink_obj_t *obj, salink_label_t *label,
-			     uint8_t depth)
+			     uint8_t depth, uint16_t line_no)
 {
 	const char *name;
 	uint8_t id;
@@ -546,16 +605,15 @@ void salink_equ_eval_local_e(salink_obj_t *obj, salink_label_t *label,
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
-	label->data.off = prv_equ_eval_e(obj, name, depth, 0);
-	if (err_type == SALINK_ERROR_RECURISVE_EQU) {
+	label->data.off = prv_equ_eval_e(obj, name, depth, 0, line_no);
+	if (err_type >= SPECASM_MAX_ERRORS) {
 		if (label->type == SALINK_LABEL_TYPE_EQU_LONG)
 			str = specasm_state_get_long_e(label->id);
 		else
 			str = specasm_state_get_short_e(label->id);
 
-		snprintf(error_buf, sizeof(error_buf),
-			 "Recursive definition %s : %s = '%s'", obj->fname,
-			 str, name);
+		prv_check_equ_err(obj, str, name, line_no, 0);
+		return;
 	}
 
 	if (label->type == SALINK_LABEL_TYPE_EQU_SHORT)
@@ -569,19 +627,9 @@ void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
 {
 	const char *name = global->name + strlen(global->name) + 1;
 
-	label->data.off = prv_equ_eval_e(obj, name, depth, 1);
-
-	if (err_type == SALINK_ERROR_RECURISVE_EQU) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "Recursive definition %s : %s = '%s'", obj->fname,
-			 global->name, name);
-		return;
-	}
-
-	if (err_type == SALINK_ERROR_LOCAL_IN_GLOBAL_EQU) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "Global EQU references local EQU %s : %s = '%s'",
-			 obj->fname,  global->name, name);
+	label->data.off = prv_equ_eval_e(obj, name, depth, 1, global->line_no);
+	if (err_type >= SPECASM_MAX_ERRORS) {
+		prv_check_equ_err(obj, global->name, name, global->line_no, 1);
 		return;
 	}
 

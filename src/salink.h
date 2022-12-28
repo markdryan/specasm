@@ -59,6 +59,7 @@
 #define SALINK_ERROR_BAD_EXP (SPECASM_MAX_ERRORS + 15)
 #define SALINK_ERROR_UNEXPECTED_EXP (SPECASM_MAX_ERRORS + 16)
 #define SALINK_ERROR_DIV_ZERO (SPECASM_MAX_ERRORS + 17)
+#define SALINK_ERROR_BAD_EXPRESSION (SPECASM_MAX_ERRORS + 18)
 
 /*
  * Label usage for EQU statements
@@ -85,7 +86,8 @@ struct salink_label_t_ {
 typedef struct salink_label_t_ salink_label_t;
 
 struct salink_global_t_ {
-	size_t obj_index;
+	uint8_t obj_index;
+	uint16_t line_no;
 	uint16_t label_index;
 	char name[SPECASM_LINE_MAX_LEN + 1];
 };

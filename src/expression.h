@@ -21,10 +21,10 @@
 
 #include "salink.h"
 
-int16_t salink_equ_eval_e(salink_obj_t *obj, const char *str);
+int16_t salink_equ_eval_e(salink_obj_t *obj, const char *str, uint16_t line_no);
 void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
 			      salink_label_t *label, uint8_t depth);
 void salink_equ_eval_local_e(salink_obj_t *obj, salink_label_t *label,
-			     uint8_t depth);
+			     uint8_t depth, uint16_t line_no);
 
 #endif
