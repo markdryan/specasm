@@ -25,11 +25,11 @@
 
 /*
  * This is all a bit complicated so is worth documenting for future
- * references.
+ * reference.
  *
- * equ statements are treated as special kinds of labels.  However,
- * they contain not one but two labels.  The type and id of the
- * first label (the name of the constant) are stored in op_code[0]
+ * equ statements in .x files are treated as special kinds of labels.
+ * However, they contain not one but two strings.  The type and id of the
+ * first string (the name of the constant) are stored in op_code[0]
  * and op_code[1].  The type and id of the second are stored in
  * op_code[2] and op_code[3].
  *
@@ -99,6 +99,8 @@ static const char *prv_exp_priority4_e(const char *str, salink_obj_t *obj,
 				       int16_t *e, uint8_t depth,
 				       uint8_t is_global, uint16_t line_no);
 
+static void prv_equ_eval_local_e(salink_obj_t *obj, salink_label_t *label,
+				    uint8_t depth, uint16_t line_no);
 
 const char* prv_get_token_e(const char *buf, salink_obj_t *obj,
 			    salink_token_t *tok, uint8_t is_global)
@@ -265,7 +267,7 @@ static const char *prv_exp_priority0_e(const char *str, salink_obj_t *obj,
 				err_type = SALINK_ERROR_RECURISVE_EQU;
 				return NULL;
 			}
-			salink_equ_eval_local_e(obj, label, depth + 1, line_no);
+			prv_equ_eval_local_e(obj, label, depth + 1, line_no);
 			if (err_type != SPECASM_ERROR_OK)
 				return NULL;
 			*e = label->data.off;
@@ -590,28 +592,21 @@ int16_t salink_equ_eval_e(salink_obj_t *obj, const char *str, uint16_t line_no)
 	return e;
 }
 
-void salink_equ_eval_local_e(salink_obj_t *obj, salink_label_t *label,
-			     uint8_t depth, uint16_t line_no)
+static void prv_equ_eval_local_e(salink_obj_t *obj, salink_label_t *label,
+				 uint8_t depth, uint16_t line_no)
 {
 	const char *name;
 	uint8_t id;
 	const char *str;
 
 	id = label->data.equ[1];
-	if (label->data.equ[0] == SPECASM_LINE_TYPE_LL)
-		name = specasm_state_get_long_e(id);
-	else
-		name = specasm_state_get_short_e(id);
+	name = salink_get_label_str_e(id, label->data.equ[0]);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
 	label->data.off = prv_equ_eval_e(obj, name, depth, 0, line_no);
 	if (err_type >= SPECASM_MAX_ERRORS) {
-		if (label->type == SALINK_LABEL_TYPE_EQU_LONG)
-			str = specasm_state_get_long_e(label->id);
-		else
-			str = specasm_state_get_short_e(label->id);
-
+		str = salink_get_label_str_e(label->id, label->type);
 		prv_check_equ_err(obj, str, name, line_no, 0);
 		return;
 	}

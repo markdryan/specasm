@@ -110,5 +110,6 @@ unsigned int salink_find_local_label_e(const char* str, int len,
 				       salink_obj_t *obj);
 unsigned int salink_find_global_label_e(const char* str,
 					salink_obj_t *obj);
+const char *salink_get_label_str_e(uint8_t id, uint8_t label_type);
 
 #endif

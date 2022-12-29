@@ -98,7 +98,14 @@ static void prv_init_out_fnames(salink_obj_t *obj)
 	map_name[i + 3] = 'p';
 }
 
-static const char *prv_get_label_str_e(uint8_t id, uint8_t label_type)
+/*
+ * Returns the string from the state of the currently loaded object
+ * file identified by the given id and type.
+ *
+ * If label_type is odd id is expected to be a long string, otherwise
+ * it is expected to be a short string.
+ */
+const char *salink_get_label_str_e(uint8_t id, uint8_t label_type)
 {
 	if (label_type & 1)
 		return specasm_state_get_long_e(id);
@@ -127,7 +134,7 @@ static uint8_t prv_add_label_e(salink_obj_t *obj, uint16_t size,
 	label->id = id;
 	label->type = type;
 	label->data.off = size;
-	str = prv_get_label_str_e(id, type);
+	str = salink_get_label_str_e(id, type);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
@@ -170,7 +177,7 @@ static uint8_t prv_add_label_e(salink_obj_t *obj, uint16_t size,
 			    (labels[i].type > SALINK_LABEL_TYPE_EQU_LONG))
 				continue;
 
-			str1 = prv_get_label_str_e(labels[i].id,
+			str1 = salink_get_label_str_e(labels[i].id,
 						   labels[i].type);
 			if (err_type != SPECASM_ERROR_OK)
 				return 0;
@@ -226,10 +233,7 @@ static void prv_add_queued_file_e(const char *base, const char *prefix,
 	}
 
 	id = line->data.label;
-	if (line->type & 1)
-		str = specasm_state_get_long_e(id);
-	else
-		str = specasm_state_get_short_e(id);
+	str = salink_get_label_str_e(id, line->type);
 
 	base_len = 0;
 	if (str[0] != '/') {
@@ -296,23 +300,20 @@ static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj,
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 	label = &labels[label_count - 1];
-	if (is_global) {
-		global = &globals[global_count - 1];
-		id = op_code[3];
-		type = op_code[2] == SPECASM_LINE_TYPE_SL ?
-			SALINK_LABEL_TYPE_EQU_SHORT :
-			SALINK_LABEL_TYPE_EQU_LONG;
-		str = prv_get_label_str_e(id, type);
-		if (err_type != SPECASM_ERROR_OK)
-			return;
-		strcpy(global->name + strlen(global->name) + 1,
-		       str);
-		label->type = SALINK_LABEL_TYPE_EQU_GLOBAL;
+	if (!is_global) {
+		label->data.equ[0] = op_code[2];
+		label->data.equ[1] = op_code[3];
 		return;
 	}
 
-	label->data.equ[0] = op_code[2];
-	label->data.equ[1] = op_code[3];
+	global = &globals[global_count - 1];
+	id = op_code[3];
+	str = salink_get_label_str_e(id, op_code[2]);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	strcpy(global->name + strlen(global->name) + 1,
+	       str);
+	label->type = SALINK_LABEL_TYPE_EQU_GLOBAL;
 }
 
 static void prv_parse_obj_e(const char *fname)
@@ -550,10 +551,7 @@ unsigned int salink_find_local_label_e(const char* str, int len,
 		if (lng != lab_lng)
 			continue;
 
-		if (lng)
-			lab_str = specasm_state_get_long_e(label->id);
-		else
-			lab_str = specasm_state_get_short_e(label->id);
+		lab_str = salink_get_label_str_e(label->id, lng);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 
@@ -595,10 +593,8 @@ static salink_global_t *prv_find_global_label_e(salink_obj_t *obj,
 	salink_global_t *global;
 	unsigned int i;
 
-	if (lng)
-		str = specasm_state_get_long_e(id);
-	else
-		str = specasm_state_get_short_e(id);
+
+	str = salink_get_label_str_e(id, lng);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -646,7 +642,7 @@ static int16_t prv_eval_exp_from_id_e(salink_obj_t *obj,
 	const char *str;
 	int16_t exp;
 
-	str = prv_get_label_str_e(id, lng);
+	str = salink_get_label_str_e(id, lng);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
@@ -741,10 +737,7 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 	if ((line->type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
 	    (line->type <= SPECASM_LINE_TYPE_STR_AMP_LONG)) {
 		id = line->data.label;
-		if (line->type & 1)
-			data = specasm_state_get_long_e(id);
-		else
-			data = specasm_state_get_short_e(id);
+		data = salink_get_label_str_e(id, line->type);
 		memcpy(&buf.file_buf[buf_count], data, size);
 		buf_count += size;
 	}
@@ -829,7 +822,7 @@ static int16_t prv_eval_equ_label(specasm_line_t *line, salink_obj_t *obj,
 	uint8_t label_type;
 	uint8_t lng;
 
-	label_type =specasm_line_get_addr_type(line);
+	label_type = specasm_line_get_addr_type(line);
 	lng = label_type == SPECASM_FLAGS_ADDR_SHORT ? 0 : 1;
 	return prv_eval_exp_from_id_e(obj, line_no, id, lng);
 }
@@ -1222,7 +1215,7 @@ static void prv_write_map_e(void)
 			label = &labels[i];
 			if (label->type > SALINK_LABEL_TYPE_LNG)
 				continue;
-			str = prv_get_label_str_e(label->id, label->type);
+			str = salink_get_label_str_e(label->id, label->type);
 			if (err_type != SPECASM_ERROR_OK)
 				goto on_error;
 			itoa(label->data.off, &ibuf[1], 16);
