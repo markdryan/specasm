@@ -16,6 +16,8 @@
 
 #include "line_common.h"
 
+/* clang-format off */
+
 char byte_regs[8] = {'b', 'c', 'd', 'e', 'h', 'l', ' ', 'a'};
 
 /*
@@ -98,5 +100,7 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "xor", SPECASM_LINE_TYPE_XOR, },
 };
 
+/* clang-format on */
+
 const uint8_t mnemomics_table_size =
-	sizeof(mnemomics_table) / sizeof(const specasm_mnemomic_t);
+    sizeof(mnemomics_table) / sizeof(const specasm_mnemomic_t);

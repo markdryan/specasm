@@ -21,9 +21,7 @@
 #include "peer.h"
 #include "state.h"
 
-
-static char *prv_dump_exp_e(const specasm_line_t *line, char *buf,
-			    uint8_t id);
+static char *prv_dump_exp_e(const specasm_line_t *line, char *buf, uint8_t id);
 
 typedef uint8_t (*specasm_dump_opcode_fn_t)(const specasm_line_t *line,
 					    char *buf);
@@ -236,8 +234,7 @@ static char *prv_dump_jump_label_e(const specasm_line_t *line, char *buf,
 	return prv_dump_jump_label_fmt_e(line, buf, id, fmt);
 }
 
-static char *prv_dump_exp_e(const specasm_line_t *line, char *buf,
-			    uint8_t id)
+static char *prv_dump_exp_e(const specasm_line_t *line, char *buf, uint8_t id)
 {
 	uint8_t fmt = specasm_line_get_addr_type(line);
 	*buf++ = '=';
@@ -468,15 +465,15 @@ static uint8_t prv_dump_im_e(const specasm_line_t *line, char *buf)
 	return 1;
 }
 
-static char* prv_dump_byte_imm_ind_e(const specasm_line_t *line, char *buf)
+static char *prv_dump_byte_imm_ind_e(const specasm_line_t *line, char *buf)
 {
 	const uint8_t *op_code = line->data.op_code;
 
 	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
 		return prv_dump_exp_e(line, buf, op_code[1]);
 
-	return buf + prv_dump_byte(buf, op_code[1],
-				   specasm_line_get_format(line));
+	return buf +
+	       prv_dump_byte(buf, op_code[1], specasm_line_get_format(line));
 }
 
 static uint8_t prv_dump_in_e(const specasm_line_t *line, char *buf)
@@ -1285,7 +1282,6 @@ static specasm_line_opcode_dump_t dump_opcodes[] = {
 };
 
 /* clang-format on */
-
 
 void specasm_init_dump_table(void)
 {

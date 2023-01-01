@@ -42,7 +42,7 @@ static int prv_make_opcode_file(const char *path)
 		goto cleanup;
 	}
 
-	count = (uint16_t) opcode_tests_count;
+	count = (uint16_t)opcode_tests_count;
 	if (fwrite(&count, sizeof(count), 1, f) < 1) {
 		fprintf(stderr, "Failed to write to %s\n", fname);
 		goto cleanup;
@@ -64,7 +64,7 @@ static int prv_make_opcode_file(const char *path)
 
 		strcpy(zx_test.source, t->source);
 		strcpy(zx_test.str, t->str);
-		zx_test.size = (uint8_t) t->size;
+		zx_test.size = (uint8_t)t->size;
 		memcpy(zx_test.op_code, t->op_code, 4);
 
 		if (fwrite(&zx_test, sizeof(zx_test), 1, f) < 1) {
@@ -79,7 +79,7 @@ static int prv_make_opcode_file(const char *path)
 cleanup:
 
 	if (f)
-		(void) fclose(f);
+		(void)fclose(f);
 
 	free(fname);
 
@@ -107,7 +107,7 @@ static int prv_make_bad_test_file(const char *path)
 		goto cleanup;
 	}
 
-	count = (uint16_t) bad_tests_count;
+	count = (uint16_t)bad_tests_count;
 	if (fwrite(&count, sizeof(count), 1, f) < 1) {
 		fprintf(stderr, "Failed to write to %s\n", fname);
 		goto cleanup;
@@ -137,7 +137,7 @@ static int prv_make_bad_test_file(const char *path)
 cleanup:
 
 	if (f)
-		(void) fclose(f);
+		(void)fclose(f);
 
 	free(fname);
 
@@ -151,8 +151,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	int retval = prv_make_opcode_file(argv[1]) |
-		prv_make_bad_test_file(argv[1]);
+	int retval =
+	    prv_make_opcode_file(argv[1]) | prv_make_bad_test_file(argv[1]);
 
 	return retval;
 }

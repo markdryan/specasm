@@ -30,7 +30,6 @@ typedef const char *(*specasm_parse_label_fn_t)(const char *args,
 						specasm_line_t *line,
 						uint8_t *label);
 
-
 struct specasm_opcode_t_ {
 	specasm_parse_fn_t fn;
 	uint8_t op_code[2];
@@ -211,8 +210,7 @@ static const char *prv_get_word_imm_ind_e(const char *args, uint16_t *val,
 }
 
 static const char *prv_get_byte_imm_ind_e(specasm_line_t *line,
-					  const char *args,
-					  uint8_t *val)
+					  const char *args, uint8_t *val)
 {
 	long v;
 	uint8_t flags;
@@ -533,9 +531,8 @@ static const char *prv_parse_jump_label_e(const char *args,
 	return args;
 }
 
-static const char *prv_parse_label_or_exp_e(const char *args,
-					    specasm_line_t *line,
-					    uint8_t *label)
+static const char *
+prv_parse_label_or_exp_e(const char *args, specasm_line_t *line, uint8_t *label)
 {
 	const char *args2;
 	uint8_t read;
@@ -553,10 +550,9 @@ static const char *prv_parse_label_or_exp_e(const char *args,
 	return args2;
 }
 
-static const char* prv_parse_byte_imm_or_exp_e(const char *args,
+static const char *prv_parse_byte_imm_or_exp_e(const char *args,
 					       specasm_line_t *line,
-					       uint8_t *val,
-					       uint8_t *label)
+					       uint8_t *val, uint8_t *label)
 {
 	uint8_t flags;
 	uint8_t label_type;
@@ -860,8 +856,7 @@ static uint8_t prv_parse_bit_e(const char *args, specasm_line_t *line,
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	if ((reg > SPECASM_BYTE_REG_A) &&
-	    (reg != SPECASM_BYTE_REG_HL_IND) &&
+	if ((reg > SPECASM_BYTE_REG_A) && (reg != SPECASM_BYTE_REG_HL_IND) &&
 	    (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)) {
 		err_type = SPECASM_ERROR_BAD_EXPRESSION;
 		return 0;
@@ -1032,14 +1027,13 @@ static uint8_t prv_signed_ok(uint8_t flags, uint8_t val)
 	       ((flags == SPECASM_FLAGS_NUM_UNSIGNED) && (val < 128));
 }
 
-static const char* prv_parse_data_exp_e(const char *args,
-					   specasm_line_t *line, uint8_t size)
+static const char *prv_parse_data_exp_e(const char *args, specasm_line_t *line,
+					uint8_t size)
 {
 	uint8_t read;
 	uint8_t label_type;
 
-	read = specasm_parse_exp_e(args, &line->data.op_code[0],
-				   &label_type);
+	read = specasm_parse_exp_e(args, &line->data.op_code[0], &label_type);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 	specasm_line_set_addr_type(line, label_type);
@@ -2347,7 +2341,8 @@ uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 	uint8_t brackets = 0;
 	uint8_t end = SPECASM_LINE_MAX_LEN - 1;
 
-	for (i = 0; str[i] == ' '; i++);
+	for (i = 0; str[i] == ' '; i++)
+		;
 
 	end = i;
 	c = str[end];
@@ -2375,9 +2370,9 @@ uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 	while ((end > i) && (str[end] == ' '))
 		end--;
 
-	len = ((end -i) +  1);
+	len = ((end - i) + 1);
 	for (j = 0; j < len; j++)
-		scratch[j] = str[i+j];
+		scratch[j] = str[i + j];
 	scratch[j] = 0;
 
 	if (len < SPECASM_MAX_SHORT_LEN) {

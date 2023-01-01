@@ -232,16 +232,16 @@
 #define specasm_line_get_format2(l) ((((l)->flags) & 0x30) << 2)
 #define specasm_line_set_format2(l, s) ((l)->flags |= ((s) >> 2))
 
-
 /*
  * returns the type of a line but treats instructions with expressions
  * as normal instructions.  This makes it easier to handle these instructions
  * in code that doesn't care about expressions.
  */
 
-#define specasm_line_get_adj_type(l) ((l->type >= SPECASM_LINE_TYPE_EXP_ADJ) ?\
-				      (l->type - SPECASM_LINE_TYPE_EXP_ADJ) :\
-				      l->type)
+#define specasm_line_get_adj_type(l)                                           \
+	((l->type >= SPECASM_LINE_TYPE_EXP_ADJ)                                \
+	     ? (l->type - SPECASM_LINE_TYPE_EXP_ADJ)                           \
+	     : l->type)
 
 /*
  * flags bit field

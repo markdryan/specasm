@@ -14,7 +14,6 @@
  * limitations under the License.
 */
 
-
 #include "editor.h"
 #include "editor_test_content.h"
 

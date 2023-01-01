@@ -35,5 +35,4 @@ struct bad_test_zx_t_ {
 };
 typedef struct bad_test_zx_t_ bad_test_zx_t;
 
-
 #endif

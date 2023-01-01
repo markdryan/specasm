@@ -43,7 +43,6 @@ EDITOR_STATIC unsigned int select_end;
 static char current_fname[MAX_FNAME + 1];
 char line_buf[SPECASM_MAX_SCRATCH];
 
-
 static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 {
 	uint8_t col;
@@ -99,8 +98,7 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 		if (line->comment != SPECASM_NULL)
 			scratch[SPECASM_LINE_MAX_OPCODE + 1] = 0;
 	}
-	if ((line->comment == SPECASM_NULL) ||
-	    (type == SPECASM_LINE_TYPE_LC) ||
+	if ((line->comment == SPECASM_NULL) || (type == SPECASM_LINE_TYPE_LC) ||
 	    (type == SPECASM_LINE_TYPE_SC)) {
 		(void)specasm_text_print(scratch, 0, r, col);
 		return;

@@ -14,7 +14,6 @@
  * limitations under the License.
 */
 
-
 #include <string.h>
 
 #include "state.h"
@@ -37,11 +36,11 @@ static char *prv_format_string_e(char *buf, uint8_t lng, unsigned int l,
 	return buf;
 }
 
-static char* prv_format_equ_e(char *buf, const specasm_line_t *line)
+static char *prv_format_equ_e(char *buf, const specasm_line_t *line)
 {
 	const uint8_t *op_code = &line->data.op_code[0];
 	buf = prv_format_string_e(buf, op_code[0] == SPECASM_LINE_TYPE_LL,
-				    op_code[1], '.');
+				  op_code[1], '.');
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -51,7 +50,7 @@ static char* prv_format_equ_e(char *buf, const specasm_line_t *line)
 	buf[3] = 'u';
 
 	return prv_format_string_e(buf + 4, op_code[2] == SPECASM_LINE_TYPE_LL,
-				    op_code[3], ' ');
+				   op_code[3], ' ');
 }
 
 void specasm_format_line_e(char *buf, unsigned int l)
@@ -77,19 +76,15 @@ void specasm_format_line_e(char *buf, unsigned int l)
 		goto clear;
 	}
 
-	if ((type == SPECASM_LINE_TYPE_LL) ||
-	    (type == SPECASM_LINE_TYPE_SL)) {
-		buf =
-		    prv_format_string_e(buf, type == SPECASM_LINE_TYPE_LL,
-					line->data.label, '.');
+	if ((type == SPECASM_LINE_TYPE_LL) || (type == SPECASM_LINE_TYPE_SL)) {
+		buf = prv_format_string_e(buf, type == SPECASM_LINE_TYPE_LL,
+					  line->data.label, '.');
 		goto clear;
 	}
 
-	if ((type == SPECASM_LINE_TYPE_LC) ||
-	    (type == SPECASM_LINE_TYPE_SC)) {
-		buf =
-		    prv_format_string_e(buf, type == SPECASM_LINE_TYPE_LC,
-					line->comment, ';');
+	if ((type == SPECASM_LINE_TYPE_LC) || (type == SPECASM_LINE_TYPE_SC)) {
+		buf = prv_format_string_e(buf, type == SPECASM_LINE_TYPE_LC,
+					  line->comment, ';');
 		goto clear;
 	}
 	if ((type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&

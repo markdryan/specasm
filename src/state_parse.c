@@ -122,10 +122,11 @@ static void prv_parse_equ_e(specasm_line_t *line, const char *str, uint8_t i)
 	line->data.op_code[0] = label_type;
 	line->data.op_code[1] = label;
 
-	(void) specasm_parse_exp_e(&str[i], &label1, &label1_type);
+	(void)specasm_parse_exp_e(&str[i], &label1, &label1_type);
 
-	line->data.op_code[2] = (label1_type == SPECASM_FLAGS_ADDR_SHORT) ?
-		SPECASM_LINE_TYPE_SL : SPECASM_LINE_TYPE_LL;
+	line->data.op_code[2] = (label1_type == SPECASM_FLAGS_ADDR_SHORT)
+				    ? SPECASM_LINE_TYPE_SL
+				    : SPECASM_LINE_TYPE_LL;
 	line->data.op_code[3] = label1;
 }
 
@@ -425,4 +426,3 @@ void specasm_parse_line_e(unsigned int l, const char *str)
 
 	prv_parse_short_comment_e(str, i + 1, line);
 }
-
