@@ -112,6 +112,8 @@ static int prv_parse_file(const char *fname)
 				specasm_error_msg(err_type));
 			goto cleanup;
 		}
+		if ((linelen == 0) && eof)
+			break;
 		specasm_append_empty_line_e();
 		if (err_type != SPECASM_ERROR_OK) {
 			fprintf(stderr, "%s\n", specasm_error_msg(err_type));
@@ -124,8 +126,8 @@ static int prv_parse_file(const char *fname)
 					cur_line, specasm_error_msg(err_type));
 				goto cleanup;
 			}
-			cur_line = state.lines.num_lines;
 		}
+		cur_line = state.lines.num_lines;
 	} while (!eof);
 
 	retval = 0;
