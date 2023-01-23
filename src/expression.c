@@ -565,6 +565,8 @@ static void prv_check_exp_err(salink_obj_t *obj, const char *name,
 	case SALINK_ERROR_BAD_EXPRESSION:
 		err_msg = "Bad expression";
 		break;
+	default:
+		return;
 	}
 	snprintf(error_buf, sizeof(error_buf), "%s '%s' %s %s:%d", err_msg,
 		 name, local_msg, obj->fname, line_no);
