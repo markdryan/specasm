@@ -1,0 +1,2 @@
+.Label1
+	ret

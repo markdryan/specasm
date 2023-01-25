@@ -28,7 +28,7 @@ const char* error_msgs[SPECASM_MAX_ERRORS] = {
 	"Too many long strings",  // SPECASM_ERROR_TOO_MANY_LONG_STRINGS
 	"String too long",        // SPECASM_ERROR_STRING_TOO_LONG
 	"ASSERT: bad string id",  // SPECASM_ERROR_ASSERT_BAD_STRING_ID
-	"Long labels cannot share a line",  // SPECASM_ERROR_LONG_LABEL_EX
+	"Labels cannot share a line",  // SPECASM_ERROR_LONG_LABEL_EX
 	"Bad comment",            // SPECASM_ERROR_BAD_COMMENT
 	"One or more lines are invalid", // SPECASM_ERROR_BAD_LINES
 	"No room to insert characters", // SPECASM_ERROR_NO_ROOM_IN_LINE
@@ -46,4 +46,5 @@ const char* error_msgs[SPECASM_MAX_ERRORS] = {
 	"Negative number", // SPECASM_ERROR_NUM_NEG
 	"Bad filename", // SPECASM_ERROR_BAD_FNAME
 	"SPECASM too old", // SPECASM_ERROR_SPECASM_TOO_OLD
+	"Bad expression", // SPECASM_ERROR_BAD_EXPRESSION
 };

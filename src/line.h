@@ -97,7 +97,8 @@
 #define SPECASM_LINE_TYPE_ORG (SPECASM_LINE_TYPE_SIMPLE_MAX + 2)
 #define SPECASM_LINE_TYPE_MAP (SPECASM_LINE_TYPE_SIMPLE_MAX + 3)
 #define SPECASM_LINE_TYPE_ALIGN (SPECASM_LINE_TYPE_SIMPLE_MAX + 4)
-#define SPECASM_LINE_TYPE_MAX (SPECASM_LINE_TYPE_ALIGN + 1)
+#define SPECASM_LINE_TYPE_EQU (SPECASM_LINE_TYPE_SIMPLE_MAX + 5)
+#define SPECASM_LINE_TYPE_MAX (SPECASM_LINE_TYPE_EQU + 1)
 
 #define SPECASM_LINE_TYPE_EMPTY 128
 #define SPECASM_LINE_TYPE_LL 129
@@ -121,6 +122,8 @@
 #define SPECASM_LINE_TYPE_INC_SYS_SHORT 144
 #define SPECASM_LINE_TYPE_INC_SYS_LONG 145
 
+#define SPECASM_LINE_TYPE_EXP_ADJ 160
+
 #define SPECASM_MAX_MNEMOM 5
 #define SPECASM_MAX_LINES 512
 #define SPECASM_MAX_ROWS 23
@@ -141,6 +144,85 @@
 #define SPECASM_FLAGS_NUM_HEX 0x80
 #define SPECASM_FLAGS_NUM_SIGNED 0xC0
 
+/*
+ *
+ * The way this is encoded is a bit hacky.
+ * We don't support expressions when specifying offsets using the
+ * ix and iy registers, e.g.,
+ *
+ * add a, (ix + =10*10)
+ *
+ * isn't supported.
+ *
+ * Opcodes that are supported include
+ *
+ * adc a, =expression
+ * add a, =expression
+ * and =expression
+ * call =expression
+ * cp =expression
+ * jp =expression
+ * in a, (=expression)
+ * ld a, =expression
+ * ld a, (=expression)
+ * ld (=expression), a
+ * ld b, =expression
+ * ld c, =expression
+ * ld d, =expression
+ * ld e, =expression
+ * ld h, =expression
+ * ld l, =expression
+ * ld bc, =expression
+ * ld de, =expression
+ * ld hl, =expression
+ * ld hl, (=expression)
+ * ld (hl), =expression
+ * ld (=expression), hl
+ * ld sp, =expression
+ * out (=expression), a
+ * or =expression
+ * rst =expression
+ * sbc a, =expression
+ * sub a, expression
+ * xor =expression
+ *
+ * In these cases we store the label id in op_code[1] and set the addr flag
+ * to indicate whether it's a long or short label.
+ *
+ * bit =expression, [a-l]
+ * bit =expression, (hl)
+ * ld ix, =expression
+ * ld iy, =expression
+ * ld bc, (=expression)
+ * ld (=expression), bc
+ * ld de, (=expression)
+ * ld (=expression), de
+ * ld ix, (=expression)
+ * ld (=expression), ix
+ * ld iy, (=expression)
+ * ld (=expression), iy
+ * ld (=expression), sp
+ * ld sp, (=expression)
+ * im =expression
+ * res =expression, [a-l]
+ * res =expression, (hl)
+ * set =expression, [a-l]
+ * set =expression, (hl)
+
+ *
+ * In these cases the label id in op_code[2] and set the addr flag
+ * to indicate whether it's a long or short label.  op_code[1] is
+ * set as though the integer was 0.
+ *
+ * db =expression
+ * dw =expression
+ *
+ * In this case the id is stored in op_code[0].  It's not possible to have
+ * multiple expressions in a single db or dw statement.
+ */
+
+#define SPECASM_FLAGS_EXP_LONG 0x80
+
 #define specasm_line_set_size(l, s) ((l)->flags |= s)
 #define specasm_line_get_size(l) ((l)->flags & 0x3)
 #define specasm_line_get_addr_type(l) (((l)->flags) & 0xC)
@@ -149,6 +231,17 @@
 #define specasm_line_set_format(l, s) ((l)->flags |= (s))
 #define specasm_line_get_format2(l) ((((l)->flags) & 0x30) << 2)
 #define specasm_line_set_format2(l, s) ((l)->flags |= ((s) >> 2))
+
+/*
+ * returns the type of a line but treats instructions with expressions
+ * as normal instructions.  This makes it easier to handle these instructions
+ * in code that doesn't care about expressions.
+ */
+
+#define specasm_line_get_adj_type(l)                                           \
+	((l->type >= SPECASM_LINE_TYPE_EXP_ADJ)                                \
+	     ? (l->type - SPECASM_LINE_TYPE_EXP_ADJ)                           \
+	     : l->type)
 
 /*
  * flags bit field
@@ -181,7 +274,8 @@ void specasm_init_dump_table(void);
 char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags);
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 				 specasm_line_t *line);
-
+uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
+			    uint8_t *label1_type);
 uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf);
 
 #endif

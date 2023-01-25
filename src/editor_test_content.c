@@ -14,7 +14,6 @@
  * limitations under the License.
 */
 
-
 #include "editor.h"
 #include "editor_test_content.h"
 
@@ -842,20 +841,22 @@ const editor_test_t editor_tests[] = {
 		"byte_count",
 		"ld a, 10" EDITOR_KEY_ENTER
 		"db 10" EDITOR_KEY_ENTER
+		"db =1 << 6" EDITOR_KEY_ENTER
 		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
 		"@hello" EDITOR_KEY_ENTER
 		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
 		EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_UP
-		EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_ENTER
 		EDITOR_KEY_COMMAND "b" EDITOR_KEY_ENTER,
 		"  ld a, 10                      "
 		"db 10                           "
+		"db =1 << 6                      "
 		"  bit 3, (ix+127)               "
 		"@hello                          "
 		EDITOR_BLANK_LINE,
 		"",
 		{ .command_col = 3 },
-		5,
+		6,
 	},
 	{
 		"copy_into_selected_area",

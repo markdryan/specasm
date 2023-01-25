@@ -163,7 +163,207 @@ Here are some valid label examples.
 .l_1
 ```
 
-Specasm does not support expressions in the general sense.  There is one exception however.  In certain circumstances it supports label subtraction.  This permits the size of a given block of code or data delimited by two labels to be encoded into the binary at link time.  Label subtraction can be used in place of an immediate value in four specific mnemonics.
+#### Expressions and Constants ####
+
+Constants can be defined anywhere within .x files.  The syntax is
+
+```
+.label equ expression
+```
+
+Where label is a normal label, either local or global, and expression is an expression that evaluates to a 16 bit integer.  For example
+
+```
+.topbit equ 1 << 7
+```
+
+The labels of equ statements share the same namespace as ordinary labels.  So, code like
+
+```
+.topbit equ 1 << 7
+.topbit
+```
+
+is not allowed.
+
+Expressions in Specasm can contain 16 bit numbers and labels. The labels can either be a label of a location within the code or that of an equ statement.  There is one restriction here.  An equ statement that defines a global label, i.e.,  one whose label begins with an upper case letter, cannot contain a reference to a local label.  However, equ statements that define local labels can reference global labels.  In addition,
+recursive definitions are not permitted.  For example, the following sequences of equ definitions are invalid in Specasm.
+
+```
+.local equ 10
+.Global equ local / 2
+```
+
+```
+.local1 equ local2
+.local2 equ local3
+.local3 equ local1
+```
+
+The following operators are supported
+
+| Operator   | Description |  Precedence |
+|------------|-------------|------------ |
+| -          | unary minus |  0          |
+| ~          | complement  |  0          |
+| ( )        | brackets    |  0          |
+| *          | multiply    |  1          |
+| /          | div         |  1          |
+| %          | mod         |  1          |
+| +          | plus        |  2          |
+| -          | minus       |  2          |
+| <<         | left shift  |  3          |
+| >>         | right shift |  3          |
+| &          | bitwise and |  4          |
+| \|         | bitwise or  |  4          |
+| ^          | bitwise eor |  4          |
+
+Expressions can be used in certain instructions that accept 8 or 16 bit immediate integers. When an expression or a constant, defined by an equ statement, is used by an instruction they must be preceded by an '=' sign.  For example,
+
+```
+.equ index 6
+.start
+ld a, =10*2
+or =1 << index
+res =index, a
+.end
+db =end-start
+```
+
+Constants defined by equ statements cannot be used directly as the target of a jump or call instruction, without specifying the '=' sign.  For example,
+
+```
+.opench equ 5563
+.target
+call =opench  ; Allowed
+jp target     ; Allowed
+ret
+call opench   ; Not allowed
+jp opench     ; Not allowed
+call target   ; Allowed
+call =target  ; Allowed
+jp =target    ; Allowed
+```
+
+Note however that normal labels that mark a position within the code, can be used in expressions, either by themselves or in combination with other operators, e.g.,
+
+```
+.target
+ret
+
+.fn
+call target
+call =target
+call =target + 1
+```
+
+The first two call statements in this example generate the same machine code instruction.
+
+The following instructions support expressions.
+
+| Instruction / Directive  |
+|--------------------------|
+| adc a, =expression       |
+| add a, =expression       |
+| and =expression          |
+| call =expression         |
+| cp =expression           |
+| jp =expression           |
+| in a, (=expression)      |
+| ld a, =expression        |
+| ld a, (=expression)      |
+| ld (=expression), a      |
+| ld b, =expression        |
+| ld c, =expression        |
+| ld d, =expression        |
+| ld e, =expression        |
+| ld h, =expression        |
+| ld l, =expression        |
+| ld bc, =expression       |
+| ld de, =expression       |
+| ld hl, =expression       |
+| ld hl, (=expression)     |
+| ld (hl), =expression     |
+| ld (=expression), hl     |
+| ld sp, =expression       |
+| out (=expression), a     |
+| or =expression           |
+| rst =expression          |
+| sbc a, =expression       |
+| sub a, expression        |
+| xor =expressio           |
+| bit =expression, [a-l]   |
+| bit =expression, (hl)    |
+| ld ix, =expression       |
+| ld iy, =expression       |
+| ld bc, (=expression)     |
+| ld (=expression), bc     |
+| ld de, (=expression)     |
+| ld (=expression), de     |
+| ld ix, (=expression)     |
+| ld (=expression), ix     |
+| ld iy, (=expression)     |
+| ld (=expression), iy     |
+| ld (=expression), sp     |
+| ld sp, (=expression)     |
+| im =expression           |
+| res =expression, [a-l]   |
+| res =expression, (hl)    |
+| set =expression, [a-l]   |
+| set =expression, (hl)    |
+| dw =expression           |
+| db =expression           |
+
+Expressions cannot be used as an offset in combination with an index register, e.g.,
+
+```
+add a, (ix + =10*10)
+```
+
+is not supported.
+
+There's one additional restriction.  Only a single value can be specified when an expression is used with a data directive.  For example,
+
+```
+dw =10^1, =constant
+```
+
+is not permitted.  This needs to be written as
+
+```
+dw =10^1
+dw =constant
+```
+
+One final note.  Expressions are not parsed or evaluated until link time.  As a result you will not be warned about a syntax error in your expressions until you link your program.  For example, Specasm's editor will allow you to enter and save the following code.
+
+```
+.shift equ 1 <<
+ld a, =shift
+```
+
+No errors will be reported until link time.  This is unfortunate and contrary to the way Specasm handles instructions that do not use expressions.  Unfortunately, there's not enough memory left to include an expression checker in the editor/asssembler, and even if there was, it would not be possible to catch all the errors at assembly time, as it may not be possible to resolve the expressions until link time.  For example,
+
+*main.x*
+```
+.Global equ 16
+```
+
+*other.x*
+```
+im =Global
+```
+
+Here, the expression used in the im statement is invalid as it resolves to a value that is larger than 2.  However, this can't be known until link time as the constant Global is defined in a different file.
+
+#### Label Subtraction
+
+> **Warning**
+> Label subtraction outside of expressions is deprecated.  This syntax has been rendered redundant by the introduction of expressions in Specasm v5.  It will probably be removed in the future to reclaim the bytes used to implement it.
+
+Direct label subtraction is supported in certain instructions and directives without the use of an expression.
+
+Label subtraction permits the size of a given block of code or data delimited by two labels to be encoded into the binary at link time.  Label subtraction can be used in place of an immediate value in four specific mnemonics.
 
 
 | Mnemonic                 | Description                                            |

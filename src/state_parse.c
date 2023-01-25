@@ -111,6 +111,25 @@ void specasm_state_check_label_e(const char *str)
 		err_type = SPECASM_ERROR_BAD_LABEL;
 }
 
+static void prv_parse_equ_e(specasm_line_t *line, const char *str, uint8_t i)
+{
+	uint8_t label1;
+	uint8_t label1_type;
+	uint8_t label = line->data.label;
+	uint8_t label_type = line->type;
+
+	line->type = SPECASM_LINE_TYPE_EQU;
+	line->data.op_code[0] = label_type;
+	line->data.op_code[1] = label;
+
+	(void)specasm_parse_exp_e(&str[i], &label1, &label1_type);
+
+	line->data.op_code[2] = (label1_type == SPECASM_FLAGS_ADDR_SHORT)
+				    ? SPECASM_LINE_TYPE_SL
+				    : SPECASM_LINE_TYPE_LL;
+	line->data.op_code[3] = label1;
+}
+
 static void prv_parse_label_e(const char *str, uint8_t i, specasm_line_t *line)
 {
 	uint8_t j;
@@ -133,17 +152,21 @@ static void prv_parse_label_e(const char *str, uint8_t i, specasm_line_t *line)
 		if (err_type != SPECASM_ERROR_OK)
 			return;
 		line->type = SPECASM_LINE_TYPE_SL;
-		return;
+	} else {
+		line->data.label = specasm_state_add_long_e(scratch);
+		if (err_type != SPECASM_ERROR_OK)
+			return;
+		line->type = SPECASM_LINE_TYPE_LL;
 	}
-
-	line->data.label = specasm_state_add_long_e(scratch);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-	line->type = SPECASM_LINE_TYPE_LL;
 	for (; i < SPECASM_LINE_MAX_LEN && str[i] == ' '; i++)
 		;
-	if (i < SPECASM_LINE_MAX_LEN)
-		err_type = SPECASM_ERROR_LONG_LABEL_EX;
+	if (i < SPECASM_LINE_MAX_LEN) {
+		if (i < (SPECASM_LINE_MAX_LEN - 4) &&
+		    !strncmp(str + i, "equ ", 4))
+			prv_parse_equ_e(line, str, i + 4);
+		else
+			err_type = SPECASM_ERROR_LONG_LABEL_EX;
+	}
 }
 
 static void prv_parse_short_comment_e(const char *str, uint8_t i,
@@ -248,8 +271,10 @@ static uint8_t prv_parse_include_e(const char *str, char type, uint8_t i,
 	for (; i < SPECASM_LINE_MAX_LEN && str[i] <= ' '; i++)
 		;
 
-	if (i == SPECASM_LINE_MAX_LEN)
-		return i;
+	if (i == SPECASM_LINE_MAX_LEN) {
+		err_type = SPECASM_ERROR_BAD_MNENOMIC;
+		return 0;
+	}
 
 	for (k = SPECASM_LINE_MAX_LEN - 1; k > i && str[k] <= ' '; k--)
 		;
@@ -400,91 +425,4 @@ void specasm_parse_line_e(unsigned int l, const char *str)
 	}
 
 	prv_parse_short_comment_e(str, i + 1, line);
-}
-
-static char *prv_format_string_e(char *buf, uint8_t lng, unsigned int l,
-				 uint8_t ch)
-{
-	const char *ptr;
-
-	if (lng)
-		ptr = specasm_state_get_long_e(l);
-	else
-		ptr = specasm_state_get_short_e(l);
-	if (err_type != SPECASM_ERROR_OK)
-		return NULL;
-	*buf++ = ch;
-	while (*ptr)
-		*buf++ = *ptr++;
-
-	return buf;
-}
-
-void specasm_format_line_e(char *buf, unsigned int l)
-{
-	const char *ptr;
-	const char *end_ptr;
-	char *comment_start;
-	char *start;
-	uint8_t i;
-	const char str_ids[] = {'\'', '"', '#', '@', '-', '+'};
-	const specasm_line_t *line = &state.lines.lines[l];
-
-	end_ptr = buf + SPECASM_LINE_MAX_LEN;
-
-	if (line->type == SPECASM_LINE_TYPE_EMPTY)
-		goto clear;
-
-	start = buf;
-	if ((line->type == SPECASM_LINE_TYPE_LL) ||
-	    (line->type == SPECASM_LINE_TYPE_SL)) {
-		buf =
-		    prv_format_string_e(buf, line->type == SPECASM_LINE_TYPE_LL,
-					line->data.label, '.');
-		goto clear;
-	}
-
-	if ((line->type == SPECASM_LINE_TYPE_LC) ||
-	    (line->type == SPECASM_LINE_TYPE_SC)) {
-		buf =
-		    prv_format_string_e(buf, line->type == SPECASM_LINE_TYPE_LC,
-					line->comment, ';');
-		goto clear;
-	}
-	if ((line->type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
-	    (line->type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
-		i = (line->type - SPECASM_LINE_TYPE_STR_SIN_SHORT) >> 1;
-		i = str_ids[i];
-		buf = prv_format_string_e(buf, line->type & 1, line->data.label,
-					  i);
-		if ((line->type < SPECASM_LINE_TYPE_INC_SHORT) && buf < end_ptr)
-			*buf++ = i;
-	} else {
-		if (!((line->type >= SPECASM_LINE_TYPE_DB &&
-		       line->type <= SPECASM_LINE_TYPE_DW_SUB) ||
-		      line->type == SPECASM_LINE_TYPE_DS))
-			for (i = 0; i < SPECASM_MAX_INDENT; i++)
-				*buf++ = ' ';
-
-		buf += specasm_dump_opcode_e(line, buf);
-		if (err_type != SPECASM_ERROR_OK)
-			goto clear;
-	}
-
-	if (line->comment != SPECASM_NULL) {
-		comment_start = start + SPECASM_LINE_MAX_OPCODE + 1;
-		while (buf < comment_start)
-			*buf++ = ' ';
-		*buf++ = ';';
-		ptr = specasm_state_get_short_e(line->comment);
-		if (err_type != SPECASM_ERROR_OK)
-			goto clear;
-		while (*ptr)
-			*buf++ = *ptr++;
-	}
-
-clear:
-	while (buf < end_ptr)
-		*buf++ = ' ';
-	*buf = 0;
 }

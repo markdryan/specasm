@@ -11,8 +11,11 @@ include Make.include
 UNITZX = \
 	error.o \
 	state_base.o \
-	line.o \
-	state.o \
+	line_common.o \
+	line_dump.o \
+	line_parse.o \
+	state_dump.o \
+	state_parse.o \
 	peer_file_zx.o \
 	util_print_zx.o \
 	peer_unit.o \
@@ -27,8 +30,8 @@ clean:
 
 .PHONY: tests
 tests:
-	- rm -rf unitzx
-	mkdir unitzx
+	- rm -rf tests
+	mkdir tests
 	cd .. && make -f Makefile test_content_zx
-	../test_content_zx unitzx
-	cp unitzx.tap unitzx
+	../test_content_zx tests
+	cp unitzx.tap tests

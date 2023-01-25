@@ -40,4 +40,3 @@ int utoa(int n, char *s, unsigned char radix)
 {
 	return sprintf(s, radix == 16 ? "%" PRIX16 : "%" PRIu16, (uint16_t)n);
 }
-
