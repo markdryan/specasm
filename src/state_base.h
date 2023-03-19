@@ -17,8 +17,8 @@
 #ifndef SPECASM_STATE_READ_H
 #define SPECASM_STATE_READ_H
 
-#define SPECASM_VERSION 5
-#define SPECASM_VERSION_STR "v5"
+#define SPECASM_VERSION 6
+#define SPECASM_VERSION_STR "v6"
 
 #include <stdint.h>
 
