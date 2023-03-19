@@ -74,6 +74,7 @@ release:
 	- rm -rf release
 	mkdir -p release/specasm
 	cp specasm.tap salink.tap release/specasm
+	cp ../COPYING release/specasm
 	cp SAIMPORT SAEXPORT *.X release/specasm
 	cp ../bas/INSTALL release/specasm
 	cp ../bas/REMOVE release/specasm
