@@ -46,8 +46,10 @@ TEST_CONTENT_ZX =\
 	test_content_zx.c
 
 SBC_COMMON =\
+	sbc_error.c \
+	sbc_lexer.c \
 	sbc_overlay.c \
-	sbc_lexer.c
+	state_base.c
 
 SBC_LEX_TEST =\
 	sbc_lex_test.c
@@ -68,7 +70,7 @@ saexport: $(BASE:%.c=%.o) $(COMMON:%.c=%.o) $(POSIX:%.c=%.o) $(SAEXPORT:%.c=%.o)
 salink: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SALINK:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
-sbclextest: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SBC_LEX_TEST:%.c=%.o) $(SBC_COMMON:%.c=%.o)
+sbclextest: $(POSIX:%.c=%.o) $(SBC_LEX_TEST:%.c=%.o) $(SBC_COMMON:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 test_content_zx: $(TEST_CONTENT_ZX:%.c=%.o)

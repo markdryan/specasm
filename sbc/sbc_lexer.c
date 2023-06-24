@@ -20,8 +20,9 @@
 
 #include "error.h"
 
-#include "sbc_overlay.h"
+#include "sbc_error.h"
 #include "sbc_lexer.h"
+#include "sbc_overlay.h"
 
 void sbc_lexer_open(const char *f)
 {
@@ -43,7 +44,7 @@ static void prv_ensure_buffer(uint8_t wanted)
 		return;
 
 	if (overlay.lex.eof) {
-		err_type = SPECASM_ERROR_CORRUPT;
+		err_type = SBC_ERROR_BAD_PROGRAM;
 		return;
 	}
 
@@ -68,7 +69,7 @@ static void prv_ensure_buffer(uint8_t wanted)
 	overlay.lex.start = 0;
 	overlay.lex.end = bytes_in_buffer + read;
 	if (read < wanted) {
-		err_type = SPECASM_ERROR_CORRUPT;
+		err_type = SBC_ERROR_BAD_PROGRAM;
 		return;
 	}
 }
@@ -103,6 +104,8 @@ static void prv_handle_line_start(void)
 	overlay.lex.tok.tok.line_no |=
 		((uint16_t )overlay.lex.lex_buf[overlay.lex.start]);
 	overlay.lex.start++;
+
+	overlay.lex.line_no = overlay.lex.tok.tok.line_no;
 
 	/*
 	 * This 3rd byte contains the length of the line. This is handy
@@ -152,7 +155,7 @@ static void prv_handle_ext_keyword(void)
 	key = overlay.lex.lex_buf[overlay.lex.start];
 
 	if (key < 0x8e) {
-		err_type = SPECASM_ERROR_CORRUPT;
+		err_type = SBC_ERROR_BAD_PROGRAM;
 		return;
 	}
 
@@ -256,7 +259,7 @@ static void prv_handle_decimal(int8_t f)
 
 		if (((f > 0) && (val < old_val)) ||
 		    ((f < 0) && (val > old_val))) {
-			err_type = SPECASM_ERROR_NUM_TOO_BIG;
+			err_type = SBC_ERROR_BAD_NUM;
 			return;
 		}
 		--ptr;
@@ -331,7 +334,7 @@ static void prv_handle_string(void)
 
 	for (ptr = start + 1; *ptr != '"'; ptr++) {
 		if (*ptr == 13) {
-			err_type = SPECASM_ERROR_STRING_TOO_LONG;
+			err_type = SBC_ERROR_MISSING_QUOTE;
 			return;
 		}
 	}
@@ -392,7 +395,7 @@ static void prv_handle_hex(void)
 
 	dig = prv_is_hex_digit(*ptr);
 	if (dig == -1) {
-		err_type = SPECASM_ERROR_BAD_NUM;
+		err_type = SBC_ERROR_BAD_NUM;
 		return;
 	}
 
@@ -400,7 +403,7 @@ static void prv_handle_hex(void)
 	ptr++;
 	while ((dig = prv_is_hex_digit(*ptr)) != -1) {
 		if (count == 8) {
-			err_type = SPECASM_ERROR_NUM_TOO_BIG;
+			err_type = SBC_ERROR_BAD_NUM;
 			return;
 		}
 		overlay.lex.tok.tok.integer <<= 4;
@@ -418,7 +421,7 @@ static void prv_handle_bin(void)
 	uint8_t count = 1;
 
 	if (*ptr != '0' && *ptr != '1') {
-		err_type = SPECASM_ERROR_BAD_NUM;
+		err_type = SBC_ERROR_BAD_NUM;
 		return;
 	}
 
@@ -426,7 +429,7 @@ static void prv_handle_bin(void)
 	ptr++;
 	while (*ptr == '0' || *ptr == '1') {
 		if (count == 32) {
-			err_type = SPECASM_ERROR_NUM_TOO_BIG;
+			err_type = SBC_ERROR_BAD_NUM;
 			return;
 		}
 		overlay.lex.tok.tok.integer <<= 1;

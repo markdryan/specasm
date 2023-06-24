@@ -242,6 +242,7 @@ struct sbc_lexer_state_t {
 	uint16_t start;
 	uint16_t end;
 	uint8_t eof;
+	uint16_t line_no;
 };
 
 typedef struct sbc_lexer_state_t sbc_lexer_state_t;

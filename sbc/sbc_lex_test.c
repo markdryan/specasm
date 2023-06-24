@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "error.h"
+#include "sbc_error.h"
 #include "sbc_lexer.h"
 #include "sbc_overlay.h"
 
@@ -411,7 +412,7 @@ int main(int argc, char **argv)
 	prv_dump(argv[1]);
 
 	if (err_type != SPECASM_ERROR_OK) {
-		printf("%s\n", error_msgs[err_type]);
+		printf("%s at line %d\n", sbc_error_msg(), overlay.lex.line_no);
 		return 1;
 	}
 
