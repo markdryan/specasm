@@ -9,6 +9,7 @@ salink
 saimport
 saexport
 specasm-bare
+sbclextest
 test_content_zx
 SAIMPORT
 SAEXPORT

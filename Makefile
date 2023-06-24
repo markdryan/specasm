@@ -1,4 +1,4 @@
-VPATH = src
+VPATH = src sbc
 
 BASE =\
 	error.c \
@@ -45,9 +45,16 @@ TEST_CONTENT_ZX =\
 	test_content.c \
 	test_content_zx.c
 
+SBC_COMMON =\
+	sbc_overlay.c \
+	sbc_lexer.c
+
+SBC_LEX_TEST =\
+	sbc_lex_test.c
+
 CFLAGS += -Wall -MMD -DUNITTESTS -Isrc
 
-all: unittests saimport saexport salink
+all: unittests saimport saexport salink sbclextest
 
 unittests: $(BASE:%.c=%.o) $(COMMON:%.c=%.o) $(SRCS:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -61,11 +68,14 @@ saexport: $(BASE:%.c=%.o) $(COMMON:%.c=%.o) $(POSIX:%.c=%.o) $(SAEXPORT:%.c=%.o)
 salink: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SALINK:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
+sbclextest: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SBC_LEX_TEST:%.c=%.o) $(SBC_COMMON:%.c=%.o)
+	$(CC) $(CFLAGS) -o $@ $^
+
 test_content_zx: $(TEST_CONTENT_ZX:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	- rm *.d *.o unittests saimport saexport salink
+	- rm *.d *.o unittests saimport saexport salink sbclextest
 
 -include $(BASE:%.c=%.d)
 -include $(COMMON:%.c=%.d)
@@ -75,3 +85,5 @@ clean:
 -include $(SAEXPORT:%.c=%.d)
 -include $(SALINK:%.c=%.d)
 -include $(TEST_CONTENT_ZX:%.c=%.d)
+-include $(SBC_COMMON:%.c=%.d)
+-include $(SBC_LEX_TEST:%.c=%.d)
