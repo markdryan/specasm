@@ -247,7 +247,7 @@ struct sbc_lexer_state_t {
 
 typedef struct sbc_lexer_state_t sbc_lexer_state_t;
 
-void sbc_lexer_open(const char *f);
-void sbc_lexer_get_token();
+void sbc_lexer_open_e(const char *f);
+void sbc_lexer_get_token_e();
 
 #endif

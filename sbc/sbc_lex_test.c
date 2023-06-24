@@ -289,18 +289,18 @@ static void prv_dump_real(void)
 	printf("%f", real);
 }
 
-static void prv_dump(const char *fname)
+static void prv_dump_e(const char *fname)
 {
 	uint8_t tokch;
 	uint8_t i;
 	uint32_t mask;
 
-	sbc_lexer_open(fname);
+	sbc_lexer_open_e(fname);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
 	do {
-		sbc_lexer_get_token();
+		sbc_lexer_get_token_e();
 		if (err_type != SPECASM_ERROR_OK)
 			break;
 		switch (overlay.lex.tok.type) {
@@ -409,7 +409,12 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	prv_dump(argv[1]);
+	prv_dump_e(argv[1]);
+
+	if ((err_type == SBC_ERROR_OPEN) || (err_type == SBC_ERROR_WRITE)) {
+		printf("%s : %s\n", sbc_error_msg(), argv[1]);
+		return 1;
+	}
 
 	if (err_type != SPECASM_ERROR_OK) {
 		printf("%s at line %d\n", sbc_error_msg(), overlay.lex.line_no);

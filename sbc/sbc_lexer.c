@@ -24,17 +24,19 @@
 #include "sbc_lexer.h"
 #include "sbc_overlay.h"
 
-void sbc_lexer_open(const char *f)
+void sbc_lexer_open_e(const char *f)
 {
 	overlay.lex.h = specasm_file_ropen_e(f);
-	if (err_type != SPECASM_ERROR_OK)
+	if (err_type != SPECASM_ERROR_OK) {
+		err_type = SBC_ERROR_OPEN;
 		return;
+	}
 	overlay.lex.start = 0;
 	overlay.lex.end = 0;
 	overlay.lex.eof = 0;
 }
 
-static void prv_ensure_buffer(uint8_t wanted)
+static void prv_ensure_buffer_e(uint8_t wanted)
 {
 	uint16_t to_read;
 	uint16_t read;
@@ -62,8 +64,10 @@ static void prv_ensure_buffer(uint8_t wanted)
 	read = specasm_file_read_e(overlay.lex.h,
 				   &overlay.lex.lex_buf[bytes_in_buffer],
 				   to_read);
-	if (err_type != SPECASM_ERROR_OK)
+	if (err_type != SPECASM_ERROR_OK) {
+		err_type = SBC_ERROR_READ;
 		return;
+	}
 	if (read < to_read)
 		overlay.lex.eof = 1;
 	overlay.lex.start = 0;
@@ -74,7 +78,7 @@ static void prv_ensure_buffer(uint8_t wanted)
 	}
 }
 
-static void prv_handle_line_start(void)
+static void prv_handle_line_start_e(void)
 {
 
 	/*
@@ -84,7 +88,7 @@ static void prv_handle_line_start(void)
 
 	overlay.lex.start++;
 
-	prv_ensure_buffer(1);
+	prv_ensure_buffer_e(1);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
@@ -93,7 +97,7 @@ static void prv_handle_line_start(void)
 		return;
 	}
 
-	prv_ensure_buffer(3);
+	prv_ensure_buffer_e(3);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 	overlay.lex.tok.type = SBC_TOKEN_LINE_LABEL;
@@ -113,7 +117,7 @@ static void prv_handle_line_start(void)
 	 * we get to another line.
 	 */
 
-	prv_ensure_buffer(overlay.lex.lex_buf[overlay.lex.start] - 1);
+	prv_ensure_buffer_e(overlay.lex.lex_buf[overlay.lex.start] - 1);
 	overlay.lex.start++;
 }
 
@@ -146,7 +150,7 @@ static void prv_handle_identifier(void)
 	overlay.lex.tok.ptr = overlay.lex.start - len;
 }
 
-static void prv_handle_ext_keyword(void)
+static void prv_handle_ext_keyword_e(void)
 {
 	uint8_t key;
 	uint8_t first = overlay.lex.lex_buf[overlay.lex.start];
@@ -225,7 +229,7 @@ static void prv_handle_floating(int8_t f)
 	overlay.lex.tok.type = SBC_TOKEN_REAL;
 }
 
-static void prv_handle_decimal(int8_t f)
+static void prv_handle_decimal_e(int8_t f)
 {
 	const uint8_t *last;
 	int32_t old_val;
@@ -311,7 +315,7 @@ static void prv_handle_complex_op(void)
 		if (*ptr >= '0' && *ptr <= '9') {
 			overlay.lex.start += ptr -
 				&overlay.lex.lex_buf[overlay.lex.start];
-			prv_handle_decimal(-1);
+			prv_handle_decimal_e(-1);
 			return;
 		} else if (*ptr == '.') {
 			overlay.lex.start--;
@@ -326,7 +330,7 @@ static void prv_handle_complex_op(void)
 	overlay.lex.start++;
 }
 
-static void prv_handle_string(void)
+static void prv_handle_string_e(void)
 {
 	const uint8_t *ptr;
 	uint8_t len;
@@ -346,7 +350,7 @@ static void prv_handle_string(void)
 	overlay.lex.start += len + 1;
 }
 
-static void prv_handle_line_no(void)
+static void prv_handle_line_no_e(void)
 {
 	uint8_t a;
 	uint8_t b;
@@ -354,7 +358,7 @@ static void prv_handle_line_no(void)
 	uint8_t num[2];
 	const uint8_t *ptr = &overlay.lex.lex_buf[overlay.lex.start + 1];
 
-	prv_ensure_buffer(3);
+	prv_ensure_buffer_e(3);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
@@ -387,7 +391,7 @@ static int8_t prv_is_hex_digit(uint8_t d)
 	return -1;
 }
 
-static void prv_handle_hex(void)
+static void prv_handle_hex_e(void)
 {
 	int8_t dig;
 	const uint8_t *ptr = &overlay.lex.lex_buf[overlay.lex.start + 1];
@@ -415,7 +419,7 @@ static void prv_handle_hex(void)
 	overlay.lex.start += count + 1;
 }
 
-static void prv_handle_bin(void)
+static void prv_handle_bin_e(void)
 {
 	const uint8_t *ptr = &overlay.lex.lex_buf[overlay.lex.start + 1];
 	uint8_t count = 1;
@@ -441,21 +445,21 @@ static void prv_handle_bin(void)
 	overlay.lex.start += count + 1;
 }
 
-void sbc_lexer_get_token(void)
+void sbc_lexer_get_token_e(void)
 {
 	uint8_t first;
 	const char *ptr;
 	const char *simple_ops = "/*()=,;^~?$!:";
 	const char *complex_ops = "<>+-";
 
-	prv_ensure_buffer(1);
+	prv_ensure_buffer_e(1);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
 	first = overlay.lex.lex_buf[overlay.lex.start];
 
 	if (first == 13) {
-		prv_handle_line_start();
+		prv_handle_line_start_e();
 		return;
 	}
 
@@ -465,27 +469,27 @@ void sbc_lexer_get_token(void)
 	}
 
 	if (first == 0x8d) {
-		prv_handle_line_no();
+		prv_handle_line_no_e();
 		return;
 	}
 
 	if (first >= 0xc6 && first <= 0xc8) {
-		prv_handle_ext_keyword();
+		prv_handle_ext_keyword_e();
 		return;
 	}
 
 	if (first == '&') {
-		prv_handle_hex();
+		prv_handle_hex_e();
 		return;
 	}
 
 	if (first == '%') {
-		prv_handle_bin();
+		prv_handle_bin_e();
 		return;
 	}
 
 	if (first >= '0' && first <= '9') {
-		prv_handle_decimal(1);
+		prv_handle_decimal_e(1);
 		return;
 	}
 
@@ -510,7 +514,7 @@ void sbc_lexer_get_token(void)
 	}
 
 	if (first == '"') {
-		prv_handle_string();
+		prv_handle_string_e();
 		return;
 	}
 
