@@ -274,12 +274,12 @@ static void prv_dump_real(void)
 {
 	float real;
 	uint8_t bin_num[4];
-	uint8_t exponent = overlay.lex.tok.tok.real[0] - 1;
+	uint8_t exponent = overlay.lex.tok.tok.real.b[0] - 1;
 
-	bin_num[0] = overlay.lex.tok.tok.real[3];
-	bin_num[1] = overlay.lex.tok.tok.real[2];
-	bin_num[3] = overlay.lex.tok.tok.real[1] & 0x80;
-	bin_num[2] = overlay.lex.tok.tok.real[1] & 0x7f;
+	bin_num[0] = overlay.lex.tok.tok.real.b[3];
+	bin_num[1] = overlay.lex.tok.tok.real.b[2];
+	bin_num[3] = overlay.lex.tok.tok.real.b[1] & 0x80;
+	bin_num[2] = overlay.lex.tok.tok.real.b[1] & 0x7f;
 	bin_num[3] |=  exponent >> 1;
 	if (exponent & 1)
 		bin_num[2] |= 0x80;

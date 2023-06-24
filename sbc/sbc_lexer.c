@@ -206,26 +206,26 @@ static void prv_handle_floating(int8_t f)
 	 * up.
 	 */
 
-	overlay.lex.tok.tok.real[0] = bin_num[3] << 1;
+	overlay.lex.tok.tok.real.b[0] = bin_num[3] << 1;
 	if (bin_num[2] & 0x80)
-		overlay.lex.tok.tok.real[0]++;
-	overlay.lex.tok.tok.real[0]++;
+		overlay.lex.tok.tok.real.b[0]++;
+	overlay.lex.tok.tok.real.b[0]++;
 
 	/*
 	 * Copy the mantissa.
 	 */
 
-	overlay.lex.tok.tok.real[1] = bin_num[2];
-	overlay.lex.tok.tok.real[2] = bin_num[1];
-	overlay.lex.tok.tok.real[3] = bin_num[0];
-	overlay.lex.tok.tok.real[4] = 0;
+	overlay.lex.tok.tok.real.b[1] = bin_num[2];
+	overlay.lex.tok.tok.real.b[2] = bin_num[1];
+	overlay.lex.tok.tok.real.b[3] = bin_num[0];
+	overlay.lex.tok.tok.real.b[4] = 0;
 
 	/*
 	 * Copy the sign bit.
 	 */
 
-	overlay.lex.tok.tok.real[1] &= 0x7f;
-	overlay.lex.tok.tok.real[1] |= bin_num[3] & 0x80;
+	overlay.lex.tok.tok.real.b[1] &= 0x7f;
+	overlay.lex.tok.tok.real.b[1] |= bin_num[3] & 0x80;
 	overlay.lex.tok.type = SBC_TOKEN_REAL;
 }
 

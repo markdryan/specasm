@@ -20,6 +20,7 @@
 #include <stdint.h>
 
 #include "peer_file.h"
+#include "sbc_config.h"
 
 #define SBC_LEX_BUF_SIZE 1024
 
@@ -225,7 +226,7 @@ struct sbc_token_t {
 	union {
 		uint8_t keyword;
 		int32_t integer;
-		uint8_t real[5];
+		sbc_real_t real;
 		sbc_id_type_t id_type;
 		uint16_t line_no;
 	} tok;
