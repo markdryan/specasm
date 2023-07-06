@@ -543,3 +543,11 @@ void sbc_lexer_get_token_e(void)
 
 	overlay.lex.tok.type = SBC_TOKEN_EOF;
 }
+
+void sbc_lexer_close(void)
+{
+	specasm_error_t old_err = err_type;
+
+	specasm_file_close_e(overlay.lex.h);
+	err_type = old_err;
+}

@@ -51,12 +51,19 @@ SBC_COMMON =\
 	sbc_overlay.c \
 	state_base.c
 
+SBC_PARSER =\
+	sbc_parser.c \
+	sbc_exp.c
+
 SBC_LEX_TEST =\
 	sbc_lex_test.c
 
+SBC_FMT =\
+	sbc_fmt.c
+
 CFLAGS += -Wall -MMD -DUNITTESTS -Isrc
 
-all: unittests saimport saexport salink sbclextest
+all: unittests saimport saexport salink sbclextest sbcfmt
 
 unittests: $(BASE:%.c=%.o) $(COMMON:%.c=%.o) $(SRCS:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -73,11 +80,14 @@ salink: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SALINK:%.c=%.o)
 sbclextest: $(POSIX:%.c=%.o) $(SBC_LEX_TEST:%.c=%.o) $(SBC_COMMON:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
+sbcfmt: $(POSIX:%.c=%.o) $(SBC_FMT:%.c=%.o) $(SBC_PARSER:%.c=%.o) $(SBC_COMMON:%.c=%.o)
+	$(CC) $(CFLAGS) -o $@ $^
+
 test_content_zx: $(TEST_CONTENT_ZX:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	- rm *.d *.o unittests saimport saexport salink sbclextest
+	- rm *.d *.o unittests saimport saexport salink sbclextest sbcfmt
 
 -include $(BASE:%.c=%.d)
 -include $(COMMON:%.c=%.d)
@@ -89,3 +99,5 @@ clean:
 -include $(TEST_CONTENT_ZX:%.c=%.d)
 -include $(SBC_COMMON:%.c=%.d)
 -include $(SBC_LEX_TEST:%.c=%.d)
+-include $(SBC_PARSER:%.c=%.d)
+-include $(SBC_FMT:%.c=%.d)

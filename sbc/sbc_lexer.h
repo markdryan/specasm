@@ -24,27 +24,28 @@
 
 #define SBC_LEX_BUF_SIZE 1024
 
-typedef enum {
-	SBC_TOKEN_EOF,
-	SBC_TOKEN_LINE_LABEL,
-	SBC_TOKEN_KEYWORD,
-	SBC_TOKEN_OPERATOR,
-	SBC_TOKEN_STRING,
-	SBC_TOKEN_INTEGER,
-	SBC_TOKEN_HEX,
-	SBC_TOKEN_BIN,
-	SBC_TOKEN_REAL,
-	SBC_TOKEN_IDENTIFIER,
-	SBC_TOKEN_LINE_NUMBER,
-	SBC_TOKEN_REM,
-	SBC_TOKEN_UNKNOWN,
-} sbc_token_type_t;
+#define SBC_TOKEN_EOF 0
+#define SBC_TOKEN_LINE_LABEL 1
+#define SBC_TOKEN_KEYWORD 2
+#define SBC_TOKEN_OPERATOR 3
+#define SBC_TOKEN_STRING 4
+#define SBC_TOKEN_INTEGER 5
+#define SBC_TOKEN_HEX 6
+#define SBC_TOKEN_BIN 7
+#define SBC_TOKEN_REAL 8
+#define SBC_TOKEN_IDENTIFIER 9
+#define SBC_TOKEN_LINE_NUMBER 10
+#define SBC_TOKEN_REM 11
+#define SBC_TOKEN_UNKNOWN 12
 
-typedef enum {
-	SBC_ID_TYPE_INT,
-	SBC_ID_TYPE_REAL,
-	SBC_ID_TYPE_STR,
-} sbc_id_type_t;
+typedef uint8_t sbc_token_type_t;
+
+#define SBC_ID_TYPE_NONE 0
+#define SBC_ID_TYPE_INT 1
+#define SBC_ID_TYPE_REAL 2
+#define SBC_ID_TYPE_STR 3
+
+typedef uint8_t sbc_id_type_t;
 
 #define SBC_KEYWORD_OTHERWISE 0
 #define SBC_KEYWORD_AND 1
@@ -221,6 +222,8 @@ typedef enum {
 #define SBC_KEYWORD_SUM 169
 #define SBC_KEYWORD_BEAT 170
 
+#define SBC_KEYWORD_UNUSED 240
+
 struct sbc_token_t {
 	sbc_token_type_t type;
 	union {
@@ -249,6 +252,7 @@ struct sbc_lexer_state_t {
 typedef struct sbc_lexer_state_t sbc_lexer_state_t;
 
 void sbc_lexer_open_e(const char *f);
+void sbc_lexer_close(void);
 void sbc_lexer_get_token_e();
 
 #endif
