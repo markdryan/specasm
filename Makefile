@@ -56,6 +56,7 @@ SBC_PARSER =\
 	sbc_exp.c
 
 SBC_LEX_TEST =\
+	sbc_fmt_utils.c \
 	sbc_lex_test.c
 
 SBC_FMT =\

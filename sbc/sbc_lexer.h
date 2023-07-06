@@ -221,6 +221,7 @@ typedef uint8_t sbc_id_type_t;
 
 #define SBC_KEYWORD_SUM 169
 #define SBC_KEYWORD_BEAT 170
+#define SBC_KEYWORD_MAX (SBC_KEYWORD_BEAT + 1)
 
 #define SBC_KEYWORD_UNUSED 240
 
