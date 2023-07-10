@@ -526,8 +526,8 @@ void sbc_lexer_get_token_e(void)
 
 	if (first >= 127) {
 		overlay.lex.tok.tok.keyword = first - 127;
-		overlay.lex.tok.ptr = overlay.lex.start;
 		overlay.lex.start++;
+		overlay.lex.tok.ptr = overlay.lex.start;
 		if (overlay.lex.tok.tok.keyword == SBC_KEYWORD_REM) {
 			overlay.lex.tok.type = SBC_TOKEN_REM;
 			while (overlay.lex.lex_buf[overlay.lex.start] != 13)

@@ -1,0 +1,236 @@
+/*
+ * Copyright contributors to Specasm
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+#include <string.h>
+
+#include "sbc_fmt_utils.h"
+
+const char * const sbc_fmt_keywords_strings[SBC_KEYWORD_MAX] = {
+	"OTHERWISE", // SBC_KEYWORD_OTHERWISE
+	"AND",       // SBC_KEYWORD_AND
+	"DIV",       // SBC_KEYWORD_DIV
+	"EOR", // SBC_KEYWORD_EOR
+	"MOD", // SBC_KEYWORD_MOD
+	"OR", // SBC_KEYWORD_OR
+	"ERROR", // SBC_KEYWORD_ERROR
+	"LINE", // SBC_KEYWORD_LINE
+	"OFF", // SBC_KEYWORD_OFF
+	"STEP", // SBC_KEYWORD_STEP
+	"SPC", // SBC_KEYWORD_SPC
+	"TAB(", // SBC_KEYWORD_TAB
+	"ELSE", // SBC_KEYWORD_ELSE
+	"THEN", // SBC_KEYWORD_THEN
+	"",
+	"OPENIN", // SBC_KEYWORD_OPENIN
+	"PTR", // SBC_KEYWORD_PTR
+	"PAGE", // SBC_KEYWORD_PAGE
+	"TIME", // SBC_KEYWORD_TIME
+	"LOMEM", // SBC_KEYWORD_LOMEM
+	"HIMEM", // SBC_KEYWORD_HIMEM
+	"ABS", // SBC_KEYWORD_ABS
+	"ACS", // SBC_KEYWORD_ACS
+	"ADVAL", // SBC_KEYWORD_ADVAL
+	"ASC", // SBC_KEYWORD_ASC
+	"ASN", // SBC_KEYWORD_ASN
+	"ATN", // SBC_KEYWORD_ATN
+	"BGET", // SBC_KEYWORD_BGET
+	"COS", // SBC_KEYWORD_COS
+	"COUNT", // SBC_KEYWORD_COUNT
+	"DEG", // SBC_KEYWORD_DEG
+	"ERL", // SBC_KEYWORD_ERL
+	"ERR", // SBC_KEYWORD_ERR
+	"EVAL", // SBC_KEYWORD_EVAL
+	"EXP", // SBC_KEYWORD_EXP
+	"EXT", // SBC_KEYWORD_EXT
+	"FALSE", // SBC_KEYWORD_FALSE
+	"FN", // SBC_KEYWORD_FN
+	"GET", // SBC_KEYWORD_GET
+	"INKEY", // SBC_KEYWORD_INKEY
+	"INSTR(", // SBC_KEYWORD_INSTR
+	"INT", // SBC_KEYWORD_INT
+	"LEN", // SBC_KEYWORD_LEN
+	"LN", // SBC_KEYWORD_LN
+	"LOG", // SBC_KEYWORD_LOG
+	"NOT", // SBC_KEYWORD_NOT
+	"OPENUP", // SBC_KEYWORD_OPENUP
+	"OPENOUT", // SBC_KEYWORD_OPENOUT
+	"PI", // SBC_KEYWORD_PI
+	"POINT(", // SBC_KEYWORD_POINT
+	"POS", // SBC_KEYWORD_POS
+	"RAD", // SBC_KEYWORD_RAD
+	"RND", // SBC_KEYWORD_RND2
+	"SGN", // SBC_KEYWORD_SGN
+	"SIN", // SBC_KEYWORD_SIN
+	"SQR", // SBC_KEYWORD_SQR
+	"TAN", // SBC_KEYWORD_TAN
+	"TO", // SBC_KEYWORD_TO
+	"TRUE", // SBC_KEYWORD_TRUE
+	"USR", // SBC_KEYWORD_USR
+	"VAL", // SBC_KEYWORD_VAL
+	"VPOS", // SBC_KEYWORD_VPOS
+	"CHR$", // SBC_KEYWORD_CHR_STR
+	"GET$", // SBC_KEYWORD_GET_STR
+	"INKEY$", // SBC_KEYWORD_INKEY_STR
+	"LEFT$(", // SBC_KEYWORD_LEFT_STR
+	"MID$(", // SBC_KEYWORD_MID_STR
+	"RIGHT$(", // SBC_KEYWORD_RIGHT_STR
+	"STR$", // SBC_KEYWORD_STR_STR
+	"STRING$(", // SBC_KEYWORD_STRING_STR
+	"EOF", // SBC_KEYWORD_EOF_HASH
+	"",
+	"",
+	"",
+	"WHEN", // SBC_KEYWORD_WHEN
+	"OF", // SBC_KEYWORD_OF
+	"ENDCASE", // SBC_KEYWORD_ENDCASE
+	"ELSE", // SBC_KEYWORD_ELSE_2
+	"ENDIF", // SBC_KEYWORD_ENDIF
+	"ENDWHILE", // SBC_KEYWORD_ENDWHILE
+	"PTR", // SBC_KEYWORD_PTR_2
+	"PAGE", // SBC_KEYWORD_PAGE_2
+	"TIME", // SBC_KEYWORD_TIME_2
+	"LOMEM", // SBC_KEYWORD_LOMEM_2
+	"HIMEM", // SBC_KEYWORD_HIMEM_2
+	"SOUND", // SBC_KEYWORD_SOUND
+	"BPUT", // SBC_KEYWORD_BPUT
+	"CALL", // SBC_KEYWORD_CALL
+	"CHAIN", // SBC_KEYWORD_CHAIN
+	"CLEAR", // SBC_KEYWORD_CLEAR
+	"CLOSE", // SBC_KEYWORD_CLOSE
+	"CLG", // SBC_KEYWORD_CLG
+	"CLS", // SBC_KEYWORD_CLS
+	"DATA", // SBC_KEYWORD_DATA
+	"DEF", // SBC_KEYWORD_DEF
+	"DIM", // SBC_KEYWORD_DIM
+	"DRAW", // SBC_KEYWORD_DRAW
+	"END", // SBC_KEYWORD_END
+	"ENDPROC", // SBC_KEYWORD_ENDPROC
+	"ENVELOPE", // SBC_KEYWORD_ENVELOPE
+	"FOR", // SBC_KEYWORD_FOR
+	"GOSUB", // SBC_KEYWORD_GOSUB
+	"GOTO", // SBC_KEYWORD_GOTO
+	"GCOL", // SBC_KEYWORD_GCOL
+	"IF", // SBC_KEYWORD_IF
+	"INPUT", // SBC_KEYWORD_INPUT
+	"LET", // SBC_KEYWORD_LET
+	"LOCAL", // SBC_KEYWORD_LOCAL
+	"MODE", // SBC_KEYWORD_MODE
+	"MOVE", // SBC_KEYWORD_MOVE
+	"NEXT", // SBC_KEYWORD_NEXT
+	"ON", // SBC_KEYWORD_ON
+	"VDU", // SBC_KEYWORD_VDU
+	"PLOT", // SBC_KEYWORD_PLOT
+	"PRINT", // SBC_KEYWORD_PRINT
+	"PROC", // SBC_KEYWORD_PROC
+	"READ", // SBC_KEYWORD_READ
+	"REM", // SBC_KEYWORD_REM
+	"REPEAT", // SBC_KEYWORD_REPEAT
+	"REPORT", // SBC_KEYWORD_REPORT
+	"RESTORE", // SBC_KEYWORD_RESTORE
+	"RETURN", // SBC_KEYWORD_RETURN
+	"RUN", // SBC_KEYWORD_RUN
+	"STOP", // SBC_KEYWORD_STOP
+	"COLOUR", // SBC_KEYWORD_COLOUR
+	"TRACE", // SBC_KEYWORD_TRACE
+	"UNTIL", // SBC_KEYWORD_UNTIL
+	"WIDTH", // SBC_KEYWORD_WIDTH
+	"OSCLI", // SBC_KEYWORD_OSCLI
+
+	"CASE", // SBC_KEYWORD_CASE
+	"CIRCLE", // SBC_KEYWORD_CIRCLE
+	"FILL", // SBC_KEYWORD_FILL
+	"ORIGIN", // SBC_KEYWORD_ORIGIN
+	"POINT", // SBC_KEYWORD_POINT2
+	"RECTANGLE", // SBC_KEYWORD_RECT
+	"SWAP", // SBC_KEYWORD_SWAP
+	"WHILE", // SBC_KEYWORD_WHILE
+	"WAIT", // SBC_KEYWORD_WAIT
+	"MOUSE", // SBC_KEYWORD_MOUSE
+	"QUIT", // SBC_KEYWORD_QUIT
+	"SYS", // SBC_KEYWORD_SYS
+	"INSTALL", // SBC_KEYWORD_INSTALL
+	"LIBRARY", // SBC_KEYWORD_LIBRARY
+	"TINT", // SBC_KEYWORD_TINT
+	"ELLIPSE", // SBC_KEYWORD_ELLIPSE
+	"BEATS", // SBC_KEYWORD_BEATS
+	"TEMPO", // SBC_KEYWORD_TEMPO
+	"VOICES", // SBC_KEYWORD_VOICES
+	"VOICE", // SBC_KEYWORD_VOICE
+	"STEREO", // SBC_KEYWORD_STEREO
+	"OVERLAY", // SBC_KEYWORD_OVERLAY
+
+	"APPEND", // SBC_KEYWORD_APPEND
+	"AUTO", // SBC_KEYWORD_AUTO
+	"CRUNCH", // SBC_KEYWORD_CRUNCH
+	"DELETE", // SBC_KEYWORD_DELETE
+	"EDIT", // SBC_KEYWORD_EDIT
+	"HELP", // SBC_KEYWORD_HELP
+	"LIST", // SBC_KEYWORD_LIST
+	"LOAD", // SBC_KEYWORD_LOAD
+	"LVAR", // SBC_KEYWORD_LVAR
+	"NEW", // SBC_KEYWORD_NEW
+	"OLD", // SBC_KEYWORD_OLD
+	"RENUMBER", // SBC_KEYWORD_RENUMBER
+	"SAVE", // SBC_KEYWORD_SAVE
+	"TEXTLOAD", // SBC_KEYWORD_TEXTLOAD
+	"TEXTSAVE", // SBC_KEYWORD_TEXTSAVE
+	"TWIN", // SBC_KEYWORD_TWIN
+	"TWINNO", // SBC_KEYWORD_TWINNO
+	"INSTALL2", // SBC_KEYWORD_INSTALL2
+
+	"SUM", // SBC_KEYWORD_SUM
+	"BEAT", // SBC_KEYWORD_BEAT
+};
+
+void sbc_fmt_utils_dump_real(const sbc_real_t *r)
+{
+	float real;
+	uint8_t bin_num[4];
+	uint8_t exponent = r->b[0] - 1;
+
+	bin_num[0] = r->b[3];
+	bin_num[1] = r->b[2];
+	bin_num[3] = r->b[1] & 0x80;
+	bin_num[2] = r->b[1] & 0x7f;
+	bin_num[3] |=  exponent >> 1;
+	if (exponent & 1)
+		bin_num[2] |= 0x80;
+
+	memcpy(&real, bin_num, sizeof(float));
+
+	printf("%f", real);
+}
+
+void sbc_fmt_utils_dump_bin(const int32_t *v)
+{
+	uint32_t uv = *v;
+	uint32_t mask;
+	uint8_t i;
+
+	mask = 0x80000000;
+	putchar('%');
+	while (mask && !(mask & uv))
+		mask >>= 1;
+	if (mask == 0) {
+		putchar('0');
+		return;
+	}
+	while (mask) {
+		i = (mask & uv) ? 1 : 0;
+		putchar(i + '0');
+		mask >>= 1;
+	}
+}

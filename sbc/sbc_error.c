@@ -36,7 +36,14 @@ static const char* const sbc_error_msgs[] = {
 	"= expected", // SBC_ERROR_EQ_EXPECTED
 	"Expression expected", // SBC_ERROR_EXP_EXPECTED
 	"Too many nested levels", // SBC_ERROR_TOO_MUCH_NESTING
-	"ENDWHILE expected", // SBC_ERROR_ENDWHILE_EXPECTED
+	"ENDWHILE unexpected", // SBC_ERROR_ENDWHILE_UNEXPECTED
+	"Line number expected", // SBC_ERROR_LINENO_EXPECTED
+	", expected", // SBC_ERROR_COMMA_EXPECTED
+	"TO expected", // SBC_ERROR_TO_EXPECTED
+	"NEXT unexpected", // SBC_ERROR_NEXT_UNEXPECTED
+	") expected", // SBC_ERROR_CLOSEB_UNEXPECTED
+	"ENDCASE expected", // SBC_ERROR_ENDCASE_UNEXPECTED
+	"OF unexpected", // SBC_ERROR_OF_UNEXPECTED
 };
 
 const char *sbc_error_msg(void)

@@ -32,7 +32,7 @@
 #define SBC_EXP_HEX SBC_TOKEN_HEX            // 6
 #define SBC_EXP_BIN SBC_TOKEN_BIN            // 7
 #define SBC_EXP_REAL SBC_TOKEN_REAL          // 8
-#define SBC_EXP_IDENTIFIER TOKEN_IDENTIFIER  // 9
+#define SBC_EXP_IDENTIFIER SBC_TOKEN_IDENTIFIER  // 9
 
 #define SBC_EXP_DIV 10
 #define SBC_EXP_MOD 11
@@ -45,6 +45,8 @@
 #define SBC_EXP_PLUSEQ 18
 #define SBC_EXP_MINUSEQ 19
 #define SBC_EXP_PEEKW '!'   // 33
+#define SBC_EXP_OPENB  '('  // 40
+#define SBC_EXP_CLOSEB ')'  // 41
 #define SBC_EXP_MUL   '*'   // 42
 #define SBC_EXP_PLUS  '+'   // 43
 #define SBC_EXP_MINUS '-'   // 45
@@ -53,6 +55,7 @@
 #define SBC_EXP_EQ    '='   // 61
 #define SBC_EXP_GT    '>'   // 62
 #define SBC_EXP_PEEKB '?'   // 63
+#define SBC_EXP_RND 127
 
 #define SBC_POOL_MAX_STRING_BUF (1024 * SBC_CONFIG_SIZE)
 extern uint8_t sbc_pool_strings[SBC_POOL_MAX_STRING_BUF + 1];
@@ -65,7 +68,13 @@ typedef struct sbc_ast_args_t sbc_ast_args_t;
 
 struct sbc_expression_node_t {
 	sbc_handle_t e;
-	sbc_handle_t next; /* points to an expression node */
+
+	/*
+	 * Points to an expression node.  Set to SBC_MAX_EXP_NODES
+	 * if this is the last element.
+	 */
+
+	sbc_handle_t next;
 };
 typedef struct sbc_expression_node_t sbc_expression_node_t;
 
@@ -96,7 +105,7 @@ typedef struct sbc_id_t sbc_id_t;
  * I spent a lot of time thinking about the layout of this structure.
  * Originally, I was planning to have separate pools for ints and
  * floats and lists, but in the end it just made everything more complicated,
- *  didn't save a lot of space and added more points of failure.  So we're
+ * didn't save a lot of space and added more points of failure.  So we're
  * just going to bundle everything up together into one structure with a big
  * union.
  */
@@ -114,7 +123,7 @@ struct sbc_expression_t {
 typedef struct sbc_expression_t sbc_expression_t;
 
 #define SBC_MAX_EXPRESSIONS (256 * SBC_CONFIG_SIZE)
-#define SBC_MAX_EXP_NODES   (256 * SBC_CONFIG_SIZE)
+#define SBC_MAX_EXP_NODES   (255 * SBC_CONFIG_SIZE)
 
 extern sbc_expression_t sbc_expressions[SBC_MAX_EXPRESSIONS];
 extern sbc_expression_node_t exp_list[SBC_MAX_EXP_NODES];
@@ -128,5 +137,7 @@ sbc_big_handle_t sbc_pool_add_string_e(const uint8_t *v, uint8_t len);
 #define sbc_exp_add_string_e(t) sbc_exp_add_id_base_e((t), SBC_ID_TYPE_NONE)
 
 sbc_handle_t sbc_exp_parse_e(void);
+sbc_handle_t sbc_exp_parse_no_get_e(void);
+sbc_handle_t sbc_exp_get_node_e(void);
 
 #endif

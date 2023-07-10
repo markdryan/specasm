@@ -98,7 +98,7 @@ static void prv_dump_e(const char *fname)
 {
 	uint8_t tokch;
 	uint8_t i;
-	uint32_t mask;
+
 
 	sbc_lexer_open_e(fname);
 	if (err_type != SPECASM_ERROR_OK)
@@ -162,27 +162,14 @@ static void prv_dump_e(const char *fname)
 			printf("&%X", overlay.lex.tok.tok.integer);
 			break;
 		case SBC_TOKEN_BIN:
-			mask = 0x80000000;
-			putchar('%');
-			while (mask && !(mask & overlay.lex.tok.tok.integer))
-				mask >>= 1;
-			if (mask == 0) {
-				putchar('0');
-				break;
-			}
-			while (mask) {
-				i = (mask & overlay.lex.tok.tok.integer) ? 1 :
-					0;
-				putchar(i + '0');
-				mask >>= 1;
-			}
+			sbc_fmt_utils_dump_bin(&overlay.lex.tok.tok.integer);
 			break;
 		case SBC_TOKEN_REAL:
 			sbc_fmt_utils_dump_real(&overlay.lex.tok.tok.real);
 			break;
 		case SBC_TOKEN_REM:
 			printf("REM");
-			for (i = 1; i < overlay.lex.tok.len; i++)
+			for (i = 0; i < overlay.lex.tok.len; i++)
 				putchar(overlay.lex.lex_buf[
 						overlay.lex.tok.ptr + i]);
 			break;

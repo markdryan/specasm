@@ -14,30 +14,14 @@
  * limitations under the License.
 */
 
-#ifndef SBC_CONFIG_H
-#define SBC_CONFIG_H
+#include "sbc_lexer.h"
 
-#include <stdint.h>
+#ifndef SBC_FMT_UTILS_H
+#define SBC_FMT_UTILS_H
 
-#define SBC_CONFIG_SIZE_SMALL 1
-#define SBC_CONFIG_SIZE_MEDIUM 2
-#define SBC_CONFIG_SIZE_LARGE 4
-
-#ifdef SPECTRUM
-#define SBC_CONFIG_SIZE SBC_CONFIG_SIZE_SMALL
-typedef uint8_t sbc_handle_t;
-typedef uint16_t sbc_big_handle_t;
-#define SBC_INVALID_BIG_HANDLE 0xffff
-#else
-#define SBC_CONFIG_SIZE SBC_CONFIG_SIZE_LARGE
-typedef unsigned int sbc_handle_t;
-typedef unsigned int sbc_big_handle_t;
-#define SBC_INVALID_BIG_HANDLE 0xffffffff
-#endif
-
-struct sbc_real_t {
-	uint8_t b[5];
-};
-typedef struct sbc_real_t sbc_real_t;
+extern const char * const sbc_fmt_keywords_strings[SBC_KEYWORD_MAX];
+void sbc_fmt_utils_dump_real(const sbc_real_t *r);
+void sbc_fmt_utils_dump_bin(const int32_t *v);
 
 #endif
+

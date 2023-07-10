@@ -60,7 +60,8 @@ SBC_LEX_TEST =\
 	sbc_lex_test.c
 
 SBC_FMT =\
-	sbc_fmt.c
+	sbc_fmt.c \
+	sbc_fmt_utils.c
 
 CFLAGS += -Wall -MMD -DUNITTESTS -Isrc
 

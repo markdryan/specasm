@@ -21,6 +21,9 @@
 #include "sbc_exp.h"
 
 #define SBC_KEYWORD_ASSIGN SBC_KEYWORD_UNUSED
+#define SBC_KEYWORD_BLANK  (SBC_KEYWORD_UNUSED + 1)
+#define SBC_KEYWORD_RECT_FILL  (SBC_KEYWORD_UNUSED + 2)
+#define SBC_KEYWORD_FOR_STEP  (SBC_KEYWORD_UNUSED + 3)
 
 struct sbc_assignment_t {
 	uint8_t op;
@@ -29,66 +32,67 @@ struct sbc_assignment_t {
 };
 typedef struct sbc_assignment_t sbc_assignment_t;
 
+struct sbc_compound_t {
+	sbc_big_handle_t id;
+
+	/*
+	 * Either a pointer to an expression or for a for
+	 * an expression node.
+	 */
+	sbc_handle_t eh;
+	sbc_handle_t body;
+};
+typedef struct sbc_compound_t sbc_compound_t;
+
 struct sbc_four_exps_t {
-	sbc_handle_t e1;
-	sbc_handle_t e2;
-	sbc_handle_t e3;
-	sbc_handle_t e4;
+	sbc_handle_t e[4];
 };
 typedef struct sbc_four_exps_t sbc_four_exps_t;
+
+struct sbc_gcol_exps_t {
+	uint8_t count;
+	sbc_handle_t e1;
+	sbc_handle_t e2;
+};
+typedef struct sbc_gcol_exps_t sbc_gcol_exps_t;
 
 struct sbc_statement_t {
 	uint8_t type;
 	union {
 		sbc_assignment_t assignment;
+		sbc_compound_t compound;
 		sbc_expression_node_t exp_list;
 		sbc_handle_t exp;
 		sbc_four_exps_t four_exps;
+		uint16_t line_no;
+		sbc_big_handle_t str;
+		sbc_gcol_exps_t gcol;
 	} d;
 
 	/*
 	 * Points to next statement in this compound statement.
 	 */
-	sbc_handle_t body;
-
-	/*
-	 * Points to next statement on this line.
-	 */
 	sbc_handle_t next;
+	uint16_t line_no;
 };
 typedef struct sbc_statement_t sbc_statement_t;
 
-/*
- * If stmt = SBC_MAX_STATEMENTS it's a ':' or a NOP.  This allows
- * us to have blank lines in the code for formatting without using
- * one of our precious statements.
- */
-
-struct sbc_line_t {
-	uint16_t line_no;
-	sbc_handle_t stmt;
-};
-typedef struct sbc_line_t sbc_line_t;
 
 /*
  * How much memory is all this going to take.  On the Spectrum we have
  *
  * string pool     =            1024
  * expressions     =  256 * 6 = 1536
- * expression_list =  256 * 2 =  512
- * statements =    =  255 * 7 = 1785
- * lines           =  256 * 3 =  768
+ * expression_list =  255 * 2 =  510
+ * statements =    =  255 * 8 = 2040
  *
- * Total                      = 5625
+ * Total                      = 5110
  */
 
 #define SBC_MAX_STATEMENTS ((256 * SBC_CONFIG_SIZE) - 1)
-#define SBC_MAX_LINES (256 * SBC_CONFIG_SIZE)
 
 extern sbc_statement_t sbc_statements[SBC_MAX_STATEMENTS];
-extern sbc_line_t sbc_lines[SBC_MAX_LINES];
-
-extern sbc_handle_t sbc_lines_start;
+extern sbc_handle_t sbc_statement_start;
 
 void sbc_parse_file_e(const char *f);
 
