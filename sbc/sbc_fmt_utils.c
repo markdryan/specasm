@@ -15,6 +15,7 @@
 */
 
 #include <string.h>
+#include <stdio.h>
 
 #include "sbc_fmt_utils.h"
 

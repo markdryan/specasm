@@ -15,6 +15,7 @@
 */
 
 #include <inttypes.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "sbc_exp.h"
@@ -22,6 +23,11 @@
 #include "sbc_fmt_utils.h"
 #include "sbc_parser.h"
 #include "sbc_overlay.h"
+
+#ifdef SPECTRUM
+#include <z80.h>
+#include <sys/ioctl.h>
+#endif
 
 static void prv_dump_block(uint16_t line_no, sbc_handle_t stmt, uint8_t ind);
 
@@ -315,12 +321,17 @@ static void prv_dump_e(const char *fname)
 
 int main(int argc, char **argv)
 {
+#ifdef SPECTRUM
+	ioctl(1, IOCTL_OTERM_PAUSE, 0);
+	prv_dump_e("dither");
+#else
 	if (argc != 2) {
 		fprintf(stderr, "Usage: sbcfmt .sbc\n");
 		return 1;
 	}
 
 	prv_dump_e(argv[1]);
+#endif
 
 	if ((err_type == SBC_ERROR_OPEN) || (err_type == SBC_ERROR_WRITE)) {
 		printf("%s : %s\n", sbc_error_msg(), argv[1]);

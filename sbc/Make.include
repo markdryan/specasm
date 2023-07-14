@@ -1,0 +1,21 @@
+sbc_fmt.o: sbc_fmt.c sbc_exp.h sbc_config.h sbc_lexer.h \
+  ../src/peer_file.h sbc_error.h ../src/error.h sbc_fmt_utils.h \
+  sbc_parser.h sbc_overlay.h
+
+sbc_fmt_utils.o: sbc_fmt_utils.c sbc_fmt_utils.h sbc_lexer.h \
+  ../src/peer_file.h sbc_config.h
+
+sbc_lexer.o: sbc_lexer.c ../src/error.h sbc_error.h sbc_lexer.h \
+  ../src/peer_file.h sbc_config.h sbc_overlay.h
+
+sbc_overlay.o: sbc_overlay.c sbc_overlay.h sbc_lexer.h \
+  ../src/peer_file.h sbc_config.h
+
+sbc_parser.o: sbc_parser.c sbc_error.h ../src/error.h \
+  sbc_lexer.h ../src/peer_file.h sbc_config.h sbc_overlay.h \
+  sbc_parser.h sbc_exp.h
+
+sbc_exp.o: sbc_exp.c sbc_config.h sbc_error.h ../src/error.h \
+  sbc_exp.h sbc_lexer.h ../src/peer_file.h sbc_overlay.h
+
+sbc_error.o: sbc_error.c sbc_error.h ../src/error.h

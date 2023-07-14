@@ -283,7 +283,7 @@ static sbc_handle_t prv_priority3_e(void)
 			op = sbc_exp_map_op();
 			if ((op != SBC_EXP_MUL) && (op != SBC_EXP_RDIV))
 				break;
-		} else if (tok_type == SBC_TOKEN_KEYWORD) {
+		} else {
 			op = overlay.lex.tok.tok.keyword;
 			if (op == SBC_KEYWORD_DIV)
 				op = SBC_EXP_DIV;

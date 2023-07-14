@@ -133,7 +133,7 @@ static void prv_handle_identifier(void)
 		overlay.lex.start++;
 		ch = overlay.lex.lex_buf[overlay.lex.start];
 	} while ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-		 (ch >= 0 && ch <= 9) || (ch == '_'));
+		 (ch >= '0' && ch <= '9') || (ch == '_'));
 
 	if (ch == '$') {
 		overlay.lex.tok.tok.id_type = SBC_ID_TYPE_STR;
