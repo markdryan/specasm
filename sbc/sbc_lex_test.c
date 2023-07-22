@@ -20,7 +20,7 @@
 #include "sbc_error.h"
 #include "sbc_fmt_utils.h"
 #include "sbc_lexer.h"
-#include "sbc_overlay.h"
+
 
 #define LEX_DUMP_MAX_INDENT 16
 
@@ -34,8 +34,8 @@ static void prv_dump_text(void)
 {
 	uint8_t i;
 
-	for (i = 0; i < overlay.lex.tok.len; i++)
-		putchar(overlay.lex.lex_buf[overlay.lex.tok.ptr + i]);
+	for (i = 0; i < lex.tok.len; i++)
+		putchar(lex.lex_buf[lex.tok.ptr + i]);
 }
 
 static uint8_t prv_adjust_keyword_indent(void)
@@ -43,7 +43,7 @@ static uint8_t prv_adjust_keyword_indent(void)
 	uint8_t *ptr;
 	uint8_t old_indent = indent;
 
-	switch (overlay.lex.tok.tok.keyword) {
+	switch (lex.tok.tok.keyword) {
 	case SBC_KEYWORD_REPEAT:
 	case SBC_KEYWORD_WHILE:
 	case SBC_KEYWORD_FOR:
@@ -52,7 +52,7 @@ static uint8_t prv_adjust_keyword_indent(void)
 		}
 		break;
 	case SBC_KEYWORD_THEN:
-		ptr = &overlay.lex.lex_buf[overlay.lex.tok.ptr + 1];
+		ptr = &lex.lex_buf[lex.tok.ptr + 1];
 		while (*ptr == ' ' || *ptr == '\t')
 			++ptr;
 		if (*ptr != 0xd)
@@ -108,13 +108,13 @@ static void prv_dump_e(const char *fname)
 		sbc_lexer_get_token_e();
 		if (err_type != SPECASM_ERROR_OK)
 			break;
-		switch (overlay.lex.tok.type) {
+		switch (lex.tok.type) {
 		case SBC_TOKEN_LINE_LABEL:
 			if (first_line)
 				first_line = 0;
 			else
 				putchar('\n');
-			printf("%5d ", overlay.lex.tok.tok.line_no);
+			printf("%5d ", lex.tok.tok.line_no);
 			indent_done = 0;
 			break;
 		case SBC_TOKEN_IDENTIFIER:
@@ -122,19 +122,19 @@ static void prv_dump_e(const char *fname)
 			prv_dump_text();
 			break;
 		case SBC_TOKEN_OPERATOR:
-			tokch = overlay.lex.lex_buf[overlay.lex.tok.ptr];
+			tokch = lex.lex_buf[lex.tok.ptr];
 			if (tokch != ',' && tokch != ':' && tokch != '(')
 				putchar(' ');
-			putchar(overlay.lex.lex_buf[overlay.lex.tok.ptr]);
-			if (overlay.lex.tok.len > 1)
-				putchar(overlay.lex.lex_buf[
-						overlay.lex.tok.ptr + 1]);
+			putchar(lex.lex_buf[lex.tok.ptr]);
+			if (lex.tok.len > 1)
+				putchar(lex.lex_buf[
+						lex.tok.ptr + 1]);
 			if (tokch != ':' && tokch != ')')
 				putchar(' ');
 			break;
 		case SBC_TOKEN_KEYWORD:
 			prv_do_indent(prv_adjust_keyword_indent());
-			switch (overlay.lex.tok.tok.keyword) {
+			switch (lex.tok.tok.keyword) {
 			case SBC_KEYWORD_OF:
 			case SBC_KEYWORD_TO:
 			case SBC_KEYWORD_STEP:
@@ -145,8 +145,8 @@ static void prv_dump_e(const char *fname)
 				break;
 			}
 			printf("%s", sbc_fmt_keywords_strings[
-				       overlay.lex.tok.tok.keyword]);
-			switch (overlay.lex.tok.tok.keyword) {
+				       lex.tok.tok.keyword]);
+			switch (lex.tok.tok.keyword) {
 			case SBC_KEYWORD_PROC:
 			case SBC_KEYWORD_ERR:
 				break;
@@ -156,42 +156,42 @@ static void prv_dump_e(const char *fname)
 			}
 			break;
 		case SBC_TOKEN_INTEGER:
-			printf("%d", overlay.lex.tok.tok.integer);
+			printf("%d", lex.tok.tok.integer);
 			break;
 		case SBC_TOKEN_HEX:
-			printf("&%X", overlay.lex.tok.tok.integer);
+			printf("&%X", lex.tok.tok.integer);
 			break;
 		case SBC_TOKEN_BIN:
-			sbc_fmt_utils_dump_bin(&overlay.lex.tok.tok.integer);
+			sbc_fmt_utils_dump_bin(&lex.tok.tok.integer);
 			break;
 		case SBC_TOKEN_REAL:
-			sbc_fmt_utils_dump_real(&overlay.lex.tok.tok.real);
+			sbc_fmt_utils_dump_real(&lex.tok.tok.real);
 			break;
 		case SBC_TOKEN_REM:
 			printf("REM");
-			for (i = 0; i < overlay.lex.tok.len; i++)
-				putchar(overlay.lex.lex_buf[
-						overlay.lex.tok.ptr + i]);
+			for (i = 0; i < lex.tok.len; i++)
+				putchar(lex.lex_buf[
+						lex.tok.ptr + i]);
 			break;
 		case SBC_TOKEN_LINE_NUMBER:
 			printf("%u", (unsigned int)
-			       overlay.lex.tok.tok.line_no);
+			       lex.tok.tok.line_no);
 			break;
 		case SBC_TOKEN_STRING:
 			putchar('"');
-			for (i = 0; i < overlay.lex.tok.len; i++)
-				putchar(overlay.lex.lex_buf[
-						overlay.lex.tok.ptr + i]);
+			for (i = 0; i < lex.tok.len; i++)
+				putchar(lex.lex_buf[
+						lex.tok.ptr + i]);
 			putchar('"');
 		case SBC_TOKEN_EOF:
 		case SBC_TOKEN_UNKNOWN:
 			break;
 		}
-	} while (overlay.lex.tok.type != SBC_TOKEN_EOF);
+	} while (lex.tok.type != SBC_TOKEN_EOF);
 
 	printf("\n");
 
-	specasm_file_close_e(overlay.lex.h);
+	specasm_file_close_e(lex.h);
 }
 
 int main(int argc, char **argv)
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
 	}
 
 	if (err_type != SPECASM_ERROR_OK) {
-		printf("%s at line %d\n", sbc_error_msg(), overlay.lex.line_no);
+		printf("%s at line %d\n", sbc_error_msg(), lex.line_no);
 		return 1;
 	}
 

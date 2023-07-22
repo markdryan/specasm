@@ -9,7 +9,6 @@ include Make.include
 SBCFMT = \
 	sbc_error.o \
 	sbc_lexer.o \
-	sbc_overlay.o \
 	sbc_parser.o \
 	sbc_exp.o \
 	sbc_fmt.o \

@@ -24,6 +24,9 @@
 #define SBC_KEYWORD_BLANK  (SBC_KEYWORD_UNUSED + 1)
 #define SBC_KEYWORD_RECT_FILL  (SBC_KEYWORD_UNUSED + 2)
 #define SBC_KEYWORD_FOR_STEP  (SBC_KEYWORD_UNUSED + 3)
+#define SBC_KEYWORD_ELSE_THEN  (SBC_KEYWORD_UNUSED + 4)
+#define SBC_KEYWORD_DEF_PROC  (SBC_KEYWORD_UNUSED + 5)
+#define SBC_KEYWORD_DEF_FN  (SBC_KEYWORD_UNUSED + 6)
 
 struct sbc_assignment_t {
 	uint8_t op;
@@ -61,7 +64,7 @@ struct sbc_statement_t {
 	union {
 		sbc_assignment_t assignment;
 		sbc_compound_t compound;
-		sbc_expression_node_t exp_list;
+		sbc_handle_t exp_list;
 		sbc_handle_t exp;
 		sbc_four_exps_t four_exps;
 		uint16_t line_no;

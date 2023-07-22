@@ -56,6 +56,13 @@
 #define SBC_EXP_GT    '>'   // 62
 #define SBC_EXP_PEEKB '?'   // 63
 #define SBC_EXP_RND 127
+#define SBC_EXP_TIME 128
+#define SBC_EXP_FN 129
+#define SBC_EXP_GET 130
+#define SBC_EXP_COS 131
+#define SBC_EXP_SIN 132
+#define SBC_EXP_SQR 133
+#define SBC_EXP_PI 134
 
 #define SBC_POOL_MAX_STRING_BUF (1024 * SBC_CONFIG_SIZE)
 extern uint8_t sbc_pool_strings[SBC_POOL_MAX_STRING_BUF + 1];
@@ -79,19 +86,8 @@ struct sbc_expression_node_t {
 typedef struct sbc_expression_node_t sbc_expression_node_t;
 
 struct sbc_fn_call_t {
-	uint8_t arg_count;
 	sbc_big_handle_t name;
-
-	/*
-	 * We have enough room for two arg handles so for function
-	 * calls that have only one or two parameters we don't need to
-	 * use node in the node list.
-	 */
-
-	union {
-		sbc_ast_args_t args;
-		sbc_expression_node_t args_list;
-	} a;
+	sbc_handle_t args_list;
 };
 typedef struct sbc_fn_call_t sbc_fn_call_t;
 
@@ -136,8 +132,11 @@ sbc_big_handle_t sbc_pool_add_string_e(const uint8_t *v, uint8_t len);
 #define sbc_exp_add_id_e(t) sbc_exp_add_id_base_e((t), (t)->tok.id_type);
 #define sbc_exp_add_string_e(t) sbc_exp_add_id_base_e((t), SBC_ID_TYPE_NONE)
 
+uint8_t sbc_exp_is_simple_op(uint8_t op);
 sbc_handle_t sbc_exp_parse_e(void);
 sbc_handle_t sbc_exp_parse_no_get_e(void);
 sbc_handle_t sbc_exp_get_node_e(void);
+sbc_handle_t sbc_parse_node_list_e(void);
+sbc_handle_t sbc_parse_bracketednode_list_e(void);
 
 #endif

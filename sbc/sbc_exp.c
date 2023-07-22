@@ -19,7 +19,7 @@
 #include "sbc_config.h"
 #include "sbc_error.h"
 #include "sbc_exp.h"
-#include "sbc_overlay.h"
+
 
 /*
  * Strings have a 1 byte length followed by the string contents.
@@ -40,6 +40,12 @@ static sbc_handle_t sbc_exp_list_start;
 sbc_expression_t sbc_expressions[SBC_MAX_EXPRESSIONS];
 sbc_expression_node_t exp_list[SBC_MAX_EXP_NODES];
 
+uint8_t sbc_exp_is_simple_op(uint8_t op)
+{
+	return (lex.tok.type == SBC_TOKEN_OPERATOR) &&
+		(lex.tok.len == 1) &&
+		(lex.lex_buf[lex.tok.ptr] == op);
+}
 
 sbc_handle_t sbc_exp_get_node_e(void)
 {
@@ -50,6 +56,61 @@ sbc_handle_t sbc_exp_get_node_e(void)
 	return sbc_exp_list_start++;
 }
 
+sbc_handle_t sbc_parse_node_list_e(void)
+{
+	sbc_handle_t node;
+	sbc_handle_t first;
+	sbc_handle_t new_node;
+
+	node = sbc_exp_get_node_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+	first = node;
+
+	exp_list[node].e = sbc_exp_parse_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	while (sbc_exp_is_simple_op(',')) {
+		new_node = sbc_exp_get_node_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		exp_list[node].next = new_node;
+		exp_list[new_node].e = sbc_exp_parse_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		node = new_node;
+	}
+	exp_list[node].next = SBC_MAX_EXP_NODES;
+
+	return first;
+}
+
+sbc_handle_t sbc_parse_bracketednode_list_e(void)
+{
+	sbc_handle_t h;
+
+	sbc_lexer_get_token_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	if (!sbc_exp_is_simple_op('(')) {
+		return SBC_MAX_EXP_NODES;
+	}
+
+	h = sbc_parse_node_list_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	if (!sbc_exp_is_simple_op(')')) {
+		err_type = SBC_ERROR_CLOSEB_EXPECTED;
+		return 0;
+	}
+
+	sbc_lexer_get_token_e();
+
+	return h;
+}
 
 sbc_big_handle_t sbc_pool_add_string_e(const uint8_t *v, uint8_t len)
 {
@@ -128,7 +189,7 @@ sbc_handle_t sbc_exp_add_id_base_e(sbc_token_t *t, uint8_t id_type)
 	sbc_handle_t h;
 	sbc_big_handle_t sh;
 	sbc_expression_t *e;
-	uint8_t *str = &overlay.lex.lex_buf[t->ptr];
+	uint8_t *str = &lex.lex_buf[t->ptr];
 
 	if (sbc_exp_start == sbc_exp_end) {
 		err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
@@ -159,12 +220,12 @@ uint8_t sbc_exp_map_op(void)
 	char b1;
 	char b2;
 
-	if (overlay.lex.tok.len == 1)
-		return overlay.lex.lex_buf[overlay.lex.tok.ptr];
-	if (overlay.lex.tok.len == 3)
+	if (lex.tok.len == 1)
+		return lex.lex_buf[lex.tok.ptr];
+	if (lex.tok.len == 3)
 		return SBC_EXP_ASR;
-	b1 = (char) overlay.lex.lex_buf[overlay.lex.tok.ptr];
-	b2 = (char) overlay.lex.lex_buf[overlay.lex.tok.ptr + 1];
+	b1 = (char) lex.lex_buf[lex.tok.ptr];
+	b2 = (char) lex.lex_buf[lex.tok.ptr + 1];
 
 	if (b1 == '-')
 		return SBC_EXP_MINUSEQ;
@@ -186,6 +247,22 @@ uint8_t sbc_exp_map_op(void)
 	return SBC_EXP_GTE;
 }
 
+static sbc_handle_t prv_no_arg_keyword(uint8_t op)
+{
+	sbc_expression_t *e;
+
+	if (sbc_exp_start == sbc_exp_end) {
+		err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
+		return 0;
+	}
+
+	e = &sbc_expressions[sbc_exp_start];
+	e->type = op;
+
+	return sbc_exp_start++;
+}
+
+
 static sbc_handle_t prv_single_arg_fn(uint8_t op)
 {
 	sbc_expression_t *e;
@@ -202,26 +279,58 @@ static sbc_handle_t prv_single_arg_fn(uint8_t op)
 	return sbc_exp_start++;
 }
 
+static sbc_handle_t prv_add_fn(void)
+{
+	sbc_expression_t *e;
+	sbc_token_t *t = &lex.tok;
+
+	if (sbc_exp_start == sbc_exp_end) {
+		err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
+		return 0;
+	}
+
+	sbc_lexer_get_token_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	if (lex.tok.type != SBC_TOKEN_IDENTIFIER) {
+		err_type = SBC_ERROR_ID_EXPECTED;
+		return 0;
+	}
+
+	e = &sbc_expressions[sbc_exp_start];
+	e->type = SBC_EXP_FN;
+	e->v.fn_call.name = sbc_pool_add_string_e(&lex.lex_buf[t->ptr], t->len);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	e->v.fn_call.args_list = sbc_parse_bracketednode_list_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	return sbc_exp_start++;
+}
+
 static sbc_handle_t prv_priority1_e(void)
 {
 	sbc_token_type_t tok_type;
 	sbc_handle_t e = 0;
 
-	tok_type = overlay.lex.tok.type;
+	tok_type = lex.tok.type;
 	switch (tok_type) {
 	case SBC_TOKEN_INTEGER:
 	case SBC_TOKEN_HEX:
 	case SBC_TOKEN_BIN:
-		e = sbc_exp_add_int_e(&overlay.lex.tok);
+		e = sbc_exp_add_int_e(&lex.tok);
 		break;
 	case SBC_TOKEN_REAL:
-		e = sbc_exp_add_real_e(&overlay.lex.tok);
+		e = sbc_exp_add_real_e(&lex.tok);
 		break;
 	case SBC_TOKEN_IDENTIFIER:
-		e = sbc_exp_add_id_e(&overlay.lex.tok);
+		e = sbc_exp_add_id_e(&lex.tok);
 		break;
 	case SBC_TOKEN_STRING:
-		e = sbc_exp_add_string_e(&overlay.lex.tok);
+		e = sbc_exp_add_string_e(&lex.tok);
 		break;
 	case SBC_TOKEN_OPERATOR:
 		switch (sbc_exp_map_op()) {
@@ -229,7 +338,7 @@ static sbc_handle_t prv_priority1_e(void)
 			e = sbc_exp_parse_e();
 			if (err_type != SPECASM_ERROR_OK)
 				return 0;
-			if ((overlay.lex.tok.type != SBC_TOKEN_OPERATOR) ||
+			if ((lex.tok.type != SBC_TOKEN_OPERATOR) ||
 			    (sbc_exp_map_op() != SBC_EXP_CLOSEB)) {
 				err_type = SBC_ERROR_CLOSEB_EXPECTED;
 				return 0;
@@ -237,9 +346,26 @@ static sbc_handle_t prv_priority1_e(void)
 		}
 		break;
 	case SBC_TOKEN_KEYWORD:
-		switch (overlay.lex.tok.tok.keyword) {
+		switch (lex.tok.tok.keyword) {
+		case SBC_KEYWORD_FN:
+			return prv_add_fn();
 		case SBC_KEYWORD_RND:
 			return prv_single_arg_fn(SBC_EXP_RND);
+		case SBC_KEYWORD_COS:
+			return prv_single_arg_fn(SBC_EXP_COS);
+		case SBC_KEYWORD_SIN:
+			return prv_single_arg_fn(SBC_EXP_SIN);
+		case SBC_KEYWORD_SQR:
+			return prv_single_arg_fn(SBC_EXP_SQR);
+		case SBC_KEYWORD_GET:
+			e = prv_no_arg_keyword(SBC_EXP_GET);
+			break;
+		case SBC_KEYWORD_TIME:
+			e = prv_no_arg_keyword(SBC_EXP_TIME);
+			break;
+		case SBC_KEYWORD_PI:
+			e = prv_no_arg_keyword(SBC_EXP_PI);
+			break;
 		default:
 			err_type = SBC_ERROR_EXP_EXPECTED;
 			break;
@@ -275,7 +401,7 @@ static sbc_handle_t prv_priority3_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	tok_type = overlay.lex.tok.type;
+	tok_type = lex.tok.type;
 
 	while ((tok_type == SBC_TOKEN_OPERATOR) ||
 	       (tok_type == SBC_TOKEN_KEYWORD)) {
@@ -284,7 +410,7 @@ static sbc_handle_t prv_priority3_e(void)
 			if ((op != SBC_EXP_MUL) && (op != SBC_EXP_RDIV))
 				break;
 		} else {
-			op = overlay.lex.tok.tok.keyword;
+			op = lex.tok.tok.keyword;
 			if (op == SBC_KEYWORD_DIV)
 				op = SBC_EXP_DIV;
 			else if (op == SBC_KEYWORD_MOD)
@@ -307,7 +433,7 @@ static sbc_handle_t prv_priority3_e(void)
 		e->v.args.a2 = e2;
 		e1 = sbc_exp_start++;
 
-		tok_type = overlay.lex.tok.type;
+		tok_type = lex.tok.type;
 	}
 
 	return e1;
@@ -325,7 +451,7 @@ static sbc_handle_t prv_priority4_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	tok_type = overlay.lex.tok.type;
+	tok_type = lex.tok.type;
 
 	while ((tok_type == SBC_TOKEN_OPERATOR) ||
 	       (tok_type == SBC_TOKEN_INTEGER) ||
@@ -345,9 +471,9 @@ static sbc_handle_t prv_priority4_e(void)
 			 */
 
 			if (((tok_type == SBC_TOKEN_INTEGER) &&
-			    (overlay.lex.tok.tok.integer < 0)) ||
+			    (lex.tok.tok.integer < 0)) ||
 			    ((tok_type == SBC_TOKEN_REAL) &&
-			     (overlay.lex.tok.tok.real.b[1] & 0x80)))
+			     (lex.tok.tok.real.b[1] & 0x80)))
 				op = SBC_EXP_PLUS;
 			else
 				break;
@@ -362,7 +488,7 @@ static sbc_handle_t prv_priority4_e(void)
 		e->v.args.a1 = e1;
 		e->v.args.a2 = e2;
 		e1 = sbc_exp_start++;
-		tok_type = overlay.lex.tok.type;
+		tok_type = lex.tok.type;
 	}
 
 	return e1;
@@ -380,7 +506,7 @@ static sbc_handle_t prv_priority5_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	tok_type = overlay.lex.tok.type;
+	tok_type = lex.tok.type;
 
 	while (tok_type == SBC_TOKEN_OPERATOR) {
 		op = sbc_exp_map_op();
@@ -407,7 +533,7 @@ static sbc_handle_t prv_priority5_e(void)
 			e->v.args.a1 = e1;
 			e->v.args.a2 = e2;
 			e1 = sbc_exp_start++;
-			tok_type = overlay.lex.tok.type;
+			tok_type = lex.tok.type;
 			continue;
 		}
 		break;

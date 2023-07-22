@@ -18,7 +18,7 @@
 
 #include "sbc_error.h"
 #include "sbc_lexer.h"
-#include "sbc_overlay.h"
+
 #include "sbc_parser.h"
 
 
@@ -40,13 +40,7 @@ static int8_t nest_level = 0;
 sbc_handle_t sbc_statement_start = 0;
 sbc_statement_t sbc_statements[SBC_MAX_STATEMENTS];
 
-
-static uint8_t prv_is_simple_op(uint8_t op)
-{
-	return (overlay.lex.tok.type == SBC_TOKEN_OPERATOR) &&
-		(overlay.lex.tok.len == 1) &&
-		(overlay.lex.lex_buf[overlay.lex.tok.ptr] == op);
-}
+static void prv_handle_proc_fn_e(void);
 
 static void prv_parse_exps_e(uint8_t num)
 {
@@ -58,7 +52,7 @@ static void prv_parse_exps_e(uint8_t num)
 		return;
 
 	for (i = 1; i < num; i++) {
-		if (!prv_is_simple_op(',')) {
+		if (!sbc_exp_is_simple_op(',')) {
 			err_type = SBC_ERROR_COMMA_EXPECTED;
 			return;
 		}
@@ -72,9 +66,9 @@ static void prv_handle_assignment_e(uint8_t keyword)
 {
 	uint8_t op;
 	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
-	uint8_t *str = &overlay.lex.lex_buf[overlay.lex.tok.ptr];
+	uint8_t *str = &lex.lex_buf[lex.tok.ptr];
 
-	s->d.assignment.id = sbc_pool_add_string_e(str, overlay.lex.tok.len);
+	s->d.assignment.id = sbc_pool_add_string_e(str, lex.tok.len);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
@@ -104,25 +98,73 @@ static void prv_handle_case_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
-	if (overlay.lex.tok.type != SBC_TOKEN_IDENTIFIER) {
+	if (lex.tok.type != SBC_TOKEN_IDENTIFIER) {
 		err_type = SBC_ERROR_ID_EXPECTED;
 		return;
 	}
 
-	str = &overlay.lex.lex_buf[overlay.lex.tok.ptr];
-	s->d.compound.id = sbc_pool_add_string_e(str, overlay.lex.tok.len);
+	str = &lex.lex_buf[lex.tok.ptr];
+	s->d.compound.id = sbc_pool_add_string_e(str, lex.tok.len);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 	s->d.compound.body = SBC_MAX_STATEMENTS;
 	sbc_lexer_get_token_e();
 	if (err_type != SPECASM_ERROR_OK)
 		return;
-	if ((overlay.lex.tok.type != SBC_TOKEN_KEYWORD) ||
-	    (overlay.lex.tok.tok.keyword != SBC_KEYWORD_OF)) {
+	if ((lex.tok.type != SBC_TOKEN_KEYWORD) ||
+	    (lex.tok.tok.keyword != SBC_KEYWORD_OF)) {
 		err_type = SBC_ERROR_OF_EXPECTED;
 		return;
 	}
 	sbc_lexer_get_token_e();
+}
+
+static void prv_handle_def_e(void)
+{
+	sbc_handle_t eh;
+	sbc_expression_t *e;
+	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
+
+	sbc_lexer_get_token_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	if ((lex.tok.type != SBC_TOKEN_KEYWORD) ||
+	    ((lex.tok.tok.keyword != SBC_KEYWORD_PROC) &&
+	     (lex.tok.tok.keyword != SBC_KEYWORD_FN))) {
+		err_type = SBC_ERROR_PROC_OR_FN_EXPECTED;
+		return;
+	}
+
+	s->type = lex.tok.tok.keyword == SBC_KEYWORD_PROC ?
+		SBC_KEYWORD_DEF_PROC : SBC_KEYWORD_DEF_FN;
+
+	prv_handle_proc_fn_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	s->d.compound.body = SBC_MAX_STATEMENTS;
+
+	/*
+	 * We parse a procedure/function defintion as if it was a call to avoid
+	 * having to maintain a list of identifiers and the code to parse such
+	 * lists.  Thus we need to iterate through all the formal parameters and
+	 * check that they are identifiers.  We should probably check that there
+	 * are no duplicate parameters as well.
+	 */
+
+	/*
+	 * TODO check for duplicates.
+	 */
+
+	eh = s->d.compound.eh;
+	while (eh != SBC_MAX_EXP_NODES) {
+		e = &sbc_expressions[exp_list[eh].e];
+		if (e->type != SBC_EXP_IDENTIFIER) {
+			err_type = SBC_ERROR_ID_EXPECTED;
+			return;
+		}
+		eh = exp_list[eh].next;
+	}
 }
 
 static void prv_handle_gcol_e(void)
@@ -132,7 +174,7 @@ static void prv_handle_gcol_e(void)
 	s->d.gcol.e1 = sbc_exp_parse_e();
 	s->d.gcol.count = 1;
 
-	if (prv_is_simple_op(',')) {
+	if (sbc_exp_is_simple_op(',')) {
 		s->d.gcol.count++;
 		s->d.gcol.e2 = sbc_exp_parse_e();
 	}
@@ -145,11 +187,11 @@ static void prv_handle_goto_gosub_e(void)
 	sbc_lexer_get_token_e();
 	if (err_type != SPECASM_ERROR_OK)
 		return;
-	if (overlay.lex.tok.type != SBC_TOKEN_LINE_NUMBER) {
+	if (lex.tok.type != SBC_TOKEN_LINE_NUMBER) {
 		err_type = SBC_ERROR_LINENO_EXPECTED;
 		return;
 	}
-	s->d.line_no = overlay.lex.tok.tok.line_no;
+	s->d.line_no = lex.tok.tok.line_no;
 	sbc_lexer_get_token_e();
 }
 
@@ -158,18 +200,18 @@ static void prv_handle_for_e(void)
 	sbc_handle_t node;
 	sbc_handle_t new_node;
 	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
-	uint8_t *str = &overlay.lex.lex_buf[overlay.lex.tok.ptr];
+	uint8_t *str = &lex.lex_buf[lex.tok.ptr];
 
 	sbc_lexer_get_token_e();
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
-	if (overlay.lex.tok.type != SBC_TOKEN_IDENTIFIER) {
+	if (lex.tok.type != SBC_TOKEN_IDENTIFIER) {
 		err_type = SBC_ERROR_ID_EXPECTED;
 		return;
 	}
 
-	s->d.compound.id = sbc_pool_add_string_e(str, overlay.lex.tok.len);
+	s->d.compound.id = sbc_pool_add_string_e(str, lex.tok.len);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
@@ -177,7 +219,7 @@ static void prv_handle_for_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
-	if (!prv_is_simple_op('=')) {
+	if (!sbc_exp_is_simple_op('=')) {
 		err_type = SBC_ERROR_EQ_EXPECTED;
 		return;
 	}
@@ -192,8 +234,8 @@ static void prv_handle_for_e(void)
 
 	s->d.compound.body = SBC_MAX_STATEMENTS;
 
-	if ((overlay.lex.tok.type != SBC_TOKEN_KEYWORD) ||
-	    (overlay.lex.tok.tok.keyword != SBC_KEYWORD_TO)) {
+	if ((lex.tok.type != SBC_TOKEN_KEYWORD) ||
+	    (lex.tok.tok.keyword != SBC_KEYWORD_TO)) {
 		err_type = SBC_ERROR_TO_EXPECTED;
 		return;
 	}
@@ -207,8 +249,8 @@ static void prv_handle_for_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
-	if ((overlay.lex.tok.type != SBC_TOKEN_KEYWORD) ||
-	    (overlay.lex.tok.tok.keyword != SBC_KEYWORD_STEP))
+	if ((lex.tok.type != SBC_TOKEN_KEYWORD) ||
+	    (lex.tok.tok.keyword != SBC_KEYWORD_STEP))
 		return;
 
 	s->type = SBC_KEYWORD_FOR_STEP;
@@ -224,22 +266,44 @@ static void prv_handle_for_e(void)
 static void prv_handle_next_e(void)
 {
 	sbc_statement_t *s;
-	uint8_t *str = &overlay.lex.lex_buf[overlay.lex.tok.ptr];
+	uint8_t *str = &lex.lex_buf[lex.tok.ptr];
 
 	sbc_lexer_get_token_e();
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
 	s = &sbc_statements[sbc_statement_start];
-	if (overlay.lex.tok.type != SBC_TOKEN_IDENTIFIER) {
+	if (lex.tok.type != SBC_TOKEN_IDENTIFIER) {
 		s->d.str = SBC_INVALID_BIG_HANDLE;
 		return;
 	}
 
-	s->d.str = sbc_pool_add_string_e(str, overlay.lex.tok.len);
+	s->d.str = sbc_pool_add_string_e(str, lex.tok.len);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 	sbc_lexer_get_token_e();
+}
+
+static void prv_handle_if_e(void)
+{
+	sbc_statement_t *s;
+
+	s = &sbc_statements[sbc_statement_start];
+	s->d.compound.eh = sbc_exp_parse_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	/*
+	 * For multiline if statements we'll use the type of THEN
+	 * rather than IF to distinguish between the two.
+	 */
+
+	if ((lex.tok.type == SBC_TOKEN_KEYWORD) &&
+	    (lex.tok.tok.keyword == SBC_KEYWORD_THEN)) {
+		s->type = SBC_KEYWORD_THEN;
+		sbc_lexer_get_token_e();
+	}
+	s->d.compound.body = SBC_MAX_STATEMENTS;
 }
 
 static void prv_handle_print_e(void)
@@ -250,6 +314,22 @@ static void prv_handle_print_e(void)
 	s->d.exp = sbc_exp_parse_e();
 }
 
+static void prv_handle_proc_fn_e(void)
+{
+	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
+
+	sbc_lexer_get_token_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	s->d.compound.id = sbc_pool_add_string_e(&lex.lex_buf[lex.tok.ptr],
+						 lex.tok.len);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	s->d.compound.eh = sbc_parse_bracketednode_list_e();
+}
+
 static void prv_handle_rect_e(void)
 {
 	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
@@ -258,8 +338,8 @@ static void prv_handle_rect_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
-	if ((overlay.lex.tok.type == SBC_TOKEN_KEYWORD) &&
-	    (overlay.lex.tok.tok.keyword == SBC_KEYWORD_FILL)) {
+	if ((lex.tok.type == SBC_TOKEN_KEYWORD) &&
+	    (lex.tok.tok.keyword == SBC_KEYWORD_FILL)) {
 		s->type = SBC_KEYWORD_RECT_FILL;
 		sbc_lexer_get_token_e();
 		if (err_type != SPECASM_ERROR_OK)
@@ -275,8 +355,8 @@ static void prv_handle_rem_e(void)
 	uint8_t *str;
 	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
 
-	t = &overlay.lex.tok;
-	str = &overlay.lex.lex_buf[t->ptr];
+	t = &lex.tok;
+	str = &lex.lex_buf[t->ptr];
 	s->type = SBC_KEYWORD_REM;
 	s->d.str = sbc_pool_add_string_e(str, t->len);
 	if (err_type != SPECASM_ERROR_OK)
@@ -293,41 +373,11 @@ static void prv_handle_while_e(void)
 	s->d.compound.body = SBC_MAX_STATEMENTS;
 }
 
-static sbc_handle_t prv_parse_node_list_e(void)
-{
-	sbc_handle_t node;
-	sbc_handle_t first;
-	sbc_handle_t new_node;
-
-	node = sbc_exp_get_node_e();
-	if (err_type != SPECASM_ERROR_OK)
-		return 0;
-	first = node;
-
-	exp_list[node].e = sbc_exp_parse_e();
-	if (err_type != SPECASM_ERROR_OK)
-		return 0;
-
-	while (prv_is_simple_op(',')) {
-		new_node = sbc_exp_get_node_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
-		exp_list[node].next = new_node;
-		exp_list[new_node].e = sbc_exp_parse_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
-		node = new_node;
-	}
-	exp_list[node].next = SBC_MAX_EXP_NODES;
-
-	return first;
-}
-
 static void prv_handle_when_e(void)
 {
 	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
 
-	s->d.compound.eh = prv_parse_node_list_e();
+	s->d.compound.eh = sbc_parse_node_list_e();
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 	s->d.compound.body = SBC_MAX_STATEMENTS;
@@ -339,7 +389,7 @@ static int8_t prv_handle_keyword_e(void)
 	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
 	int8_t compound = 0;
 
-	type = overlay.lex.tok.tok.keyword;
+	type = lex.tok.tok.keyword;
 
 	/*
 	 * We set this here so it can be overridden, e.g., RECTANGLE FILL
@@ -351,13 +401,13 @@ static int8_t prv_handle_keyword_e(void)
 		prv_handle_case_e();
 		compound = 1;
 		break;
-	case SBC_KEYWORD_ENDCASE:
-		compound = -1;
-		sbc_lexer_get_token_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
+	case SBC_KEYWORD_DEF:
+		prv_handle_def_e();
+		compound = 1;
 		break;
+	case SBC_KEYWORD_ENDCASE:
 	case SBC_KEYWORD_ENDWHILE:
+	case SBC_KEYWORD_ENDPROC:
 		compound = -1;
 		sbc_lexer_get_token_e();
 		if (err_type != SPECASM_ERROR_OK)
@@ -367,12 +417,25 @@ static int8_t prv_handle_keyword_e(void)
 		prv_handle_for_e();
 		compound = 1;
 		break;
+	case SBC_KEYWORD_PROC:
+		prv_handle_proc_fn_e();
+		break;
 	case SBC_KEYWORD_GCOL:
 		prv_handle_gcol_e();
 		break;
 	case SBC_KEYWORD_GOTO:
 	case SBC_KEYWORD_GOSUB:
 		prv_handle_goto_gosub_e();
+		break;
+	case SBC_KEYWORD_IF:
+		prv_handle_if_e();
+		compound = 1;
+		break;
+	case SBC_KEYWORD_ELSE:
+		if (nesting[nest_level].keyword == SBC_KEYWORD_THEN)
+			s->type = SBC_KEYWORD_ELSE_THEN;
+		s->d.compound.body = SBC_MAX_STATEMENTS;
+		compound = 1;
 		break;
 	case SBC_KEYWORD_END:
 	case SBC_KEYWORD_OFF:
@@ -383,6 +446,19 @@ static int8_t prv_handle_keyword_e(void)
 		break;
 	case SBC_KEYWORD_MODE:
 		s->d.exp = sbc_exp_parse_e();
+		break;
+	case SBC_KEYWORD_MOVE:
+	case SBC_KEYWORD_DRAW:
+		sbc_lexer_get_token_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		prv_parse_exps_e(2);
+		break;
+	case SBC_KEYWORD_PLOT:
+		sbc_lexer_get_token_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		prv_parse_exps_e(3);
 		break;
 	case SBC_KEYWORD_POINT2:
 		s->d.four_exps.e[0] = sbc_exp_parse_e();
@@ -408,6 +484,12 @@ static int8_t prv_handle_keyword_e(void)
 		prv_handle_while_e();
 		compound = 1;
 		break;
+	case SBC_KEYWORD_VDU:
+		/*
+		 * This isn't correct.  VDU has a special syntax.
+		 */
+		s->d.exp_list = sbc_parse_node_list_e();
+		break;
 	default:
 		err_type = SBC_ERROR_KEYWORD_EXPECTED;
 		break;
@@ -418,46 +500,79 @@ static int8_t prv_handle_keyword_e(void)
 	return compound;
 }
 
-/*
- * This is not quite right as it does not account for continuing a loop
- * of a parent compound loop.
- */
+static int8_t prv_check_end_compound_e(uint8_t keyword, specasm_error_t err)
+{
+	int8_t i;
 
-static void prv_match_end_compound_e(sbc_handle_t stmt)
+	/*
+	 * There must be a keyword somewhere in the nesting stack.
+	 */
+
+	if (nesting[nest_level].keyword == keyword)
+		return -1;
+
+	for (i = nest_level - 1; i >= 0; i--)
+		if (nesting[i].keyword == keyword)
+			return 0;
+	err_type = err;
+
+	return 0;
+}
+
+static int8_t prv_match_end_compound_e(sbc_handle_t stmt)
 {
 	sbc_big_handle_t id;
+	int8_t compound = -1;
 
 	switch (sbc_statements[stmt].type) {
 	case SBC_KEYWORD_ENDWHILE:
-		if (nesting[nest_level].keyword != SBC_KEYWORD_WHILE) {
-			err_type = SBC_ERROR_ENDWHILE_UNEXPECTED;
-			return;
-		}
+		compound = prv_check_end_compound_e(
+			SBC_KEYWORD_WHILE, SBC_ERROR_ENDWHILE_UNEXPECTED);
 		break;
 	case SBC_KEYWORD_NEXT:
-		if ((nesting[nest_level].keyword != SBC_KEYWORD_FOR) &&
-		    (nesting[nest_level].keyword != SBC_KEYWORD_FOR_STEP)) {
-			err_type = SBC_ERROR_NEXT_UNEXPECTED;
-			return;
+		compound = prv_check_end_compound_e(SBC_KEYWORD_FOR,
+						    SBC_ERROR_NEXT_UNEXPECTED);
+		if (err_type != SPECASM_ERROR_OK) {
+			err_type = SPECASM_ERROR_OK;
+			compound = prv_check_end_compound_e(
+				SBC_KEYWORD_FOR_STEP,
+				SBC_ERROR_NEXT_UNEXPECTED);
 		}
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
 		id = sbc_statements[stmt].d.str;
 		if (id == SBC_INVALID_BIG_HANDLE)
-			return;
+			return compound;
 		if (id ==
 		    sbc_statements[nesting[nest_level].compound].d.compound.id)
-			return;
+			return compound;
 		err_type = SBC_ERROR_NEXT_UNEXPECTED;
 		break;
 	case SBC_KEYWORD_ENDCASE:
-		if (nesting[nest_level].keyword != SBC_KEYWORD_CASE) {
-			err_type = SBC_ERROR_ENDCASE_EXPECTED;
-			return;
+		compound = prv_check_end_compound_e(
+			SBC_KEYWORD_CASE, SBC_ERROR_ENDCASE_UNEXPECTED);
+		break;
+	case SBC_KEYWORD_ENDPROC:
+		compound = prv_check_end_compound_e(
+			SBC_KEYWORD_DEF_PROC, SBC_ERROR_ENDPROC_UNEXPECTED);
+		break;
+	case SBC_KEYWORD_ENDIF:
+	case SBC_KEYWORD_ELSE:
+	case SBC_KEYWORD_ELSE_THEN:
+		compound = prv_check_end_compound_e(
+			SBC_KEYWORD_THEN, SBC_ERROR_ELSE_OR_ENDIF_UNEXPECTED);
+		if (err_type != SPECASM_ERROR_OK) {
+			err_type = SPECASM_ERROR_OK;
+			compound = prv_check_end_compound_e(
+				SBC_KEYWORD_IF,
+				SBC_ERROR_ELSE_OR_ENDIF_UNEXPECTED);
 		}
 		break;
 	default:
 		break;
 	}
 
+	return compound;
 }
 
 static void prv_build_tree_e(int8_t compound, sbc_handle_t stmt)
@@ -472,10 +587,11 @@ static void prv_build_tree_e(int8_t compound, sbc_handle_t stmt)
 		 * begin compound statement, e.g., WHILE/ENDWHILE.
 		 */
 
-		prv_match_end_compound_e(stmt);
+		compound = prv_match_end_compound_e(stmt);
 		if (err_type != SPECASM_ERROR_OK)
 			return;
-		nest_level--;
+		if (compound < 0)
+			nest_level--;
 	}
 
 	/*
@@ -516,20 +632,38 @@ static void prv_parse_line_e(void)
 	sbc_token_type_t tok_type;
 	uint8_t compound;
 	uint16_t line_no;
+	uint8_t nesting_kw;
+	uint8_t cont = 0;
 
-	line_no = overlay.lex.tok.tok.line_no;
+	line_no = lex.tok.tok.line_no;
 	do {
 		compound = 0;
-		sbc_lexer_get_token_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return;
+
+		/*
+		 * If the previous statement was an IF or a THEN then
+		 * we've already done the sbc_lexer_get_token_e().
+		 */
+
+		if (!cont) {
+			sbc_lexer_get_token_e();
+			if (err_type != SPECASM_ERROR_OK)
+				return;
+		}
+
+		cont = 0;
 
 		sbc_statements[sbc_statement_start].line_no = line_no;
 
-		tok_type = overlay.lex.tok.type;
+		tok_type = lex.tok.type;
 
 		if (tok_type == SBC_TOKEN_EOF)
 			break;
+
+		if (tok_type == SBC_TOKEN_LINE_LABEL) {
+			sbc_statements[sbc_statement_start++].type =
+				SBC_KEYWORD_BLANK;
+			break;
+		}
 
 		switch (tok_type) {
 		case SBC_TOKEN_IDENTIFIER:
@@ -542,7 +676,7 @@ static void prv_parse_line_e(void)
 			prv_handle_rem_e();
 			break;
 		case SBC_TOKEN_OPERATOR:
-			if (prv_is_simple_op(':')) {
+			if (sbc_exp_is_simple_op(':')) {
 				sbc_statements[sbc_statement_start].type =
 					SBC_KEYWORD_BLANK;
 				sbc_lexer_get_token_e();
@@ -564,11 +698,16 @@ static void prv_parse_line_e(void)
 		if (err_type != SPECASM_ERROR_OK)
 			return;
 
-		sbc_statement_start++;
-	} while (prv_is_simple_op(':'));
+		nesting_kw = nesting[nest_level].keyword;
+		cont = (compound > 0) &&
+			((nesting_kw == SBC_KEYWORD_THEN) ||
+			 (nesting_kw == SBC_KEYWORD_IF));
 
-	if ((overlay.lex.tok.type != SBC_TOKEN_LINE_LABEL) &&
-	    (overlay.lex.tok.type != SBC_TOKEN_EOF)) {
+		sbc_statement_start++;
+	} while (sbc_exp_is_simple_op(':') || cont);
+
+	if ((lex.tok.type != SBC_TOKEN_LINE_LABEL) &&
+	    (lex.tok.type != SBC_TOKEN_EOF)) {
 		err_type = SBC_ERROR_KEYWORD_EXPECTED;
 		return;
 	}
@@ -578,9 +717,22 @@ static void prv_parse_line_e(void)
 	 * keyword.
 	 */
 
-	if ((nest_level > 0) &&
-	    (nesting[nest_level].keyword == SBC_KEYWORD_WHEN))
-		nest_level--;
+	if (nest_level > 0) {
+		if ((nesting[nest_level].keyword == SBC_KEYWORD_WHEN) ||
+		    (nesting[nest_level].keyword == SBC_KEYWORD_IF) ||
+		    (nesting[nest_level].keyword == SBC_KEYWORD_ELSE))
+			nest_level--;
+
+		/*
+		 * It's only a compound if statement if the THEN is the last
+		 * keyword on the line.
+		 */
+
+		if ((nesting[nest_level].keyword == SBC_KEYWORD_THEN) &&
+		    (sbc_statements[sbc_statement_start - 1].type !=
+		     SBC_KEYWORD_THEN))
+			nest_level--;
+	}
 }
 
 void sbc_parse_file_e(const char *f)
@@ -597,10 +749,10 @@ void sbc_parse_file_e(const char *f)
 	nesting[0].keyword = SBC_KEYWORD_INVALID;
 
 	do {
-		if (overlay.lex.tok.type == SBC_TOKEN_EOF)
+		if (lex.tok.type == SBC_TOKEN_EOF)
 			break;
 
-		if (overlay.lex.tok.type != SBC_TOKEN_LINE_LABEL) {
+		if (lex.tok.type != SBC_TOKEN_LINE_LABEL) {
 			err_type = SBC_ERROR_BAD_LABEL;
 			break;
 		}

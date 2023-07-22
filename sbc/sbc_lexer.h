@@ -258,4 +258,6 @@ void sbc_lexer_open_e(const char *f);
 void sbc_lexer_close(void);
 void sbc_lexer_get_token_e();
 
+extern sbc_lexer_state_t lex;
+
 #endif

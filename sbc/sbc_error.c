@@ -41,9 +41,13 @@ static const char* const sbc_error_msgs[] = {
 	", expected", // SBC_ERROR_COMMA_EXPECTED
 	"TO expected", // SBC_ERROR_TO_EXPECTED
 	"NEXT unexpected", // SBC_ERROR_NEXT_UNEXPECTED
-	") expected", // SBC_ERROR_CLOSEB_UNEXPECTED
-	"ENDCASE expected", // SBC_ERROR_ENDCASE_UNEXPECTED
-	"OF unexpected", // SBC_ERROR_OF_UNEXPECTED
+	") expected", // SBC_ERROR_CLOSEB_EXPECTED
+	"ENDCASE unexpected", // SBC_ERROR_ENDCASE_UNEXPECTED
+	"OF unexpected", // SBC_ERROR_OF_EXPECTED
+	"( expected", // SBC_ERROR_OPENB_EXPECTED
+	"PROC or FN expected", // SBC_ERROR_PROC_OR_FN_EXPECTED
+	"ELSE or ENDIF unexpected", // SBC_ERROR_ELSE_OR_ENDIF_EXPECTED
+	"ENDPROC unexpected", // SBC_ERROR_ENDPROC_UNEXPECTED
 };
 
 const char *sbc_error_msg(void)

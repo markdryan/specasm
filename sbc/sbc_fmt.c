@@ -22,7 +22,6 @@
 #include "sbc_error.h"
 #include "sbc_fmt_utils.h"
 #include "sbc_parser.h"
-#include "sbc_overlay.h"
 
 #ifdef SPECTRUM
 #include <z80.h>
@@ -68,6 +67,12 @@ static void prv_dump_exp(sbc_handle_t exp)
         case SBC_EXP_IDENTIFIER:
 		prv_dump_text(e->v.id.str);
 		return;
+        case SBC_EXP_GET:
+		printf("GET");
+		return;
+        case SBC_EXP_PI:
+		printf("PI");
+		return;
 	default:
 		break;
 	}
@@ -84,6 +89,21 @@ static void prv_dump_exp(sbc_handle_t exp)
 		return;
 	case SBC_EXP_RND:
 		printf("RND(");
+		prv_dump_exp(e->v.args.a1);
+		putchar(')');
+		return;
+	case SBC_EXP_SIN:
+		printf("SIN(");
+		prv_dump_exp(e->v.args.a1);
+		putchar(')');
+		return;
+	case SBC_EXP_COS:
+		printf("COS(");
+		prv_dump_exp(e->v.args.a1);
+		putchar(')');
+		return;
+	case SBC_EXP_SQR:
+		printf("SQR(");
 		prv_dump_exp(e->v.args.a1);
 		putchar(')');
 		return;
@@ -207,6 +227,18 @@ static void prv_dump_node_list(sbc_handle_t node)
 	}
 }
 
+static void prv_dump_fn(sbc_handle_t stmt)
+{
+	sbc_statement_t *s = &sbc_statements[stmt];
+
+	prv_dump_text(s->d.compound.id);
+	if (s->d.compound.eh == SBC_MAX_EXP_NODES)
+		return;
+	putchar('(');
+	prv_dump_node_list(s->d.compound.eh);
+	putchar(')');
+}
+
 static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 {
 	sbc_statement_t *s;
@@ -232,9 +264,16 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 		printf("RECTANGLE FILL ");
 	else if (s->type == SBC_KEYWORD_FOR_STEP)
 		printf("FOR");
+	else if (s->type == SBC_KEYWORD_DEF_PROC)
+		printf("DEF PROC");
+	else if (s->type == SBC_KEYWORD_DEF_FN)
+		printf("DEF FN");
+	else if (s->type == SBC_KEYWORD_THEN)
+		printf("IF ");
 	else if (s->type != SBC_KEYWORD_BLANK) {
 		printf("%s", sbc_fmt_keywords_strings[s->type]);
-		if (s->type != SBC_KEYWORD_REM)
+		if ((s->type != SBC_KEYWORD_REM) &&
+		    (s->type != SBC_KEYWORD_PROC))
 			putchar(' ');
 	}
 
@@ -247,6 +286,10 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 		printf(" OF");
 		prv_dump_block(line_no, s->d.compound.body, ind + 1);
 		break;
+	case SBC_KEYWORD_DEF_FN:
+	case SBC_KEYWORD_DEF_PROC:
+		prv_dump_fn(stmt);
+		prv_dump_block(line_no, s->d.compound.body, ind + 1);
 	case SBC_KEYWORD_FOR_STEP:
 		step = 1;
 	case SBC_KEYWORD_FOR:
@@ -265,8 +308,20 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 	case SBC_KEYWORD_GOSUB:
 		printf("%d", s->d.line_no);
 		break;
+	case SBC_KEYWORD_THEN:
+		prv_dump_exp(s->d.compound.eh);
+		printf(" THEN ");
+		prv_dump_block(line_no, s->d.compound.body, ind + 1);
+		break;
+	case SBC_KEYWORD_IF:
+		prv_dump_exp(s->d.compound.eh);
+		prv_dump_block(line_no, s->d.compound.body, ind + 1);
+		break;
 	case SBC_KEYWORD_MODE:
 		prv_dump_exp(s->d.exp);
+		break;
+	case SBC_KEYWORD_PLOT:
+		prv_dump_four_exps(stmt, 3);
 		break;
 	case SBC_KEYWORD_POINT2:
 		prv_dump_four_exps(stmt, 2);
@@ -276,6 +331,13 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 		break;
 	case SBC_KEYWORD_REM:
 		prv_dump_text(s->d.str);
+		break;
+	case SBC_KEYWORD_DRAW:
+	case SBC_KEYWORD_MOVE:
+		prv_dump_four_exps(stmt, 2);
+		break;
+	case SBC_KEYWORD_PROC:
+		prv_dump_fn(stmt);
 		break;
 	case SBC_KEYWORD_RECT:
 	case SBC_KEYWORD_RECT_FILL:
@@ -289,6 +351,9 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 	case SBC_KEYWORD_WHILE:
 		prv_dump_exp(s->d.compound.eh);
 		prv_dump_block(line_no, s->d.compound.body, ind + 1);
+		break;
+	case SBC_KEYWORD_VDU:
+		prv_dump_node_list(s->d.compound.eh);
 		break;
 	}
 }
@@ -339,7 +404,7 @@ int main(int argc, char **argv)
 	}
 
 	if (err_type != SPECASM_ERROR_OK) {
-		printf("%s at line %d\n", sbc_error_msg(), overlay.lex.line_no);
+		printf("%s at line %d\n", sbc_error_msg(), lex.line_no);
 		return 1;
 	}
 

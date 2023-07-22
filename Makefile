@@ -48,7 +48,6 @@ TEST_CONTENT_ZX =\
 SBC_COMMON =\
 	sbc_error.c \
 	sbc_lexer.c \
-	sbc_overlay.c \
 	state_base.c
 
 SBC_PARSER =\
