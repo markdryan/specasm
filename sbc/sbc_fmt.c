@@ -239,7 +239,8 @@ static void prv_dump_fn(sbc_handle_t stmt)
 	putchar(')');
 }
 
-static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
+static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt,
+			  sbc_handle_t prev, uint8_t ind)
 {
 	sbc_statement_t *s;
 	uint8_t i;
@@ -251,7 +252,7 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 		printf("\n%5d ", line_no);
 		for (i = 0; i < ind * 4; i++)
 			putchar(' ');
-	} else if (stmt != 0) {
+	} else if ((stmt != 0) && (prev != SBC_MAX_STATEMENTS)) {
 		putchar(':');
 	}
 
@@ -290,6 +291,7 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 	case SBC_KEYWORD_DEF_PROC:
 		prv_dump_fn(stmt);
 		prv_dump_block(line_no, s->d.compound.body, ind + 1);
+		break;
 	case SBC_KEYWORD_FOR_STEP:
 		step = 1;
 	case SBC_KEYWORD_FOR:
@@ -360,8 +362,10 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 
 static void prv_dump_block(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 {
+	sbc_handle_t prev = SBC_MAX_STATEMENTS;
 	do {
-		prv_dump_stmt(line_no, stmt, ind);
+		prv_dump_stmt(line_no, stmt, prev, ind);
+		prev = stmt;
 		stmt = sbc_statements[stmt].next;
 	} while (stmt != SBC_MAX_STATEMENTS);
 }
