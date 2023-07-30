@@ -29,6 +29,7 @@
 #endif
 
 static void prv_dump_block(uint16_t line_no, sbc_handle_t stmt, uint8_t ind);
+static void prv_dump_fn_exp(sbc_handle_t stmt);
 
 static void prv_dump_text(sbc_big_handle_t ptr)
 {
@@ -87,6 +88,16 @@ static void prv_dump_exp(sbc_handle_t exp)
 		putchar(e->type);
 		prv_dump_exp(e->v.args.a1);
 		return;
+	case SBC_EXP_CHR_STR:
+		printf("CHR$(");
+		prv_dump_exp(e->v.args.a1);
+		putchar(')');
+		return;
+	case SBC_EXP_RAD:
+		printf("RAD(");
+		prv_dump_exp(e->v.args.a1);
+		putchar(')');
+		return;
 	case SBC_EXP_RND:
 		printf("RND(");
 		prv_dump_exp(e->v.args.a1);
@@ -106,6 +117,13 @@ static void prv_dump_exp(sbc_handle_t exp)
 		printf("SQR(");
 		prv_dump_exp(e->v.args.a1);
 		putchar(')');
+		return;
+	case SBC_EXP_UMINUS:
+		putchar('-');
+		prv_dump_exp(e->v.args.a1);
+		return;
+	case SBC_EXP_FN:
+		prv_dump_fn_exp(exp);
 		return;
 	default:
 		break;
@@ -227,6 +245,13 @@ static void prv_dump_node_list(sbc_handle_t node)
 	}
 }
 
+static void prv_dump_bracketed_node_list(sbc_handle_t h)
+{
+	putchar('(');
+	prv_dump_node_list(h);
+	putchar(')');
+}
+
 static void prv_dump_fn(sbc_handle_t stmt)
 {
 	sbc_statement_t *s = &sbc_statements[stmt];
@@ -234,9 +259,58 @@ static void prv_dump_fn(sbc_handle_t stmt)
 	prv_dump_text(s->d.compound.id);
 	if (s->d.compound.eh == SBC_MAX_EXP_NODES)
 		return;
-	putchar('(');
-	prv_dump_node_list(s->d.compound.eh);
-	putchar(')');
+	prv_dump_bracketed_node_list(s->d.compound.eh);
+}
+
+static void prv_dump_fn_exp(sbc_handle_t h)
+{
+	sbc_expression_t *e;
+
+	e = &sbc_expressions[h];
+	putchar('F');
+	putchar('N');
+	prv_dump_text(e->v.fn_call.name);
+	if (e->v.fn_call.args_list == SBC_MAX_EXP_NODES)
+		return;
+	prv_dump_bracketed_node_list(e->v.fn_call.args_list);
+}
+
+static void prv_dump_print(sbc_handle_t h)
+{
+	sbc_statement_t *s;
+	char op;
+
+	while (h != SBC_MAX_STATEMENTS) {
+		s = &sbc_statements[h];
+		h = s->next;
+		switch (s->type) {
+		case SBC_KEYWORD_TAB:
+			printf("TAB(");
+			prv_dump_exp(s->d.gcol.e1);
+			if (s->d.gcol.e2 != SBC_MAX_EXPRESSIONS) {
+				putchar(',');
+				putchar(' ');
+				prv_dump_exp(s->d.gcol.e2);
+			}
+			putchar(')');
+			continue;
+		case SBC_KEYWORD_PRINT_COMMA:
+			op = ',';
+			break;
+		case SBC_KEYWORD_PRINT_QUOTE:
+			op = '\'';
+			break;
+		case SBC_KEYWORD_PRINT_SEMIC:
+			op = ';';
+			break;
+		default:
+			op = ' ';
+			break;
+		}
+		putchar(op);
+		if (s->d.exp != SBC_MAX_EXPRESSIONS)
+			prv_dump_exp(s->d.exp);
+	}
 }
 
 static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt,
@@ -258,6 +332,12 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt,
 
 	if (s->type == SBC_KEYWORD_ASSIGN) {
 		prv_dump_assign(stmt);
+		return;
+	}
+
+	if (s->type == SBC_KEYWORD_END_FN) {
+		putchar('=');
+		prv_dump_exp(s->d.exp);
 		return;
 	}
 
@@ -329,13 +409,14 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt,
 		prv_dump_four_exps(stmt, 2);
 		break;
 	case SBC_KEYWORD_PRINT:
-		prv_dump_exp(s->d.exp);
+		prv_dump_print(s->d.compound.body);
 		break;
 	case SBC_KEYWORD_REM:
 		prv_dump_text(s->d.str);
 		break;
 	case SBC_KEYWORD_DRAW:
 	case SBC_KEYWORD_MOVE:
+	case SBC_KEYWORD_ORIGIN:
 		prv_dump_four_exps(stmt, 2);
 		break;
 	case SBC_KEYWORD_PROC:
@@ -355,7 +436,7 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt,
 		prv_dump_block(line_no, s->d.compound.body, ind + 1);
 		break;
 	case SBC_KEYWORD_VDU:
-		prv_dump_node_list(s->d.compound.eh);
+		prv_dump_node_list(s->d.exp_list);
 		break;
 	}
 }
@@ -363,11 +444,11 @@ static void prv_dump_stmt(uint16_t line_no, sbc_handle_t stmt,
 static void prv_dump_block(uint16_t line_no, sbc_handle_t stmt, uint8_t ind)
 {
 	sbc_handle_t prev = SBC_MAX_STATEMENTS;
-	do {
+	while (stmt != SBC_MAX_STATEMENTS) {
 		prv_dump_stmt(line_no, stmt, prev, ind);
 		prev = stmt;
 		stmt = sbc_statements[stmt].next;
-	} while (stmt != SBC_MAX_STATEMENTS);
+	}
 }
 
 static void prv_dump_e(const char *fname)

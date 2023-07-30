@@ -266,15 +266,17 @@ static sbc_handle_t prv_no_arg_keyword(uint8_t op)
 static sbc_handle_t prv_single_arg_fn(uint8_t op)
 {
 	sbc_expression_t *e;
+	sbc_handle_t h;
 
 	if (sbc_exp_start == sbc_exp_end) {
 		err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
 		return 0;
 	}
 
+	h = sbc_exp_parse_e();
 	e = &sbc_expressions[sbc_exp_start];
 	e->type = op;
-	e->v.args.a1 = sbc_exp_parse_e();
+	e->v.args.a1 = h;
 
 	return sbc_exp_start++;
 }
@@ -314,28 +316,29 @@ static sbc_handle_t prv_add_fn(void)
 static sbc_handle_t prv_priority1_e(void)
 {
 	sbc_token_type_t tok_type;
-	sbc_handle_t e = 0;
+	sbc_handle_t h = 0;
+	sbc_expression_t *e;
 
 	tok_type = lex.tok.type;
 	switch (tok_type) {
 	case SBC_TOKEN_INTEGER:
 	case SBC_TOKEN_HEX:
 	case SBC_TOKEN_BIN:
-		e = sbc_exp_add_int_e(&lex.tok);
+		h = sbc_exp_add_int_e(&lex.tok);
 		break;
 	case SBC_TOKEN_REAL:
-		e = sbc_exp_add_real_e(&lex.tok);
+		h = sbc_exp_add_real_e(&lex.tok);
 		break;
 	case SBC_TOKEN_IDENTIFIER:
-		e = sbc_exp_add_id_e(&lex.tok);
+		h = sbc_exp_add_id_e(&lex.tok);
 		break;
 	case SBC_TOKEN_STRING:
-		e = sbc_exp_add_string_e(&lex.tok);
+		h = sbc_exp_add_string_e(&lex.tok);
 		break;
 	case SBC_TOKEN_OPERATOR:
 		switch (sbc_exp_map_op()) {
 		case SBC_EXP_OPENB:
-			e = sbc_exp_parse_e();
+			h = sbc_exp_parse_e();
 			if (err_type != SPECASM_ERROR_OK)
 				return 0;
 			if ((lex.tok.type != SBC_TOKEN_OPERATOR) ||
@@ -343,12 +346,25 @@ static sbc_handle_t prv_priority1_e(void)
 				err_type = SBC_ERROR_CLOSEB_EXPECTED;
 				return 0;
 			}
+		break;
+		case '-':
+			if (sbc_exp_start == sbc_exp_end) {
+				err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
+				return 0;
+			}
+			h = sbc_exp_start++;
+			e = &sbc_expressions[h];
+			e->type = SBC_EXP_UMINUS;
+			e->v.args.a1 = sbc_exp_parse_e();
+			return h;
 		}
 		break;
 	case SBC_TOKEN_KEYWORD:
 		switch (lex.tok.tok.keyword) {
 		case SBC_KEYWORD_FN:
 			return prv_add_fn();
+		case SBC_KEYWORD_RAD:
+			return prv_single_arg_fn(SBC_EXP_RAD);
 		case SBC_KEYWORD_RND:
 			return prv_single_arg_fn(SBC_EXP_RND);
 		case SBC_KEYWORD_COS:
@@ -357,14 +373,16 @@ static sbc_handle_t prv_priority1_e(void)
 			return prv_single_arg_fn(SBC_EXP_SIN);
 		case SBC_KEYWORD_SQR:
 			return prv_single_arg_fn(SBC_EXP_SQR);
+		case SBC_KEYWORD_CHR_STR:
+			return prv_single_arg_fn(SBC_EXP_CHR_STR);
 		case SBC_KEYWORD_GET:
-			e = prv_no_arg_keyword(SBC_EXP_GET);
+			h = prv_no_arg_keyword(SBC_EXP_GET);
 			break;
 		case SBC_KEYWORD_TIME:
-			e = prv_no_arg_keyword(SBC_EXP_TIME);
+			h = prv_no_arg_keyword(SBC_EXP_TIME);
 			break;
 		case SBC_KEYWORD_PI:
-			e = prv_no_arg_keyword(SBC_EXP_PI);
+			h = prv_no_arg_keyword(SBC_EXP_PI);
 			break;
 		default:
 			err_type = SBC_ERROR_EXP_EXPECTED;
@@ -381,7 +399,7 @@ static sbc_handle_t prv_priority1_e(void)
 
 	sbc_lexer_get_token_e();
 
-	return e;
+	return h;
 }
 
 static sbc_handle_t prv_priority2_e(void)
@@ -427,6 +445,10 @@ static sbc_handle_t prv_priority3_e(void)
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 
+		if (sbc_exp_start == sbc_exp_end) {
+			err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
+			return 0;
+		}
 		e = &sbc_expressions[sbc_exp_start];
 		e->type = op;
 		e->v.args.a1 = e1;
@@ -483,6 +505,10 @@ static sbc_handle_t prv_priority4_e(void)
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 
+		if (sbc_exp_start == sbc_exp_end) {
+			err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
+			return 0;
+		}
 		e = &sbc_expressions[sbc_exp_start];
 		e->type = op;
 		e->v.args.a1 = e1;
@@ -528,6 +554,10 @@ static sbc_handle_t prv_priority5_e(void)
 			if (err_type != SPECASM_ERROR_OK)
 				return 0;
 
+			if (sbc_exp_start == sbc_exp_end) {
+				err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
+				return 0;
+			}
 			e = &sbc_expressions[sbc_exp_start];
 			e->type = op;
 			e->v.args.a1 = e1;
@@ -542,9 +572,90 @@ static sbc_handle_t prv_priority5_e(void)
 	return e1;
 }
 
+static sbc_handle_t prv_priority6_e(void)
+{
+	sbc_expression_t *e;
+	sbc_handle_t e1;
+	sbc_handle_t e2;
+	sbc_token_type_t tok_type;
+
+	e1 = prv_priority5_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	tok_type = lex.tok.type;
+
+	while ((tok_type == SBC_TOKEN_KEYWORD) &&
+	       (lex.tok.tok.keyword == SBC_KEYWORD_AND)) {
+		sbc_lexer_get_token_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+
+		e2 = prv_priority5_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+
+		if (sbc_exp_start == sbc_exp_end) {
+			err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
+			return 0;
+		}
+		e = &sbc_expressions[sbc_exp_start];
+		e->type = SBC_EXP_AND;;
+		e->v.args.a1 = e1;
+		e->v.args.a2 = e2;
+		e1 = sbc_exp_start++;
+		tok_type = lex.tok.type;
+	}
+
+	return e1;
+}
+
+static sbc_handle_t prv_priority7_e(void)
+{
+	sbc_expression_t *e;
+	sbc_handle_t e1;
+	sbc_handle_t e2;
+	sbc_token_type_t tok_type;
+	uint8_t op;
+
+	e1 = prv_priority6_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	tok_type = lex.tok.type;
+
+	while ((tok_type == SBC_TOKEN_KEYWORD) &&
+	       ((lex.tok.tok.keyword == SBC_KEYWORD_OR) ||
+		(lex.tok.tok.keyword == SBC_KEYWORD_EOR))) {
+		op = (lex.tok.tok.keyword == SBC_KEYWORD_OR) ?
+			SBC_EXP_OR : SBC_EXP_EOR;
+
+		sbc_lexer_get_token_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+
+		e2 = prv_priority6_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+
+		if (sbc_exp_start == sbc_exp_end) {
+			err_type = SBC_ERROR_TOO_MANY_EXPRESSIONS;
+			return 0;
+		}
+		e = &sbc_expressions[sbc_exp_start];
+		e->type = op;
+		e->v.args.a1 = e1;
+		e->v.args.a2 = e2;
+		e1 = sbc_exp_start++;
+		tok_type = lex.tok.type;
+	}
+
+	return e1;
+}
+
 sbc_handle_t sbc_exp_parse_no_get_e(void)
 {
-	return prv_priority5_e();
+	return prv_priority7_e();
 }
 
 sbc_handle_t sbc_exp_parse_e(void)
@@ -553,5 +664,5 @@ sbc_handle_t sbc_exp_parse_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	return prv_priority5_e();
+	return prv_priority7_e();
 }

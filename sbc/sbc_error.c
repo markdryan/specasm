@@ -34,6 +34,7 @@ static const char* const sbc_error_msgs[] = {
 	"Keyword expected", // SBC_ERROR_KEYWORD_EXPECTED
 	"Identifier expected", // SBC_ERROR_ID_EXPECTED
 	"= expected", // SBC_ERROR_EQ_EXPECTED
+	"= unexpected", // SBC_ERROR_EQ_UNEXPECTED
 	"Expression expected", // SBC_ERROR_EXP_EXPECTED
 	"Too many nested levels", // SBC_ERROR_TOO_MUCH_NESTING
 	"ENDWHILE unexpected", // SBC_ERROR_ENDWHILE_UNEXPECTED
@@ -48,6 +49,8 @@ static const char* const sbc_error_msgs[] = {
 	"PROC or FN expected", // SBC_ERROR_PROC_OR_FN_EXPECTED
 	"ELSE or ENDIF unexpected", // SBC_ERROR_ELSE_OR_ENDIF_EXPECTED
 	"ENDPROC unexpected", // SBC_ERROR_ENDPROC_UNEXPECTED
+	"Too many statements", // SBC_ERROR_TOO_MANY_STATEMENTS
+	"Syntax Error", // SBC_ERROR_SYNTAX_ERROR
 };
 
 const char *sbc_error_msg(void)

@@ -73,7 +73,8 @@ static uint8_t prv_adjust_keyword_indent(void)
 		indent_stack_top--;
 	case SBC_KEYWORD_ENDIF:
 	case SBC_KEYWORD_ENDCASE:
-		indent--;
+		if (indent > 0)
+			indent--;
 		return indent;
 	case SBC_KEYWORD_ENDPROC:
 		if (indent == 1)

@@ -29,6 +29,7 @@ struct sbc_parser_nest_t {
 	 */
 	sbc_handle_t tail;
 	uint8_t keyword;
+	uint16_t line_no;
 };
 typedef struct sbc_parser_nest_t sbc_parser_nest_t;
 
@@ -306,12 +307,109 @@ static void prv_handle_if_e(void)
 	s->d.compound.body = SBC_MAX_STATEMENTS;
 }
 
-static void prv_handle_print_e(void)
+static sbc_handle_t prv_parse_print_command_e(uint16_t line_no)
 {
 	sbc_statement_t *s;
 
+	if (lex.tok.type == SBC_TOKEN_LINE_LABEL)
+		return SBC_MAX_STATEMENTS;
+
+	if (sbc_statement_start == SBC_MAX_STATEMENTS) {
+		err_type = SBC_ERROR_TOO_MANY_STATEMENTS;
+		return SBC_MAX_STATEMENTS;
+	}
+	sbc_statement_start++;
 	s = &sbc_statements[sbc_statement_start];
-	s->d.exp = sbc_exp_parse_e();
+	s->line_no = line_no;
+	s->next = SBC_MAX_STATEMENTS;
+
+	switch (lex.tok.type) {
+	case SBC_TOKEN_KEYWORD:
+		if (lex.tok.tok.keyword != SBC_KEYWORD_TAB) {
+			s->type = SBC_KEYWORD_PRINT_SPACE;
+			s->d.exp = sbc_exp_parse_no_get_e();
+			break;
+		}
+		s->type = SBC_KEYWORD_TAB;
+		s->d.gcol.e1 = sbc_exp_parse_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return SBC_MAX_STATEMENTS;
+		s->d.gcol.count = 1;
+		if (sbc_exp_is_simple_op(',')) {
+			s->d.gcol.e2 = sbc_exp_parse_e();
+			if (err_type != SPECASM_ERROR_OK)
+				return SBC_MAX_STATEMENTS;
+			s->d.gcol.count++;
+			if (!sbc_exp_is_simple_op(')')) {
+				err_type = SBC_ERROR_CLOSEB_EXPECTED;
+				return SBC_MAX_STATEMENTS;
+			}
+			sbc_lexer_get_token_e();
+		}
+		break;
+	case SBC_TOKEN_OPERATOR:
+		s->d.exp = SBC_MAX_EXPRESSIONS;
+		switch (sbc_exp_map_op()) {
+		case ';':
+			s->type = SBC_KEYWORD_PRINT_SEMIC;
+			break;
+		case '\'':
+			s->type = SBC_KEYWORD_PRINT_QUOTE;
+			break;
+		case ',':
+			s->type = SBC_KEYWORD_PRINT_COMMA;
+			break;
+		default:
+			err_type = SBC_ERROR_SYNTAX_ERROR;
+			return SBC_MAX_STATEMENTS;
+		}
+		sbc_lexer_get_token_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return SBC_MAX_STATEMENTS;
+		if ((lex.tok.type == SBC_TOKEN_LINE_LABEL) ||
+		    (lex.tok.type == SBC_TOKEN_OPERATOR))
+			break;
+		s->d.exp = sbc_exp_parse_no_get_e();
+		break;
+	default:
+		s->type = SBC_KEYWORD_PRINT_SPACE;
+		s->d.exp = sbc_exp_parse_no_get_e();
+		break;
+	}
+
+	return sbc_statement_start;
+}
+
+static void prv_handle_print_e(void)
+{
+	sbc_statement_t *s;
+	sbc_handle_t h;
+
+	/*
+	 * We're going to treat PRINT as a compound statement.
+	 * but we're going to build up the statement manually
+	 * in this function instead of in build_tree.  We can do this
+	 * as the entire PRINT statement is restricted to one line.
+	 * Having it as one compound statement makes it easier to format.
+	 */
+
+	s = &sbc_statements[sbc_statement_start];
+
+	sbc_lexer_get_token_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	h = prv_parse_print_command_e(s->line_no);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	s->d.compound.body = h;
+	while (h != SBC_MAX_STATEMENTS) {
+		s = &sbc_statements[h];
+		h = prv_parse_print_command_e(s->line_no);
+		if (err_type != SPECASM_ERROR_OK)
+			return;
+		s->next =  h;
+	}
 }
 
 static void prv_handle_proc_fn_e(void)
@@ -406,6 +504,7 @@ static int8_t prv_handle_keyword_e(void)
 		compound = 1;
 		break;
 	case SBC_KEYWORD_ENDCASE:
+	case SBC_KEYWORD_ENDIF:
 	case SBC_KEYWORD_ENDWHILE:
 	case SBC_KEYWORD_ENDPROC:
 		compound = -1;
@@ -449,6 +548,7 @@ static int8_t prv_handle_keyword_e(void)
 		break;
 	case SBC_KEYWORD_MOVE:
 	case SBC_KEYWORD_DRAW:
+	case SBC_KEYWORD_ORIGIN:
 		sbc_lexer_get_token_e();
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
@@ -625,6 +725,21 @@ static void prv_build_tree_e(int8_t compound, sbc_handle_t stmt)
 	nest->keyword = sbc_statements[stmt].type;
 	nest->compound = stmt;
 	nest->tail = SBC_MAX_STATEMENTS;
+	nest->line_no = sbc_statements[stmt].line_no;
+}
+
+static uint8_t prv_handle_end_fn_e(void)
+{
+	sbc_statement_t *s = &sbc_statements[sbc_statement_start];
+
+	s->type = SBC_KEYWORD_END_FN;
+	s->next = SBC_MAX_STATEMENTS;
+	s->d.exp = sbc_exp_parse_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	return prv_check_end_compound_e(SBC_KEYWORD_DEF_FN,
+					SBC_ERROR_EQ_UNEXPECTED);
 }
 
 static void prv_parse_line_e(void)
@@ -633,6 +748,7 @@ static void prv_parse_line_e(void)
 	uint8_t compound;
 	uint16_t line_no;
 	uint8_t nesting_kw;
+	sbc_handle_t h;
 	uint8_t cont = 0;
 
 	line_no = lex.tok.tok.line_no;
@@ -648,23 +764,32 @@ static void prv_parse_line_e(void)
 			sbc_lexer_get_token_e();
 			if (err_type != SPECASM_ERROR_OK)
 				return;
+		} else if (lex.tok.type == SBC_TOKEN_LINE_LABEL) {
+			break;
 		}
 
 		cont = 0;
-
-		sbc_statements[sbc_statement_start].line_no = line_no;
 
 		tok_type = lex.tok.type;
 
 		if (tok_type == SBC_TOKEN_EOF)
 			break;
 
+		sbc_statements[sbc_statement_start].line_no = line_no;
 		if (tok_type == SBC_TOKEN_LINE_LABEL) {
 			sbc_statements[sbc_statement_start++].type =
 				SBC_KEYWORD_BLANK;
 			break;
 		}
 
+		/*
+		 * PRINT breaks the normal statement processing as it
+		 * can create multiple statements.  So we need to save
+		 * sbc_statement_start here so we know which statement
+		 * to add to the tree.
+		 */
+
+		h = sbc_statement_start;
 		switch (tok_type) {
 		case SBC_TOKEN_IDENTIFIER:
 			prv_handle_assignment_e(SBC_KEYWORD_ASSIGN);
@@ -680,8 +805,8 @@ static void prv_parse_line_e(void)
 				sbc_statements[sbc_statement_start].type =
 					SBC_KEYWORD_BLANK;
 				sbc_lexer_get_token_e();
-				if (err_type != SPECASM_ERROR_OK)
-					return;
+			} else if (sbc_exp_is_simple_op('=')) {
+				compound = prv_handle_end_fn_e();
 			} else {
 				err_type = SBC_ERROR_KEYWORD_EXPECTED;
 				return;
@@ -694,7 +819,7 @@ static void prv_parse_line_e(void)
 		if (err_type != SPECASM_ERROR_OK)
 			return;
 
-		prv_build_tree_e(compound, sbc_statement_start);
+		prv_build_tree_e(compound, h);
 		if (err_type != SPECASM_ERROR_OK)
 			return;
 
@@ -729,6 +854,8 @@ static void prv_parse_line_e(void)
 		 */
 
 		if ((nesting[nest_level].keyword == SBC_KEYWORD_THEN) &&
+		    (nesting[nest_level].line_no ==
+		     sbc_statements[sbc_statement_start - 1].line_no) &&
 		    (sbc_statements[sbc_statement_start - 1].type !=
 		     SBC_KEYWORD_THEN))
 			nest_level--;
@@ -747,6 +874,7 @@ void sbc_parse_file_e(const char *f)
 
 	nesting[0].tail = SBC_MAX_STATEMENTS;
 	nesting[0].keyword = SBC_KEYWORD_INVALID;
+	nesting[0].line_no = 0;
 
 	do {
 		if (lex.tok.type == SBC_TOKEN_EOF)

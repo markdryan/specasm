@@ -63,6 +63,12 @@
 #define SBC_EXP_SIN 132
 #define SBC_EXP_SQR 133
 #define SBC_EXP_PI 134
+#define SBC_EXP_AND 135
+#define SBC_EXP_OR 136
+#define SBC_EXP_EOR 137
+#define SBC_EXP_UMINUS 138
+#define SBC_EXP_RAD 139
+#define SBC_EXP_CHR_STR 140
 
 #define SBC_POOL_MAX_STRING_BUF (1024 * SBC_CONFIG_SIZE)
 extern uint8_t sbc_pool_strings[SBC_POOL_MAX_STRING_BUF + 1];
