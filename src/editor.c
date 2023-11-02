@@ -16,6 +16,7 @@
 
 #include "editor.h"
 #include "line.h"
+#include "line_parse_common.h"
 #include "peer.h"
 #include "state.h"
 

@@ -110,8 +110,11 @@ const char *prv_get_token_e(const char *buf, salink_obj_t *obj,
 	char c;
 	long lval;
 	int len;
+#ifndef SPECASM_NEXT_BANKED
+	const char simple_ops[] = "()/*+-&|^~";
+#else
 	static const char simple_ops[] = "()/*+-&|^~";
-
+#endif
 	if (!buf) {
 		tok->type = SALINK_TOKEN_EOF;
 		return NULL;
@@ -580,7 +583,12 @@ static void prv_check_equ_err(salink_obj_t *obj, const char *name,
 	prv_check_exp_err(obj, scratch, line_no, exact_line);
 }
 
+#ifdef SPECASM_NEXT_BANKED
+int16_t salink_equ_eval_banked_e(salink_obj_t *obj, const char *str,
+				 uint16_t line_no)
+#else
 int16_t salink_equ_eval_e(salink_obj_t *obj, const char *str, uint16_t line_no)
+#endif
 {
 	int16_t e;
 
@@ -615,8 +623,13 @@ static void prv_equ_eval_local_e(salink_obj_t *obj, salink_label_t *label,
 		label->type = SALINK_LABEL_TYPE_EQU_EVAL_LONG;
 }
 
+#ifdef SPECASM_NEXT_BANKED
+void salink_equ_eval_global_banked_e(salink_obj_t *obj, salink_global_t *global,
+				     salink_label_t *label, uint8_t depth)
+#else
 void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
 			      salink_label_t *label, uint8_t depth)
+#endif
 {
 	const char *name = global->name + strlen(global->name) + 1;
 

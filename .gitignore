@@ -12,10 +12,16 @@ specasm-bare
 test_content_zx
 SAIMPORT
 SAEXPORT
+SPECASM
+*.map
+SALINK
 SAIMPORT.X
 SAEXPORT.X
+UNITNEXT
+UNITZX
 build.sh
 compile.sh
 build/48/specasm/release
-build/48/unit
+build/48/unit/tests
+build/next/unit/tests
 .DS_Store

@@ -17,7 +17,14 @@
 #ifndef SPECASM_ZX_PEER_H
 #define SPECASM_ZX_PEER_H
 
+#ifdef SPECTRUM
 #include <arch/zx.h>
+#define specasm_sleep_ms(a) z80_delay_ms(a)
+#else
+#include <arch/zxn.h>
+#define specasm_sleep_ms(a) \
+	z80_delay_ms((1 << (ZXN_READ_REG(REG_TURBO_MODE) & 3))*(a))
+#endif
 #include <z80.h>
 
 #include "util_print_zx.h"
@@ -40,7 +47,6 @@
 #define SPECASM_FLASH FLASH
 #define specasm_cls(a) zx_cls(a)
 #define specasm_border(a) zx_border(a)
-#define specasm_sleep_ms(a) z80_delay_ms(a)
 #define specasm_text_print specasm_util_print
 #define specasm_text_clear specasm_util_clear
 

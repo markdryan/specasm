@@ -261,58 +261,66 @@ The first two call statements in this example generate the same machine code ins
 
 The following instructions support expressions.
 
-| Instruction / Directive  |
-|--------------------------|
-| adc a, =expression       |
-| add a, =expression       |
-| and =expression          |
-| call =expression         |
-| cp =expression           |
-| jp =expression           |
-| in a, (=expression)      |
-| ld a, =expression        |
-| ld a, (=expression)      |
-| ld (=expression), a      |
-| ld b, =expression        |
-| ld c, =expression        |
-| ld d, =expression        |
-| ld e, =expression        |
-| ld h, =expression        |
-| ld l, =expression        |
-| ld bc, =expression       |
-| ld de, =expression       |
-| ld hl, =expression       |
-| ld hl, (=expression)     |
-| ld (hl), =expression     |
-| ld (=expression), hl     |
-| ld sp, =expression       |
-| out (=expression), a     |
-| or =expression           |
-| rst =expression          |
-| sbc a, =expression       |
-| sub a, expression        |
-| xor =expressio           |
-| bit =expression, [a-l]   |
-| bit =expression, (hl)    |
-| ld ix, =expression       |
-| ld iy, =expression       |
-| ld bc, (=expression)     |
-| ld (=expression), bc     |
-| ld de, (=expression)     |
-| ld (=expression), de     |
-| ld ix, (=expression)     |
-| ld (=expression), ix     |
-| ld iy, (=expression)     |
-| ld (=expression), iy     |
-| ld (=expression), sp     |
-| ld sp, (=expression)     |
-| im =expression           |
-| res =expression, [a-l]   |
-| res =expression, (hl)    |
-| set =expression, [a-l]   |
-| set =expression, (hl)    |
-| dw =expression           |
-| db =expression           |
+| Instruction / Directive       |
+|-------------------------------|
+| adc a, =expression            |
+| add a, =expression            |
+| add hl, =expression (nx)      |
+| add de, =expression (nx)      |
+| add bc, =expression (nx)      |
+| and =expression               |
+| call =expression              |
+| cp =expression                |
+| jp =expression                |
+| in a, (=expression)           |
+| ld a, =expression             |
+| ld a, (=expression)           |
+| ld (=expression), a           |
+| ld b, =expression             |
+| ld c, =expression             |
+| ld d, =expression             |
+| ld e, =expression             |
+| ld h, =expression             |
+| ld l, =expression             |
+| ld bc, =expression            |
+| ld de, =expression            |
+| ld hl, =expression            |
+| ld hl, (=expression)          |
+| ld (hl), =expression          |
+| ld (=expression), hl          |
+| ld sp, =expression            |
+| out (=expression), a          |
+| or =expression                |
+| rst =expression               |
+| sbc a, =expression            |
+| sub a, expression             |
+| xor =expressio                |
+| bit =expression, [a-l]        |
+| bit =expression, (hl)         |
+| ld ix, =expression            |
+| ld iy, =expression            |
+| ld bc, (=expression)          |
+| ld (=expression), bc          |
+| ld de, (=expression)          |
+| ld (=expression), de          |
+| ld ix, (=expression)          |
+| ld (=expression), ix          |
+| ld iy, (=expression)          |
+| ld (=expression), iy          |
+| ld (=expression), sp          |
+| ld sp, (=expression)          |
+| im =expression                |
+| nextreg =expression, imm (nx) |
+| nextreg =expression, a (nx)   |
+| res =expression, [a-l]        |
+| res =expression, (hl)         |
+| set =expression, [a-l]        |
+| set =expression, (hl)         |
+| test =expression (nx)         |
+| dw =expression                |
+| db =expression                |
+
+The (nx) suffix indicates that the instruction is a Spectrum Next specific instruction.  The nextreg instruction only allows an expression in the first parameter.
 
 Expressions cannot be used as an offset in combination with an index register, e.g.,
 

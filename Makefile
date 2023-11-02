@@ -11,7 +11,10 @@ SRCS =\
 	editor.c \
 	editor_tests.c \
 	editor_test_content.c \
+	ld_parse.c \
 	line_parse.c \
+	line_parse_common.c \
+	line_dump_common.c \
 	line_dump.c \
 	peer_unit.c \
 	peer_posix_screen.c \
@@ -28,16 +31,21 @@ POSIX = \
 	peer_text_screen.c
 
 SAIMPORT =\
+	ld_parse.c \
 	line_parse.c \
+	line_parse_common.c \
 	saimport.c \
 	state_parse.c 
 
 SAEXPORT =\
 	line_dump.c \
+	line_dump_common.c \
 	state_dump.c \
 	saexport.c
 
 SALINK =\
+	link_obj.c \
+	map.c \
 	salink.c \
 	expression.c
 

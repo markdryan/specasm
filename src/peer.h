@@ -25,6 +25,8 @@
 #include "peer_unit.h"
 #elif defined(SPECTRUM)
 #include "peer_zx.h"
+#elif defined(__ZXNEXT)
+#include "peer_zx.h"
 #endif
 
 void specasm_peer_write_state_e(const char *fname, uint16_t checksum);
@@ -35,7 +37,7 @@ void specasm_text_set_flash(uint8_t x, uint8_t y, uint8_t attr);
 
 void specasm_text_printch(char ch, uint8_t x, uint8_t y, uint8_t attr);
 
-#ifndef SPECTRUM
+#if !defined(SPECTRUM) && !defined(__ZXNEXT)
 int itoa(int n, char *s, unsigned char radix);
 int utoa(int n, char *s, unsigned char radix);
 #endif

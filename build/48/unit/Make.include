@@ -1,0 +1,26 @@
+error.o: ../src/error.c ../src/error.h
+state_base.o: ../src/state_base.c ../src/peer.h ../src/error.h ../src/peer_unit.h \
+  ../src/line.h ../src/state_base.h ../src/strings.h
+ld_parse.o: ../src/ld_parse.c ../src/line_common.h ../src/line.h ../src/error.h \
+  ../src/line_parse_common.h ../src/peer.h ../src/peer_unit.h ../src/state.h \
+  ../src/state_base.h ../src/strings.h
+line_parse_common.o: ../src/line_parse_common.c ../src/line.h ../src/error.h \
+  ../src/line_common.h ../src/line_parse_common.h ../src/state.h ../src/state_base.h \
+  ../src/strings.h
+line_dump.o: ../src/line_dump.c ../src/line_common.h ../src/line.h ../src/error.h \
+  ../src/peer.h ../src/peer_zx.h ../src/state.h ../src/state_base.h ../src/strings.h
+line_dump_common.o: ../src/line_dump_common.c ../src/line_common.h ../src/line.h \
+  ../src/error.h ../src/peer.h ../src/peer_zx.h ../src/state.h ../src/state_base.h \
+  ../src/strings.h
+line_common.o: ../src/line_common.c ../src/line_common.h ../src/line.h ../src/error.h  
+line.o: ../src/line.c ../src/peer.h ../src/error.h ../src/peer_unit.h ../src/line.h \
+  ../src/state.h ../src/state_base.h ../src/strings.h
+state.o: ../src/state.c ../src/state.h ../src/state_base.h ../src/line.h ../src/error.h \
+  ../src/strings.h
+peer_file_zx.o: ../src/peer_file.h ../src/error.h
+util_print_zx.o: ../src/util_print_zx.h
+peer_unit.o: ../src/peer_unit.c ../src/peer.h ../src/error.h ../src/peer_unit.h \
+  ../src/line.h ../src/state.h ../src/state_base.h ../src/strings.h
+unittests_zx.o: ../src/unittests_zx.c ../src/error.h ../src/line.h \
+  ../src/state.h ../src/state_base.h ../src/strings.h ../src/test_content.h ../src/test_content_zx.h \
+  ../src/peer.h ../src/peer_file.h ../src/peer_unit.h

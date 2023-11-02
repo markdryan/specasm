@@ -33,78 +33,6 @@ struct specasm_line_opcode_dump_t_ {
 
 typedef struct specasm_line_opcode_dump_t_ specasm_line_opcode_dump_t;
 
-static uint8_t prv_dump_byte(char *buf, uint8_t v, uint8_t flags)
-{
-	int iv;
-	unsigned char radix;
-	const char *start;
-
-	if (flags == SPECASM_FLAGS_NUM_CHAR) {
-		buf[0] = '\'';
-		buf[1] = v;
-		buf[2] = '\'';
-		buf[3] = 0;
-		return 3;
-	}
-
-	start = buf;
-	if (flags == SPECASM_FLAGS_NUM_HEX) {
-		*buf++ = '$';
-		radix = 16;
-		iv = v;
-	} else {
-		radix = 10;
-		if (flags == SPECASM_FLAGS_NUM_SIGNED)
-			iv = (int8_t)v;
-		else
-			iv = v;
-	}
-	(void)itoa(iv, buf, radix);
-	return strlen(start);
-}
-
-static uint8_t prv_dump_word(char *buf, uint16_t v, uint8_t flags)
-{
-	const char *start;
-	unsigned char radix;
-
-	if (flags == SPECASM_FLAGS_NUM_CHAR) {
-		buf[0] = '\'';
-		buf[1] = (uint8_t)v;
-		buf[2] = '\'';
-		buf[3] = 0;
-		return 3;
-	}
-
-	start = buf;
-	if (flags == SPECASM_FLAGS_NUM_SIGNED) {
-		(void)itoa(v, buf, 10);
-	} else {
-		if (flags == SPECASM_FLAGS_NUM_HEX) {
-			*buf++ = '$';
-			radix = 16;
-		} else {
-			radix = 10;
-		}
-
-		(void)utoa(v, buf, radix);
-	}
-
-	return strlen(start);
-}
-
-static char *prv_dump_index(const uint8_t *op_code, char *buf, uint8_t flags)
-{
-	buf[0] = '(';
-	buf[1] = 'i';
-	buf[2] = op_code[0] == 0xDD ? 'x' : 'y';
-	buf[3] = '+';
-	buf += 4;
-	buf += prv_dump_byte(buf, op_code[2], flags);
-	*buf++ = ')';
-	return buf;
-}
-
 static char *prv_byte_and_hl_ind(uint8_t code, char *buf)
 {
 	code &= 7;
@@ -127,13 +55,13 @@ static char *prv_dump_arith_e(const specasm_line_t *line, char *buf,
 
 	if (op_code[0] == 0xDD || op_code[0] == 0xFD) {
 		buf =
-		    prv_dump_index(op_code, buf, specasm_line_get_format(line));
+		    specasm_dump_index(op_code, buf, specasm_line_get_format(line));
 	} else if (op_code[0] == imm) {
 
 		if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
 			buf = prv_dump_exp_e(line, buf, op_code[1]);
 		else
-			buf += prv_dump_byte(buf, op_code[1],
+			buf += specasm_dump_byte(buf, op_code[1],
 					     specasm_line_get_format(line));
 	} else if ((op_code[0] & reg) == reg) {
 		buf = prv_byte_and_hl_ind(op_code[0], buf);
@@ -186,7 +114,7 @@ static char *prv_dump_16bit_unary_e(const specasm_line_t *line, char *buf,
 
 	if (op_code[0] == 0xFD || op_code[0] == 0xDD) {
 		if (op_code[1] == hl_ind) {
-			buf = prv_dump_index(op_code, buf,
+			buf = specasm_dump_index(op_code, buf,
 					     specasm_line_get_format(line));
 		} else {
 			*buf++ = 'i';
@@ -208,7 +136,7 @@ static char *prv_dump_jump_label_fmt_e(const specasm_line_t *line, char *buf,
 	const char *label;
 
 	if (fmt == SPECASM_FLAGS_ADDR_NUM) {
-		buf += prv_dump_word(buf, id, specasm_line_get_format(line));
+		buf += specasm_dump_word(buf, id, specasm_line_get_format(line));
 	} else {
 		if (fmt == SPECASM_FLAGS_ADDR_LONG)
 			label = specasm_state_get_long_e((uint8_t)id);
@@ -243,9 +171,13 @@ static char *prv_dump_exp_e(const specasm_line_t *line, char *buf, uint8_t id)
 
 static char *prv_dump_cc(const uint8_t cc, char *buf)
 {
+#ifndef SPECASM_NEXT_BANKED
 	static const char *codes[] = {"nz", "z",  "nc", "c",
 				      "po", "pe", "p",  "m"};
-
+#else
+	const char *codes[] = {"nz", "z",  "nc", "c",
+		"po", "pe", "p",  "m"};
+#endif
 	const char *code = codes[cc & 7];
 	while (*code)
 		*buf++ = *code++;
@@ -283,9 +215,18 @@ static uint8_t prv_dump_adc_e(const specasm_line_t *line, char *buf)
 static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 {
 	uint8_t reg1;
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	uint16_t val;
+	uint8_t reg2 = 0;
+#else
 	uint8_t reg2;
+#endif
 	const char *code;
+#ifndef SPECASM_NEXT_BANKED
 	static const char *codes[] = {"bc", "de", "hl", "sp", "ix", "iy"};
+#else
+	const char *codes[] = {"bc", "de", "hl", "sp", "ix", "iy"};
+#endif
 	const uint8_t *op_code = line->data.op_code;
 
 	char *start = buf;
@@ -303,6 +244,14 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 		reg2 = (op_code[1] >> 4) & 3;
 		if (reg2 == 2)
 			reg2 = 4;
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	} else if (op_code[0] == 0xED) {
+		if (op_code[1] <= 0x33)
+			reg1 = 0x31;
+		else
+			reg1 = 0x34;
+		reg1 = 2 - (op_code[1] - reg1);
+#endif
 	} else {
 		buf[0] = 'a';
 		buf[1] = ',';
@@ -317,6 +266,22 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	if (op_code[0] == 0xED) {
+		if (op_code[1] <= 0x33) {
+			buf[0] = 'a';
+			buf++;
+		} else {
+			memcpy(&val, &op_code[2], 2);
+			if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+				buf = prv_dump_jump_label_e(line, buf, val);
+			else
+				buf += specasm_dump_word(
+				    buf, val, specasm_line_get_format(line));
+		}
+		return buf - start;
+	}
+#endif
 	code = codes[reg2];
 	while (*code)
 		*buf++ = *code++;
@@ -352,10 +317,23 @@ static uint8_t prv_dump_bit_e(const specasm_line_t *line, char *buf)
 		buf = prv_byte_and_hl_ind(op_code[1], buf);
 	else
 		buf =
-		    prv_dump_index(op_code, buf, specasm_line_get_format(line));
+		    specasm_dump_index(op_code, buf, specasm_line_get_format(line));
 
 	return buf - start;
 }
+
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+static uint8_t prv_dump_barrel_e(const specasm_line_t *line, char *buf)
+{
+	buf[0] = 'd';
+	buf[1] = 'e';
+	buf[2] = ',';
+	buf[3] = ' ';
+	buf[4] = 'b';
+
+	return 5;
+}
+#endif
 
 static uint8_t prv_dump_jr_call_e(const specasm_line_t *line, char *buf,
 				  uint8_t abs_ind, uint8_t mask)
@@ -374,7 +352,7 @@ static uint8_t prv_dump_jr_call_e(const specasm_line_t *line, char *buf,
 
 	if (fmt == SPECASM_FLAGS_ADDR_NUM) {
 		val = *((uint16_t *)&op_code[1]);
-		buf += prv_dump_word(buf, val, specasm_line_get_format(line));
+		buf += specasm_dump_word(buf, val, specasm_line_get_format(line));
 	} else {
 		buf = prv_dump_jump_label_e(line, buf, op_code[1]);
 	}
@@ -416,7 +394,11 @@ static uint8_t prv_dump_djnz_e(const specasm_line_t *line, char *buf)
 
 static uint8_t prv_dump_ex_e(const specasm_line_t *line, char *buf)
 {
+#ifndef SPECASM_NEXT_BANKED
 	static const char *com[] = {
+#else
+	const char *com[] = {
+#endif
 	    "\x08"
 	    "af, af'",
 	    "\xeb"
@@ -465,15 +447,16 @@ static uint8_t prv_dump_im_e(const specasm_line_t *line, char *buf)
 	return 1;
 }
 
-static char *prv_dump_byte_imm_ind_e(const specasm_line_t *line, char *buf)
+static char *specasm_dump_byte_imm_ind_e(const specasm_line_t *line, char *buf,
+				     uint8_t index)
 {
 	const uint8_t *op_code = line->data.op_code;
 
 	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
-		return prv_dump_exp_e(line, buf, op_code[1]);
+		return prv_dump_exp_e(line, buf, op_code[index]);
 
-	return buf +
-	       prv_dump_byte(buf, op_code[1], specasm_line_get_format(line));
+	return buf + specasm_dump_byte(buf, op_code[index],
+				   specasm_line_get_format(line));
 }
 
 static uint8_t prv_dump_in_e(const specasm_line_t *line, char *buf)
@@ -491,7 +474,7 @@ static uint8_t prv_dump_in_e(const specasm_line_t *line, char *buf)
 	buf[3] = '(';
 	buf += 4;
 	if (op_code[0] == 0xDB)
-		buf = prv_dump_byte_imm_ind_e(line, buf);
+		buf = specasm_dump_byte_imm_ind_e(line, buf, 1);
 	else
 		*buf++ = 'c';
 	buf[0] = ')';
@@ -508,13 +491,21 @@ static uint8_t prv_dump_inc_e(const specasm_line_t *line, char *buf)
 static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 {
 	const char *start = buf;
+#ifndef SPECASM_NEXT_BANKED
 	static const char *com[] = {
+#else
+	const char *com[] = {
+#endif
 	    "\xe9"
 	    "(hl)",
 	    "\xdd"
 	    "(ix)",
 	    "\xfd"
 	    "(iy)",
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	    "\xed"
+	    "(c)",
+#endif
 	};
 	const uint8_t *op_code = line->data.op_code;
 
@@ -522,6 +513,9 @@ static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 	case 0xDD:
 	case 0xFD:
 	case 0xE9:
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	case 0xED:
+#endif
 		return prv_dump_fixed_e(op_code[0], buf, com,
 					sizeof(com) / sizeof(uint8_t *));
 	default:
@@ -573,7 +567,11 @@ static char *prv_dump_label_ind_e(const specasm_line_t *line, char *buf,
 static char *prv_dump_label_ind_reg_e(const specasm_line_t *line, char *buf,
 				      uint8_t opcode0)
 {
+#ifndef SPECASM_NEXT_BANKED
 	static const char *com[] = {
+#else
+	const char *com[] = {
+#endif
 	    "\x3a"
 	    "a",
 	    "\xed"
@@ -631,9 +629,13 @@ static char *prv_dump_ld_16bit_imm_e(const specasm_line_t *line, char *buf,
 				     uint8_t reg, uint16_t val)
 {
 	const char *code;
+#ifndef SPECASM_NEXT_BANKED
 	static const char *codes[] = {"bc", "de", "hl",  "sp",
 				      "ix", "iy", "(hl)"};
-
+#else
+	const char *codes[] = {"bc", "de", "hl",  "sp",
+			       "ix", "iy", "(hl)"};
+#endif
 	code = codes[reg];
 	while (*code)
 		*buf++ = *code++;
@@ -645,7 +647,7 @@ static char *prv_dump_ld_16bit_imm_e(const specasm_line_t *line, char *buf,
 	    specasm_line_get_addr_type(line)) {
 		buf = prv_dump_jump_label_e(line, buf, val);
 	} else {
-		buf += prv_dump_word(buf, val, specasm_line_get_format(line));
+		buf += specasm_dump_word(buf, val, specasm_line_get_format(line));
 	}
 
 	return buf;
@@ -708,7 +710,11 @@ static char *prv_dump_lda_ind(uint8_t opcode0, char *buf)
 
 static char *prv_dump_ld_hl_ind_e(uint8_t opcode0, char *buf)
 {
+#ifndef SPECASM_NEXT_BANKED
 	static const char *com[] = {
+#else
+	const char *com[] = {
+#endif
 	    "\x46"
 	    "b",
 	    "\x4E"
@@ -743,13 +749,13 @@ static char *prv_dump_ld_reg_off_ind(const specasm_line_t *line, char *buf)
 	buf[0] = byte_regs[(line->data.op_code[1] >> 3) & 7];
 	buf[1] = ',';
 	buf[2] = ' ';
-	return prv_dump_index(line->data.op_code, buf + 3,
+	return specasm_dump_index(line->data.op_code, buf + 3,
 			      specasm_line_get_format(line));
 }
 
 static char *prv_dump_ld_ind_off_reg(const specasm_line_t *line, char *buf)
 {
-	buf = prv_dump_index(line->data.op_code, buf,
+	buf = specasm_dump_index(line->data.op_code, buf,
 			     specasm_line_get_format(line));
 	buf[0] = ',';
 	buf[1] = ' ';
@@ -760,12 +766,12 @@ static char *prv_dump_ld_ind_off_reg(const specasm_line_t *line, char *buf)
 
 static char *prv_dump_ld_ind_off_imm(const specasm_line_t *line, char *buf)
 {
-	buf = prv_dump_index(line->data.op_code, buf,
+	buf = specasm_dump_index(line->data.op_code, buf,
 			     specasm_line_get_format(line));
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
-	buf += prv_dump_byte(buf, line->data.op_code[3],
+	buf += specasm_dump_byte(buf, line->data.op_code[3],
 			     specasm_line_get_format2(line));
 
 	return buf;
@@ -803,7 +809,11 @@ end:
 
 static uint8_t prv_dump_ld_sp(uint8_t opcode0, char *buf)
 {
+#ifndef SPECASM_NEXT_BANKED
 	static const char *com[] = {
+#else
+	const char *com[] = {
+#endif
 	    "\xf9"
 	    "sp, hl",
 	    "\xdd"
@@ -930,7 +940,7 @@ static uint8_t prv_dump_ld_e(const specasm_line_t *line, char *buf)
 		if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
 			buf = prv_dump_exp_e(line, buf, line->data.op_code[1]);
 		else
-			buf += prv_dump_byte(buf, line->data.op_code[1],
+			buf += specasm_dump_byte(buf, line->data.op_code[1],
 					     specasm_line_get_format(line));
 		return buf - start;
 	}
@@ -983,6 +993,50 @@ static uint8_t prv_dump_ld_imm_8_sub_e(const specasm_line_t *line, char *buf)
 	return prv_dump_subtraction_e(line, buf, 1) + (buf - start);
 }
 
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+static uint8_t prv_dump_mirror_e(const specasm_line_t *line, char *buf)
+{
+	buf[0] = 'a';
+
+	return 1;
+}
+
+static uint8_t prv_dump_mul_e(const specasm_line_t *line, char *buf)
+{
+	buf[0] = 'd';
+	buf[1] = ',';
+	buf[2] = ' ';
+	buf[3] = 'e';
+
+	return 4;
+}
+
+static uint8_t prv_dump_nextreg_e(const specasm_line_t *line, char *buf)
+{
+	char *start = buf;
+
+	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+		buf = prv_dump_exp_e(line, buf, line->data.op_code[2]);
+	else
+		buf += specasm_dump_byte(buf, line->data.op_code[2],
+				     specasm_line_get_format(line));
+
+	buf[0] = ',';
+	buf[1] = ' ';
+	buf += 2;
+
+	if (line->data.op_code[1] == 0x92) {
+		buf[0] = 'a';
+		buf++;
+	} else {
+		buf += specasm_dump_byte(buf, line->data.op_code[3],
+				     specasm_line_get_format2(line));
+	}
+
+	return buf - start;
+}
+#endif
+
 static uint8_t prv_dump_or_e(const specasm_line_t *line, char *buf)
 {
 	char *start = buf;
@@ -1001,7 +1055,7 @@ static uint8_t prv_dump_out_e(const specasm_line_t *line, char *buf)
 
 	*buf++ = '(';
 	if (op_code[0] == 0xD3)
-		buf = prv_dump_byte_imm_ind_e(line, buf);
+		buf = specasm_dump_byte_imm_ind_e(line, buf, 1);
 	else
 		*buf++ = 'c';
 	buf[0] = ')';
@@ -1024,7 +1078,7 @@ static uint8_t prv_dump_rst_e(const specasm_line_t *line, char *buf)
 		return buf - start;
 	}
 
-	return prv_dump_byte(buf, val, specasm_line_get_format(line));
+	return specasm_dump_byte(buf, val, specasm_line_get_format(line));
 }
 
 static uint8_t prv_dump_sbc_e(const specasm_line_t *line, char *buf)
@@ -1034,6 +1088,11 @@ static uint8_t prv_dump_sbc_e(const specasm_line_t *line, char *buf)
 
 static uint8_t prv_dump_stack(const specasm_line_t *line, char *buf)
 {
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	uint16_t val;
+	char *start;
+	uint8_t val_bytes[2];
+#endif
 	const uint8_t *op_code = line->data.op_code;
 	char a = 'a';
 	char b = 'f';
@@ -1044,6 +1103,19 @@ static uint8_t prv_dump_stack(const specasm_line_t *line, char *buf)
 	} else if (op_code[0] == 0xDD) {
 		a = 'i';
 		b = 'x';
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	} else if (op_code[0] == 0xED) {
+		start = buf;
+		val_bytes[0] = op_code[3];
+		val_bytes[1] = op_code[2];
+		memcpy(&val, &val_bytes[0], 2);
+		if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+			buf = prv_dump_jump_label_e(line, buf, val);
+		else
+			buf += specasm_dump_word(buf, val,
+					     specasm_line_get_format(line));
+		return buf - start;
+#endif
 	} else {
 		switch ((op_code[0] >> 4) & 3) {
 		case SPECASM_BYTE_REG_BC - SPECASM_BYTE_REG_BC:
@@ -1092,7 +1164,7 @@ static uint8_t prv_dump_shift_e(const specasm_line_t *line, char *buf)
 		buf = prv_byte_and_hl_ind(op_code[1], buf);
 	else if (op_code[0] == 0xDD || op_code[0] == 0xFD)
 		buf =
-		    prv_dump_index(op_code, buf, specasm_line_get_format(line));
+		    specasm_dump_index(op_code, buf, specasm_line_get_format(line));
 	else
 		err_type = SPECASM_ERROR_BAD_REG;
 
@@ -1105,6 +1177,17 @@ static uint8_t prv_dump_sub_e(const specasm_line_t *line, char *buf)
 
 	return prv_dump_arith_e(line, buf, 0xD6, 0x90) - start;
 }
+
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+static uint8_t prv_dump_test_e(const specasm_line_t *line, char *buf)
+{
+	char *start = buf;
+
+	buf = specasm_dump_byte_imm_ind_e(line, buf, 2);
+
+	return buf - start;
+}
+#endif
 
 static uint8_t prv_dump_xor_e(const specasm_line_t *line, char *buf)
 {
@@ -1127,12 +1210,12 @@ static uint8_t prv_dump_db_e(const specasm_line_t *line, char *buf)
 	}
 
 	sz = specasm_line_get_size(line) + 1;
-	len = prv_dump_byte(buf, line->data.op_code[0],
+	len = specasm_dump_byte(buf, line->data.op_code[0],
 			    specasm_line_get_format(line));
 	for (i = 1; i < sz; i++) {
 		ptr = &buf[len];
 		ptr[0] = ',';
-		len += prv_dump_byte(ptr + 1, line->data.op_code[i],
+		len += specasm_dump_byte(ptr + 1, line->data.op_code[i],
 				     specasm_line_get_format(line));
 		len++;
 	}
@@ -1155,12 +1238,12 @@ static uint8_t prv_dump_equw_e(const specasm_line_t *line, char *buf)
 	} else {
 		id = *((uint16_t *)&line->data.op_code[0]);
 		str =
-		    buf + prv_dump_word(buf, id, specasm_line_get_format(line));
+		    buf + specasm_dump_word(buf, id, specasm_line_get_format(line));
 		if (specasm_line_get_size(line) > 1) {
 			str[0] = ',';
 			str++;
 			id = *((uint16_t *)&line->data.op_code[2]);
-			str += prv_dump_word(str, id,
+			str += specasm_dump_word(str, id,
 					     specasm_line_get_format(line));
 		}
 	}
@@ -1179,25 +1262,25 @@ static uint8_t prv_dump_ds_e(const specasm_line_t *line, char *buf)
 	const uint8_t *op_code = line->data.op_code;
 
 	count = (uint16_t *)&op_code[1];
-	buf += prv_dump_word(buf, *count, specasm_line_get_format2(line));
+	buf += specasm_dump_word(buf, *count, specasm_line_get_format2(line));
 
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
 
-	buf += prv_dump_byte(buf, op_code[0], specasm_line_get_format(line));
+	buf += specasm_dump_byte(buf, op_code[0], specasm_line_get_format(line));
 	return buf - start;
 }
 
 static uint8_t prv_dump_org_e(const specasm_line_t *line, char *buf)
 {
 	uint16_t addr = *((uint16_t *)&line->data.op_code[0]);
-	return prv_dump_word(buf, addr, specasm_line_get_format(line));
+	return specasm_dump_word(buf, addr, specasm_line_get_format(line));
 }
 
 static uint8_t prv_dump_align_e(const specasm_line_t *line, char *buf)
 {
-	return prv_dump_word(buf, 1 << line->data.op_code[0],
+	return specasm_dump_word(buf, 1 << line->data.op_code[0],
 			     specasm_line_get_format(line));
 }
 
@@ -1277,6 +1360,31 @@ static specasm_line_opcode_dump_t dump_opcodes[] = {
 	{ prv_dump_equws_e },         /* SPECASM_LINE_TYPE_DW_SUB */
 	{ prv_dump_ld_imm_16_sub_e }, /* SPECASM_LINE_TYPE_LD_IMM_16_SUB */
 	{ prv_dump_ld_imm_8_sub_e },  /* SPECASM_LINE_TYPE_LD_IMM_8_SUB */
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ NULL },                     /* Spare */
+	{ NULL },                     /* Spare */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDDRX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDDX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDIRX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDIX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDPIRX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDWS */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BRLC */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BSLA */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BSRA */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BSRF */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BSRL */
+	{ NULL },                     /* SPECASM_LINE_TYPE_OUTINB */
+	{ NULL },                     /* SPECASM_LINE_TYPE_SWAPNIB */
+	{ NULL },                     /* SPECASM_LINE_TYPE_PIXELAD */
+	{ NULL },                     /* SPECASM_LINE_TYPE_PIXELDN */
+	{ NULL },                     /* SPECASM_LINE_TYPE_SETAE */
+	{ prv_dump_test_e },          /* SPECASM_LINE_TYPE_TEST */
+	{ prv_dump_mirror_e },        /* SPECASM_LINE_TYPE_MIRROR */
+	{ prv_dump_mul_e },           /* SPECASM_LINE_TYPE_MUL */
+	{ prv_dump_nextreg_e },       /* SPECASM_LINE_TYPE_NEXTREG */
+	{ NULL },                     /* SPECASM_LINE_TYPE_NBRK */
+#endif
 	{ prv_dump_ds_e },            /* SPECASM_LINE_TYPE_REPB */
 	{ prv_dump_org_e },           /* SPECASM_LINE_TYPE_ORG */
 	{ NULL },                     /* SPECASM_LINE_TYPE_MAP */
@@ -1285,7 +1393,11 @@ static specasm_line_opcode_dump_t dump_opcodes[] = {
 
 /* clang-format on */
 
+#ifdef SPECASM_NEXT_BANKED
+void specasm_init_dump_table_banked(void)
+#else
 void specasm_init_dump_table(void)
+#endif
 {
 	uint8_t line_type;
 
@@ -1303,7 +1415,11 @@ void specasm_init_dump_table(void)
 	}
 }
 
+#ifdef SPECASM_NEXT_BANKED
+uint8_t specasm_dump_opcode_banked_e(const specasm_line_t *line, char *buf)
+#else
 uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf)
+#endif
 {
 	uint8_t index;
 	const char *name;

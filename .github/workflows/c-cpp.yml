@@ -25,3 +25,8 @@ jobs:
         make clean
         CFLAGS="-g -fsanitize=address -fno-omit-frame-pointer -Wall -Werror" make
         ./unittests
+    - name: no-next
+      run: |
+        make clean
+        CFLAGS="-DSPECASM_TARGET_NEXT_OPCODES" make -j
+        cd tests && SPECASM_TARGET_NEXT_OPCODES=1 ./tests.sh
