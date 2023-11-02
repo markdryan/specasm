@@ -209,14 +209,27 @@ static const char *prv_get_word_imm_ind_e(const char *args, uint16_t *val,
 	return args + 1;
 }
 
+static const char *prv_get_exp_e(specasm_line_t *line, const char *args,
+				 uint8_t *val)
+{
+	uint8_t label_type;
+	uint8_t read;
+
+	read = specasm_parse_exp_e(args + 1, val, &label_type);
+	if (err_type != SPECASM_ERROR_OK)
+		return NULL;
+	specasm_line_set_addr_type(line, label_type);
+	args += read + 1;
+	line->type += SPECASM_LINE_TYPE_EXP_ADJ;
+	return args;
+}
+
 static const char *prv_get_byte_imm_ind_e(specasm_line_t *line,
 					  const char *args, uint8_t *val)
 {
 	long v;
 	uint8_t flags;
-	uint8_t label_type;
 	uint8_t label;
-	uint8_t read;
 
 	while (*args == ' ')
 		++args;
@@ -231,12 +244,9 @@ static const char *prv_get_byte_imm_ind_e(specasm_line_t *line,
 		++args;
 
 	if (*args == '=') {
-		read = specasm_parse_exp_e(args + 1, &label, &label_type);
+		args = prv_get_exp_e(line, args, &label);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
-		specasm_line_set_addr_type(line, label_type);
-		args += read + 1;
-		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
 		v = label;
 	} else {
 		args = specasm_get_long_imm_e(args, &v, &flags);
@@ -535,17 +545,11 @@ static const char *
 prv_parse_label_or_exp_e(const char *args, specasm_line_t *line, uint8_t *label)
 {
 	const char *args2;
-	uint8_t read;
-	uint8_t label_type;
 
-	if (*args == '=') {
-		read = specasm_parse_exp_e(args + 1, label, &label_type);
-		specasm_line_set_addr_type(line, label_type);
-		args2 = args + read + 1;
-		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
-	} else {
+	if (*args == '=')
+		args2 = prv_get_exp_e(line, args, label);
+	else
 		args2 = prv_parse_jump_label_e(args, line, label);
-	}
 
 	return args2;
 }
@@ -555,19 +559,14 @@ static const char *prv_parse_byte_imm_or_exp_e(const char *args,
 					       uint8_t *val, uint8_t *label)
 {
 	uint8_t flags;
-	uint8_t label_type;
-	uint8_t read;
 
 	while (*args == ' ')
 		++args;
 
 	if (*args == '=') {
-		read = specasm_parse_exp_e(args + 1, label, &label_type);
+		args = prv_get_exp_e(line, args, label);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
-		specasm_line_set_addr_type(line, label_type);
-		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
-		args += read + 1;
 		if (val != label)
 			*val = 0;
 		return args;
@@ -579,6 +578,28 @@ static const char *prv_parse_byte_imm_or_exp_e(const char *args,
 
 	specasm_line_set_format(line, flags);
 
+	return args;
+}
+
+static const char *prv_parse_word_imm_or_exp_e(const char *args,
+					       specasm_line_t *line,
+					       uint16_t *val, uint8_t *flags)
+{
+	uint8_t label;
+
+	while (*args == ' ')
+		++args;
+
+	if (*args == '=') {
+		args = prv_get_exp_e(line, args, &label);
+		if (err_type != SPECASM_ERROR_OK)
+			return NULL;
+		*val = label;
+		*flags = 0;
+		return args;
+	}
+
+	args = prv_get_word_imm_e(args, val, flags);
 	return args;
 }
 
@@ -735,6 +756,9 @@ static uint8_t prv_parse_add_e(const char *args, specasm_line_t *line,
 	uint8_t off;
 	uint8_t i;
 	uint8_t flags;
+#ifndef SPECASM_NO_NEXT
+	uint16_t val;
+#endif
 	uint8_t opi = 0;
 	const char *start = args;
 	uint8_t sixbit_regs[] = {SPECASM_BYTE_REG_BC, SPECASM_BYTE_REG_DE,
@@ -749,6 +773,10 @@ static uint8_t prv_parse_add_e(const char *args, specasm_line_t *line,
 		args += prv_parse_arith_gen_e(args, line, 0x80, 0x86, 0xC6);
 		return args - start;
 	case SPECASM_BYTE_REG_HL:
+#ifndef SPECASM_NO_NEXT
+	case SPECASM_BYTE_REG_BC:
+	case SPECASM_BYTE_REG_DE:
+#endif
 		break;
 	case SPECASM_BYTE_REG_IY:
 		sixbit_regs[2] = SPECASM_BYTE_REG_IY;
@@ -764,8 +792,46 @@ static uint8_t prv_parse_add_e(const char *args, specasm_line_t *line,
 		goto bad_reg;
 	}
 	args += prv_parse_reg_e(args, &reg2, &off, &flags);
+#ifndef SPECASM_NO_NEXT
+	if (err_type != SPECASM_ERROR_OK) {
+		/*
+		 * 16 bit immediate cannot be added to ix and iy.
+		 */
+
+		if (opi > 0)
+			return 0;
+		err_type = SPECASM_ERROR_OK;
+		args = prv_parse_word_imm_or_exp_e(args, line, &val, &flags);
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		line->data.op_code[0] = 0xED;
+		line->data.op_code[1] =
+		    0x34 + (2 - (reg - SPECASM_BYTE_REG_BC));
+		memcpy(&line->data.op_code[2], &val, 2);
+		specasm_line_set_size(line, 3);
+		specasm_line_set_format(line, flags);
+		return args - start;
+	} else {
+		/*
+		 * a cannot be added to ix and add iy.
+		 */
+
+		if (opi == 0) {
+			if (reg2 == SPECASM_BYTE_REG_A) {
+				line->data.op_code[0] = 0xED;
+				line->data.op_code[1] =
+				    0x31 + (2 - (reg - SPECASM_BYTE_REG_BC));
+				specasm_line_set_size(line, 1);
+				return args - start;
+			}
+			if (reg != SPECASM_BYTE_REG_HL)
+				goto bad_reg;
+		}
+	}
+#else
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
+#endif
 
 	for (i = 0; i < 4; i++)
 		if (sixbit_regs[i] == reg2) {
@@ -787,6 +853,38 @@ static uint8_t prv_parse_arith_e(const char *args, specasm_line_t *line,
 
 	return prv_parse_arith_gen_e(args, line, areg, areg | 6, aimm);
 }
+
+#ifndef SPECASM_NO_NEXT
+static uint8_t prv_parse_barrel_e(const char *args, specasm_line_t *line,
+				  const specasm_opcode_t *op_entry)
+{
+	uint8_t reg;
+	uint8_t off;
+	uint8_t flags;
+	const char *start = args;
+
+	args = prv_parse_reg_comma_e(args, &reg, &off, &flags);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+	if (reg != SPECASM_BYTE_REG_DE) {
+		err_type = SPECASM_ERROR_BAD_REG;
+		return 0;
+	}
+
+	args += prv_parse_reg_e(args, &reg, &off, &flags);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+	if (reg != SPECASM_BYTE_REG_B) {
+		err_type = SPECASM_ERROR_BAD_REG;
+		return 0;
+	}
+
+	line->data.op_code[0] = op_entry->op_code[0];
+	line->data.op_code[1] = op_entry->op_code[1];
+	specasm_line_set_size(line, 1);
+	return args - start;
+}
+#endif
 
 static uint8_t prv_parse_org_e(const char *args, specasm_line_t *line,
 			       const specasm_opcode_t *op_entry)
@@ -812,8 +910,6 @@ static uint8_t prv_parse_bit_e(const char *args, specasm_line_t *line,
 	uint8_t off;
 	uint8_t val;
 	uint8_t flags;
-	uint8_t read;
-	uint8_t label_type;
 	uint8_t *op_code;
 	uint8_t sz = 1;
 	const char *start = args;
@@ -825,12 +921,7 @@ static uint8_t prv_parse_bit_e(const char *args, specasm_line_t *line,
 
 	if (*args == '=') {
 		op_code = &line->data.op_code[0];
-		read = specasm_parse_exp_e(args + 1, &op_code[2], &label_type);
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
-		specasm_line_set_addr_type(line, label_type);
-		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
-		args += read + 1;
+		args = prv_get_exp_e(line, args, &op_code[2]);
 		val = 0;
 	} else {
 		args = prv_get_byte_imm_e(args, &val, &flags);
@@ -983,17 +1074,9 @@ static uint8_t prv_signed_ok(uint8_t flags, uint8_t val)
 static const char *prv_parse_data_exp_e(const char *args, specasm_line_t *line,
 					uint8_t size)
 {
-	uint8_t read;
-	uint8_t label_type;
-
-	read = specasm_parse_exp_e(args, &line->data.op_code[0], &label_type);
-	if (err_type != SPECASM_ERROR_OK)
-		return 0;
-	specasm_line_set_addr_type(line, label_type);
+	args = prv_get_exp_e(line, args - 1, &line->data.op_code[0]);
 	specasm_line_set_size(line, size);
-	line->type += SPECASM_LINE_TYPE_EXP_ADJ;
-
-	return args + read;
+	return args;
 }
 
 static uint8_t prv_parse_db_e(const char *args, specasm_line_t *line,
@@ -1278,6 +1361,12 @@ static uint8_t prv_parse_jp_e(const char *args, specasm_line_t *line,
 			op1 = 0xFD;
 			op2 = 0xE9;
 			break;
+#ifndef SPECASM_NO_NEXT
+		case SPECASM_BYTE_REG_C_IND:
+			op1 = 0xED;
+			op2 = 0x98;
+			break;
+#endif
 		default:
 			err_type = SPECASM_ERROR_BAD_REG;
 			return 0;
@@ -1754,8 +1843,6 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 	uint8_t off2;
 	uint8_t flags;
 	uint8_t flags2;
-	uint8_t read;
-	uint8_t label_type;
 	uint8_t v;
 	const char *start = args;
 
@@ -1814,21 +1901,12 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 		return args2 - start;
 	}
 	err_type = SPECASM_ERROR_OK;
+
 	while (*args == ' ')
 		++args;
-	if (*args == '=') {
-		read = specasm_parse_exp_e(args + 1, &v, &label_type);
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
-		specasm_line_set_addr_type(line, label_type);
-		args2 = args + read + 1;
-		line->type += SPECASM_LINE_TYPE_EXP_ADJ;
-		flags2 = 0;
-		val = v;
-	} else {
-		args2 = prv_get_word_imm_e(args, &val, &flags2);
-	}
-	if (err_type == SPECASM_ERROR_NUM_TOO_BIG) {
+	args2 = prv_parse_word_imm_or_exp_e(args, line, &val, &flags2);
+	if ((err_type == SPECASM_ERROR_NUM_TOO_BIG) ||
+	    (err_type == SPECASM_ERROR_BAD_EXPRESSION)) {
 		return 0;
 	} else if (err_type == SPECASM_ERROR_OK) {
 		prv_ld_imm_e(line, reg, off, flags, flags2, val);
@@ -1859,6 +1937,103 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 
 	return args - start;
 }
+
+#ifndef SPECASM_NO_NEXT
+static uint8_t prv_parse_mirror_e(const char *args, specasm_line_t *line,
+				  const specasm_opcode_t *op_entry)
+{
+	uint8_t reg;
+	uint8_t off;
+	uint8_t flags;
+	const char *start = args;
+
+	args += prv_parse_reg_e(args, &reg, &off, &flags);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+	if (reg != SPECASM_BYTE_REG_A) {
+		err_type = SPECASM_ERROR_BAD_REG;
+		return 0;
+	}
+	line->data.op_code[0] = op_entry->op_code[0];
+	line->data.op_code[1] = op_entry->op_code[1];
+	specasm_line_set_size(line, 1);
+	return args - start;
+}
+
+static uint8_t prv_parse_mul_e(const char *args, specasm_line_t *line,
+			       const specasm_opcode_t *op_entry)
+{
+	uint8_t reg;
+	uint8_t off;
+	uint8_t flags;
+	const char *start = args;
+
+	args = prv_parse_reg_comma_e(args, &reg, &off, &flags);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+	if (reg != SPECASM_BYTE_REG_D) {
+		err_type = SPECASM_ERROR_BAD_REG;
+		return 0;
+	}
+
+	args += prv_parse_reg_e(args, &reg, &off, &flags);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+	if (reg != SPECASM_BYTE_REG_E) {
+		err_type = SPECASM_ERROR_BAD_REG;
+		return 0;
+	}
+
+	line->data.op_code[0] = op_entry->op_code[0];
+	line->data.op_code[1] = op_entry->op_code[1];
+	specasm_line_set_size(line, 1);
+	return args - start;
+}
+
+static uint8_t prv_parse_nextreg_e(const char *args, specasm_line_t *line,
+				   const specasm_opcode_t *op_entry)
+{
+	const char *args2;
+	uint8_t off;
+	uint8_t flags;
+	uint8_t reg;
+	const char *start = args;
+	uint8_t *ptr = &line->data.op_code[2];
+
+	args = prv_parse_byte_imm_or_exp_e(args, line, ptr, ptr);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	while (*args == ' ')
+		++args;
+	if (*args++ != ',') {
+		err_type = SPECASM_ERROR_COMMA_EXPECTED;
+		return 0;
+	}
+
+	args2 = args + prv_parse_reg_e(args, &reg, &off, &flags);
+	if (err_type != SPECASM_ERROR_OK) {
+		err_type = SPECASM_ERROR_OK;
+		args = prv_get_byte_imm_e(args, &line->data.op_code[3], &flags);
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		specasm_line_set_format2(line, flags);
+		line->data.op_code[1] = 0x91;
+		specasm_line_set_size(line, 3);
+	} else {
+		if (reg != SPECASM_BYTE_REG_A) {
+			err_type = SPECASM_ERROR_BAD_REG;
+			return 0;
+		}
+		args = args2;
+		line->data.op_code[1] = 0x92;
+		specasm_line_set_size(line, 2);
+	}
+	line->data.op_code[0] = 0xED;
+	;
+	return args - start;
+}
+#endif
 
 static uint8_t prv_parse_out_e(const char *args, specasm_line_t *line,
 			       const specasm_opcode_t *op_entry)
@@ -1928,13 +2103,37 @@ static uint8_t prv_parse_push_pop_e(const char *args, specasm_line_t *line,
 	uint8_t off;
 	uint8_t read;
 	uint8_t flags;
-	uint8_t sz = 1;
+#ifndef SPECASM_NO_NEXT
+	const char *start;
+	uint16_t val;
+#endif
 	uint8_t *op_code;
+	uint8_t sz = 1;
 	uint8_t ainstr = op_entry->op_code[0];
 
 	read = prv_parse_reg_e(args, &reg, &off, &flags);
-	if (err_type != SPECASM_ERROR_OK)
+	if (err_type != SPECASM_ERROR_OK) {
+#ifndef SPECASM_NO_NEXT
+		if (line->type == SPECASM_LINE_TYPE_PUSH) {
+			err_type = SPECASM_ERROR_OK;
+			start = args;
+			args = prv_parse_word_imm_or_exp_e(args, line, &val,
+							   &flags);
+			if (err_type == SPECASM_ERROR_BAD_NUM)
+				err_type = SPECASM_ERROR_BAD_REG;
+			if (err_type != SPECASM_ERROR_OK)
+				return 0;
+			op_code = &line->data.op_code[0];
+			op_code[0] = 0xED;
+			op_code[1] = 0x8A;
+			memcpy(&line->data.op_code[2], &val, 2);
+			specasm_line_set_size(line, 3);
+			specasm_line_set_format(line, flags);
+			return args - start;
+		}
+#endif
 		return 0;
+	}
 
 	switch (reg) {
 	case SPECASM_BYTE_REG_BC:
@@ -2110,6 +2309,24 @@ end:
 	return read;
 }
 
+#ifndef SPECASM_NO_NEXT
+static uint8_t prv_parse_test_e(const char *args, specasm_line_t *line,
+				const specasm_opcode_t *op_entry)
+{
+	uint8_t *op_code;
+	const char *args2;
+
+	op_code = &line->data.op_code[0];
+	args2 =
+	    prv_parse_byte_imm_or_exp_e(args, line, &op_code[2], &op_code[2]);
+	specasm_line_set_size(line, 2);
+	line->data.op_code[0] = op_entry->op_code[0];
+	line->data.op_code[1] = op_entry->op_code[1];
+
+	return args2 - args;
+}
+#endif
+
 static uint8_t prv_parse_align_e(const char *args, specasm_line_t *line,
 				 const specasm_opcode_t *op_entry)
 {
@@ -2151,6 +2368,13 @@ const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_align_e, },                       // SPECASM_LINE_TYPE_ALIGN
 	{ prv_parse_arith_e, {0xE6, 0xA0} },          // SPECASM_LINE_TYPE_AND
 	{ prv_parse_bit_e, { 0x40 } },                // SPECASM_LINE_TYPE_BIT
+#ifndef SPECASM_NO_NEXT
+	{ prv_parse_barrel_e, { 0xED, 0x2C } },       // SPECASM_LINE_TYPE_BRLC
+	{ prv_parse_barrel_e, { 0xED, 0x28 } },       // SPECASM_LINE_TYPE_BSLA
+	{ prv_parse_barrel_e, { 0xED, 0x29 } },       // SPECASM_LINE_TYPE_BSRA
+	{ prv_parse_barrel_e, { 0xED, 0x2B } },       // SPECASM_LINE_TYPE_BSRF
+	{ prv_parse_barrel_e, { 0xED, 0x2A } },       // SPECASM_LINE_TYPE_BSRL
+#endif
 	{ prv_parse_call_e, {0xC4, 0xCD} },           // SPECASM_LINE_TYPE_CALL
 	{ NULL, {0x3F} },                             // SPECASM_LINE_TYPE_CCF
 	{ prv_parse_arith_e, {0xFE, 0xB8} },          // SPECASM_LINE_TYPE_CP
@@ -2182,10 +2406,27 @@ const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_ld_e, },                          // SPECASM_LINE_TYPE_LD
 	{ NULL, {0xED, 0xA8} },                       // SPECASM_LINE_TYPE_LDD
 	{ NULL, {0xED, 0xB8} },                       // SPECASM_LINE_TYPE_LDDR
+#ifndef SPECASM_NO_NEXT
+	{ NULL, {0xED, 0xBC} },                       // SPECASM_LINE_TYPE_LDDRX
+	{ NULL, {0xED, 0xAC} },                       // SPECASM_LINE_TYPE_LDDX
+#endif
 	{ NULL, {0xED, 0xA0} },                       // SPECASM_LINE_TYPE_LDI
 	{ NULL, {0xED, 0xB0} },                       // SPECASM_LINE_TYPE_LDIR
+#ifndef SPECASM_NO_NEXT
+	{ NULL, {0xED, 0xB4} },                       // SPECASM_LINE_TYPE_LDIRX
+	{ NULL, {0xED, 0xA4} },                       // SPECASM_LINE_TYPE_LDIX
+	{ NULL, {0xED, 0xB7} },                       // SPECASM_LINE_TYPE_LDPIRX
+	{ NULL, {0xED, 0xA5} },                       // SPECASM_LINE_TYPE_LDWS
+#endif
 	{ NULL, },                                    // SPECASM_LINE_TYPE_MAP
+#ifndef SPECASM_NO_NEXT
+	{ prv_parse_mirror_e, {0xED, 0x24} },         // SPECASM_LINE_TYPE_MIRROR
+	{ prv_parse_mul_e, {0xED, 0x30} },            // SPECASM_LINE_TYPE_MUL
+#endif
 	{ NULL, {0xED, 0x44} },                       // SPECASM_LINE_TYPE_NEG
+#ifndef SPECASM_NO_NEXT
+	{ prv_parse_nextreg_e, },                     // SPECASM_LINE_TYPE_NEXTREG
+#endif
 	{ NULL, },                                    // SPECASM_LINE_TYPE_NOP
 	{ prv_parse_arith_e, {0xF6, 0xB0} },          // SPECASM_LINE_TYPE_OR
 	{ prv_parse_org_e, },                         // SPECASM_LINE_TYPE_ORG
@@ -2194,6 +2435,11 @@ const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_out_e, },                         // SPECASM_LINE_TYPE_OUT
 	{ NULL, {0xED, 0xAB} },                       // SPECASM_LINE_TYPE_OUTD
 	{ NULL, {0xED, 0xA3} },                       // SPECASM_LINE_TYPE_OUTI
+#ifndef SPECASM_NO_NEXT
+	{ NULL, {0xED, 0x90} },                       // SPECASM_LINE_TYPE_OUTINB
+	{ NULL, {0xED, 0x94} },                       // SPECASM_LINE_TYPE_PIXELAD
+	{ NULL, {0xED, 0x93} },                       // SPECASM_LINE_TYPE_PIXELDN
+#endif
 	{ prv_parse_push_pop_e, {0x1} },              // SPECASM_LINE_TYPE_POP
 	{ prv_parse_push_pop_e, {0x5} },              // SPECASM_LINE_TYPE_PUSH
 	{ prv_parse_bit_e, {0x80} },                  // SPECASM_LINE_TYPE_RES
@@ -2214,10 +2460,17 @@ const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_adc_sbc_e, {0x42, 0x98} },        // SPECASM_LINE_TYPE_SBC
 	{ NULL, { 0x37 } },                           // SPECASM_LINE_TYPE_SCF
 	{ prv_parse_bit_e, { 0xC0 } },                // SPECASM_LINE_TYPE_SET
+#ifndef SPECASM_NO_NEXT
+	{ NULL, { 0xED, 0x95 } },                     // SPECASM_LINE_TYPE_SETAE
+#endif
 	{ prv_parse_shift_e, {0x26} },                // SPECASM_LINE_TYPE_SLA
 	{ prv_parse_shift_e, {0x2E} },                // SPECASM_LINE_TYPE_SRA
 	{ prv_parse_shift_e, {0x3E} },                // SPECASM_LINE_TYPE_SRL
 	{ prv_parse_arith_e, {0xD6, 0x90} },          // SPECASM_LINE_TYPE_SUB
+#ifndef SPECASM_NO_NEXT
+	{ NULL, {0xED, 0x23} },                       // SPECASM_LINE_TYPE_SWAPNIB
+	{ prv_parse_test_e, {0xED, 0x27} },           // SPECASM_LINE_TYPE_TEST
+#endif
 	{ prv_parse_arith_e, {0xEE, 0xA8} },          // SPECASM_LINE_TYPE_XOR
 };
 

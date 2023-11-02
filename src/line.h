@@ -92,7 +92,40 @@
 #define SPECASM_LINE_TYPE_DW_SUB 70
 #define SPECASM_LINE_TYPE_LD_IMM_16_SUB 71
 #define SPECASM_LINE_TYPE_LD_IMM_8_SUB 72
+
+/*
+ * Start Spectrum Next instructions.
+ */
+
+#ifndef SPECASM_NO_NEXT
+#define SPECASM_LINE_TYPE_LDDRX 73
+#define SPECASM_LINE_TYPE_LDDX 74
+#define SPECASM_LINE_TYPE_LDIRX 75
+#define SPECASM_LINE_TYPE_LDIX 76
+#define SPECASM_LINE_TYPE_LDPIRX 77
+#define SPECASM_LINE_TYPE_LDWS 78
+#define SPECASM_LINE_TYPE_BRLC 79
+#define SPECASM_LINE_TYPE_BSLA 80
+#define SPECASM_LINE_TYPE_BSRA 81
+#define SPECASM_LINE_TYPE_BSRF 82
+#define SPECASM_LINE_TYPE_BSRL 83
+#define SPECASM_LINE_TYPE_OUTINB 84
+#define SPECASM_LINE_TYPE_SWAPNIB 85
+#define SPECASM_LINE_TYPE_PIXELAD 86
+#define SPECASM_LINE_TYPE_PIXELDN 87
+#define SPECASM_LINE_TYPE_SETAE 88
+#define SPECASM_LINE_TYPE_TEST 89
+#define SPECASM_LINE_TYPE_MIRROR 90
+#define SPECASM_LINE_TYPE_MUL 91
+#define SPECASM_LINE_TYPE_NEXTREG 92
+#define SPECASM_LINE_TYPE_SIMPLE_MAX SPECASM_LINE_TYPE_NEXTREG
+#else
 #define SPECASM_LINE_TYPE_SIMPLE_MAX SPECASM_LINE_TYPE_LD_IMM_8_SUB
+#endif
+/*
+ * End Spectrum Next instructions.
+ */
+
 #define SPECASM_LINE_TYPE_DS (SPECASM_LINE_TYPE_SIMPLE_MAX + 1)
 #define SPECASM_LINE_TYPE_ORG (SPECASM_LINE_TYPE_SIMPLE_MAX + 2)
 #define SPECASM_LINE_TYPE_MAP (SPECASM_LINE_TYPE_SIMPLE_MAX + 3)
@@ -124,7 +157,7 @@
 
 #define SPECASM_LINE_TYPE_EXP_ADJ 160
 
-#define SPECASM_MAX_MNEMOM 5
+#define SPECASM_MAX_MNEMOM 7
 #define SPECASM_MAX_LINES 512
 #define SPECASM_MAX_ROWS 23
 #define SPECASM_LINE_MAX_LEN 32
@@ -208,11 +241,20 @@
  * res =expression, (hl)
  * set =expression, [a-l]
  * set =expression, (hl)
-
  *
  * In these cases the label id in op_code[2] and set the addr flag
  * to indicate whether it's a long or short label.  op_code[1] is
  * set as though the integer was 0.
+ *
+ * test = expression
+ * nextreg =expression, a
+ * nextreg =expression, imm
+ * add hl, =expression
+ * add de, =expression
+ * add bc, =expression
+ *
+ * In these cases the label id in op_code[2] and set the addr flag
+ * to indicate whether it's a long or short label.
  *
  * db =expression
  * dw =expression

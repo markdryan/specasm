@@ -117,6 +117,17 @@ const test_t opcode_tests[] = {
 	{"add iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 	{"add  iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 
+#ifndef SPECASM_NO_NEXT
+	{"add  hl, a", "add hl, a", 2, { 0xED, 0x31 }},
+	{"add  de, a", "add de, a", 2, { 0xED, 0x32 }},
+	{"add  bc, a", "add bc, a", 2, { 0xED, 0x33 }},
+	{"add  hl, 257", "add hl, 257", 4, { 0xED, 0x34, 0x1, 0x1 }},
+	{"add  de, 257", "add de, 257", 4, { 0xED, 0x35, 0x1, 0x1 }},
+	{"add  bc, 257", "add bc, 257", 4, { 0xED, 0x36, 0x1, 0x1 }},
+	{"add  bc ,  $101", "add bc, $101", 4, { 0xED, 0x36, 0x1, 0x1 }},
+	{"add  de ,  '!'", "add de, '!'", 4, { 0xED, 0x35, 0x21, 0x0 }},
+	{"add  hl , =label", "add hl, =label", 4, { 0xED, 0x34, 0x0, 0x0 }},
+#endif
 	{"add a , =label", "add a, =label", 2, { 0xC6, 0x00 }},
 	{"add a , =no", "add a, =no", 2, { 0xC6, 0x01 }},
 	{"add a , =verylonglabel", "add a, =verylonglabel", 2, { 0xC6, 0x00 }},
@@ -367,6 +378,14 @@ const test_t opcode_tests[] = {
 	{"bit 7, l", "bit 7, l", 2, { 0xCB, 0X7D }},
 	{"bit 7,   l", "bit 7, l", 2, { 0xCB, 0X7D }},
 	{"bit $7,   l", "bit 7, l", 2, { 0xCB, 0X7D }},
+
+#ifndef SPECASM_NO_NEXT
+	{"bsla de, b", "bsla de, b", 2, { 0xED, 0x28 }},
+	{"bsra de, b", "bsra de, b", 2, { 0xED, 0x29 }},
+	{"bsrl de, b", "bsrl de, b", 2, { 0xED, 0x2A }},
+	{"bsrf de, b", "bsrf de, b", 2, { 0xED, 0x2B }},
+	{"brlc de, b", "brlc de, b", 2, { 0xED, 0x2C }},
+#endif
 
 	{"call c, label", "call c, label", 3, {0xDC, 0x00, 0x00}},
 	{"call   c,label", "call c, label", 3, {0xDC, 0x00, 0x00}},
@@ -620,6 +639,10 @@ const test_t opcode_tests[] = {
 	{"jp no", "jp no", 3, {0xC3, 0x01, 0x00}},
 	{"jp   no", "jp no", 3, {0xC3, 0x01, 0x00}},
 
+#ifndef SPECASM_NO_NEXT
+	{"jp (c)", "jp (c)", 2, {0xED, 0x98}},
+	{"jp  ( c )", "jp (c)", 2, {0xED, 0x98}},
+#endif
 	{"jp =clabel", "jp =clabel", 3, {0xc3, 0x03, 0x00}},
 	{"jp   =  clabel", "jp =clabel", 3, {0xc3, 0x03, 0x00}},
 	{"jp  nc,=label", "jp nc, =label", 3, {0xd2, 0x00, 0x00}},
@@ -1320,7 +1343,40 @@ const test_t opcode_tests[] = {
 
 	{"ldd", "ldd", 2, {0xED, 0xA8}},
 	{"lddr", "lddr", 2, {0xED, 0xB8}},
+
+#ifndef SPECASM_NO_NEXT
+	{"lddrx", "lddrx", 2, {0xED, 0xBC}},
+	{"lddx", "lddx", 2, {0xED, 0xAC}},
+	{"ldirx", "ldirx", 2, {0xED, 0xB4}},
+	{"ldix", "ldix", 2, {0xED, 0xA4}},
+	{"ldpirx", "ldpirx", 2, {0xED, 0xB7}},
+	{"ldws", "ldws", 2, {0xED, 0xA5}},
+#endif
+
 	{"ldi", "ldi", 2, {0xED, 0xA0}},
+
+#ifndef SPECASM_NO_NEXT
+	{"mirror a", "mirror a", 2, {0xED, 0x24}},
+	{"mirror   a", "mirror a", 2, {0xED, 0x24}},
+	{"mul d, e", "mul d, e", 2, {0xED, 0x30}},
+	{"mul  d ,   e", "mul d, e", 2, {0xED, 0x30}},
+	{"nextreg 10, a", "nextreg 10, a", 3, {0xED, 0x92, 0xA }},
+	{"nextreg 10  ,  a", "nextreg 10, a", 3, {0xED, 0x92, 0xA }},
+	{"nextreg =label  ,  a", "nextreg =label, a", 3, {0xED, 0x92, 0x0 }},
+	{"nextreg   = label1  ,  a", "nextreg =label1, a", 3,
+	 {0xED, 0x92, 0x5 }},
+	{"nextreg $10, a", "nextreg $10, a", 3, {0xED, 0x92, 0x10 }},
+	{"nextreg 10, 11", "nextreg 10, 11", 4, {0xED, 0x91, 0xA, 0xB }},
+	{"nextreg $10, 11", "nextreg $10, 11", 4, {0xED, 0x91, 0x10, 0xB }},
+	{"nextreg 10, $11", "nextreg 10, $11", 4, {0xED, 0x91, 0xA, 0x11 }},
+	{"nextreg $aa, $bb", "nextreg $AA, $BB", 4, {0xED, 0x91, 0xAA, 0xBB }},
+	{"nextreg -1, -1", "nextreg -1, -1", 4, {0xED, 0x91, 0xFF, 0xFF }},
+	{"nextreg =label  , $10", "nextreg =label, $10", 4,
+	 {0xED, 0x91, 0x0, 0x10 }},
+	{"nextreg =label1  , -1", "nextreg =label1, -1", 4,
+	 {0xED, 0x91, 0x5, 0xFF}},
+#endif
+
 	{"map", "map", 1, {0x0}},
 	{"neg", "neg", 2, {0xED, 0x44}},
 	{"nop", "nop", 1, {0x0}},
@@ -1401,6 +1457,12 @@ const test_t opcode_tests[] = {
 	{"outd", "outd", 2, {0xED, 0xAB}},
 	{"outi", "outi", 2, {0xED, 0xA3}},
 
+#ifndef SPECASM_NO_NEXT
+	{"outinb", "outinb", 2, {0xED, 0x90}},
+	{"pixelad", "pixelad", 2, {0xED, 0x94}},
+	{"pixeldn", "pixeldn", 2, {0xED, 0x93}},
+#endif
+
 	{"pop af", "pop af", 1, {0xF1}},
 	{"pop   af", "pop af", 1, {0xF1}},
 	{"pop bc", "pop bc", 1, {0xC1}},
@@ -1427,6 +1489,14 @@ const test_t opcode_tests[] = {
 	{"push iy", "push iy", 2, {0xFD, 0xE5}},
 	{"push   iy", "push iy", 2, {0xFD, 0xE5}},
 
+#ifndef SPECASM_NO_NEXT
+	{"push $102", "push $102", 4, {0xED, 0x8A, 0x2, 0x1}},
+	{"push   258", "push 258", 4, {0xED, 0x8A, 0x2, 0x1}},
+	{"push -2", "push -2", 4, {0xED, 0x8A, 0xFE, 0xFF}},
+	{"push    16", "push 16", 4, {0xED, 0x8A, 0x10, 0x0}},
+	{"push =label", "push =label", 4, {0xED, 0x8A, 0x00, 0x0}},
+	{"push   = label1", "push =label1", 4, {0xED, 0x8A, 0x05, 0x0}},
+#endif
 	{"res 0, (hl)", "res 0, (hl)", 2, { 0xCB, 0x86 }},
 	{"res 0,  ( hl )", "res 0, (hl)", 2, { 0xCB, 0x86 }},
 	{"res 0, (ix + 127)", "res 0, (ix+127)", 4, { 0xDD, 0xCB, 0x7f, 0x86 }},
@@ -2038,6 +2108,10 @@ const test_t opcode_tests[] = {
 	{"set =label,( hl )", "set =label, (hl)", 2, { 0xCB, 0xC6 }},
 	{"set =verylonglabel,( hl )", "set =verylonglabel, (hl)", 2, { 0xCB, 0XC6 }},
 
+#ifndef SPECASM_NO_NEXT
+	{"setae", "setae", 2, { 0xED, 0x95 }},
+#endif
+
 	{"sla (hl)", "sla (hl)", 2, { 0xCB, 0x26 }},
 	{"sla  ( hl )", "sla (hl)", 2, { 0xCB, 0x26 }},
 	{"sla (ix+$FF)", "sla (ix+$FF)", 4, { 0xDD, 0xCB, 0xff, 0x26 }},
@@ -2139,6 +2213,17 @@ const test_t opcode_tests[] = {
 	{"sub =label", "sub =label", 2, { 0xD6, 0x0 }},
 	{"sub =label1", "sub =label1", 2, { 0xD6, 0x5 }},
 	{"sub  =  label", "sub =label", 2, { 0xD6, 0x0 }},
+
+#ifndef SPECASM_NO_NEXT
+	{"swapnib", "swapnib", 2, { 0xED, 0x23 }},
+
+	{"test 40", "test 40", 3, { 0xED, 0x27, 0x28 }},
+	{"test   40", "test 40", 3, { 0xED, 0x27, 0x28 }},
+	{"test -1", "test -1", 3, { 0xED, 0x27, 0xff }},
+	{"test $ff", "test $FF", 3, { 0xED, 0x27, 0xff }},
+	{"test =label", "test =label", 3, { 0xED, 0x27, 0x0 }},
+	{"test =label1", "test =label1", 3, { 0xED, 0x27, 0x5 }},
+#endif
 
 	{"xor (hl)", "xor (hl)", 1, { 0xAE }},
 	{"xor  ( hl )", "xor (hl)", 1, { 0xAE }},
@@ -2387,15 +2472,22 @@ const bad_test_t bad_tests[] = {
 	{ "add a, 329", SPECASM_ERROR_NUM_TOO_BIG },
 	{ "add 10, b", SPECASM_ERROR_BAD_REG },
 	{ "add bc, hl", SPECASM_ERROR_BAD_REG },
+#ifdef SPECASM_NO_NEXT
 	{ "add hl, $101", SPECASM_ERROR_BAD_REG },
+#endif
+	{ "add ix, a", SPECASM_ERROR_BAD_REG },
+	{ "add iy, a", SPECASM_ERROR_BAD_REG },
+	{ "add ix, 256", SPECASM_ERROR_BAD_REG },
+	{ "add iy, 256", SPECASM_ERROR_BAD_REG },
 	{ "add ix, hl", SPECASM_ERROR_BAD_REG },
 	{ "add iy, hl", SPECASM_ERROR_BAD_REG },
 	{ "add sp, hl", SPECASM_ERROR_BAD_REG },
 	{ "add", SPECASM_ERROR_BAD_REG },
 	{ "add a, ", SPECASM_ERROR_BAD_REG },
 	{ "add , 10", SPECASM_ERROR_BAD_REG },
+#ifdef SPECASM_NO_NEXT
 	{ "add hl, =label", SPECASM_ERROR_BAD_REG },
-
+#endif
 	{"align 512", SPECASM_ERROR_BAD_NUM },
 	{"align 1", SPECASM_ERROR_BAD_NUM },
 	{"align 3", SPECASM_ERROR_BAD_NUM },
@@ -2436,6 +2528,14 @@ const bad_test_t bad_tests[] = {
 	{"bit =label, (ix + 10)", SPECASM_ERROR_BAD_EXPRESSION },
 	{"bit =label, (iy + 10)", SPECASM_ERROR_BAD_EXPRESSION },
 	{"bit 0, (ix + =label)", SPECASM_ERROR_BAD_NUM },
+
+#ifndef SPECASM_NO_NEXT
+	{"bsla hl, b", SPECASM_ERROR_BAD_REG },
+	{"bsra de, a", SPECASM_ERROR_BAD_REG },
+	{"bsrl hl,", SPECASM_ERROR_BAD_REG },
+	{"bsrf de", SPECASM_ERROR_COMMA_EXPECTED },
+	{"brlc", SPECASM_ERROR_BAD_REG },
+#endif
 
 	{"call", SPECASM_ERROR_BAD_LABEL },
 	{"call nzc, label", SPECASM_ERROR_CONDITION_CODE },
@@ -2625,6 +2725,26 @@ const bad_test_t bad_tests[] = {
 	{"ld a, =", SPECASM_ERROR_BAD_EXPRESSION },
 	{"ld hl, (=(label1+1", SPECASM_ERROR_BAD_EXPRESSION },
 
+#ifndef SPECASM_NO_NEXT
+	{"mirror",  SPECASM_ERROR_BAD_REG },
+	{"mirror b",  SPECASM_ERROR_BAD_REG },
+	{"mirror hl",  SPECASM_ERROR_BAD_REG },
+	{"mirror 1",  SPECASM_ERROR_BAD_REG },
+
+	{"mul", SPECASM_ERROR_BAD_REG },
+	{"mul d", SPECASM_ERROR_COMMA_EXPECTED },
+	{"mul d,", SPECASM_ERROR_BAD_REG },
+	{"mul d, a", SPECASM_ERROR_BAD_REG },
+	{"mul a, e", SPECASM_ERROR_BAD_REG },
+	{"mul e, 10", SPECASM_ERROR_BAD_REG },
+
+	{"nextreg a, 10", SPECASM_ERROR_BAD_NUM },
+	{"nextreg 10, b", SPECASM_ERROR_BAD_REG },
+	{"nextreg 10", SPECASM_ERROR_COMMA_EXPECTED },
+	{"nextreg 10, ", SPECASM_ERROR_BAD_NUM },
+	{"nextreg =label1, =label2 ", SPECASM_ERROR_BAD_NUM },
+#endif
+
 	{"or", SPECASM_ERROR_BAD_REG },
 	{"or (bc)", SPECASM_ERROR_BAD_REG },
 	{"or (ix)", SPECASM_ERROR_BAD_REG },
@@ -2679,7 +2799,9 @@ const bad_test_t bad_tests[] = {
 	{"push a", SPECASM_ERROR_BAD_REG },
 	{"push b", SPECASM_ERROR_BAD_REG },
 	{"push bb", SPECASM_ERROR_BAD_REG },
+#ifdef SPECASM_NO_NEXT
 	{"push 10", SPECASM_ERROR_BAD_REG },
+#endif
 	{"push (bc)", SPECASM_ERROR_BAD_REG },
 	{"push (ix+100)", SPECASM_ERROR_BAD_REG },
 
@@ -2869,6 +2991,12 @@ const bad_test_t bad_tests[] = {
 	{"sub $100", SPECASM_ERROR_NUM_TOO_BIG },
 	{"sub hl", SPECASM_ERROR_BAD_REG },
 	{"sub f", SPECASM_ERROR_BAD_REG },
+
+#ifndef SPECASM_NO_NEXT
+	{"test", SPECASM_ERROR_BAD_NUM },
+	{"test a", SPECASM_ERROR_BAD_NUM },
+	{"test $ffff", SPECASM_ERROR_NUM_TOO_BIG },
+#endif
 
 	{"xor", SPECASM_ERROR_BAD_REG },
 	{"xor (bc)", SPECASM_ERROR_BAD_REG },

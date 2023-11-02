@@ -283,7 +283,12 @@ static uint8_t prv_dump_adc_e(const specasm_line_t *line, char *buf)
 static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 {
 	uint8_t reg1;
+#ifndef SPECASM_NO_NEXT
+	uint16_t val;
+	uint8_t reg2 = 0;
+#else
 	uint8_t reg2;
+#endif
 	const char *code;
 	static const char *codes[] = {"bc", "de", "hl", "sp", "ix", "iy"};
 	const uint8_t *op_code = line->data.op_code;
@@ -303,6 +308,14 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 		reg2 = (op_code[1] >> 4) & 3;
 		if (reg2 == 2)
 			reg2 = 4;
+#ifndef SPECASM_NO_NEXT
+	} else if (op_code[0] == 0xED) {
+		if (op_code[1] <= 0x33)
+			reg1 = 0x31;
+		else
+			reg1 = 0x34;
+		reg1 = 2 - (op_code[1] - reg1);
+#endif
 	} else {
 		buf[0] = 'a';
 		buf[1] = ',';
@@ -317,6 +330,22 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
+#ifndef SPECASM_NO_NEXT
+	if (op_code[0] == 0xED) {
+		if (op_code[1] <= 0x33) {
+			buf[0] = 'a';
+			buf++;
+		} else {
+			memcpy(&val, &op_code[2], 2);
+			if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+				buf = prv_dump_jump_label_e(line, buf, val);
+			else
+				buf += prv_dump_word(
+				    buf, val, specasm_line_get_format(line));
+		}
+		return buf - start;
+	}
+#endif
 	code = codes[reg2];
 	while (*code)
 		*buf++ = *code++;
@@ -356,6 +385,19 @@ static uint8_t prv_dump_bit_e(const specasm_line_t *line, char *buf)
 
 	return buf - start;
 }
+
+#ifndef SPECASM_NO_NEXT
+static uint8_t prv_dump_barrel_e(const specasm_line_t *line, char *buf)
+{
+	buf[0] = 'd';
+	buf[1] = 'e';
+	buf[2] = ',';
+	buf[3] = ' ';
+	buf[4] = 'b';
+
+	return 5;
+}
+#endif
 
 static uint8_t prv_dump_jr_call_e(const specasm_line_t *line, char *buf,
 				  uint8_t abs_ind, uint8_t mask)
@@ -465,15 +507,16 @@ static uint8_t prv_dump_im_e(const specasm_line_t *line, char *buf)
 	return 1;
 }
 
-static char *prv_dump_byte_imm_ind_e(const specasm_line_t *line, char *buf)
+static char *prv_dump_byte_imm_ind_e(const specasm_line_t *line, char *buf,
+				     uint8_t index)
 {
 	const uint8_t *op_code = line->data.op_code;
 
 	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
-		return prv_dump_exp_e(line, buf, op_code[1]);
+		return prv_dump_exp_e(line, buf, op_code[index]);
 
-	return buf +
-	       prv_dump_byte(buf, op_code[1], specasm_line_get_format(line));
+	return buf + prv_dump_byte(buf, op_code[index],
+				   specasm_line_get_format(line));
 }
 
 static uint8_t prv_dump_in_e(const specasm_line_t *line, char *buf)
@@ -491,7 +534,7 @@ static uint8_t prv_dump_in_e(const specasm_line_t *line, char *buf)
 	buf[3] = '(';
 	buf += 4;
 	if (op_code[0] == 0xDB)
-		buf = prv_dump_byte_imm_ind_e(line, buf);
+		buf = prv_dump_byte_imm_ind_e(line, buf, 1);
 	else
 		*buf++ = 'c';
 	buf[0] = ')';
@@ -515,6 +558,10 @@ static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 	    "(ix)",
 	    "\xfd"
 	    "(iy)",
+#ifndef SPECASM_NO_NEXT
+	    "\xed"
+	    "(c)",
+#endif
 	};
 	const uint8_t *op_code = line->data.op_code;
 
@@ -522,6 +569,9 @@ static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 	case 0xDD:
 	case 0xFD:
 	case 0xE9:
+#ifndef SPECASM_NO_NEXT
+	case 0xED:
+#endif
 		return prv_dump_fixed_e(op_code[0], buf, com,
 					sizeof(com) / sizeof(uint8_t *));
 	default:
@@ -983,6 +1033,50 @@ static uint8_t prv_dump_ld_imm_8_sub_e(const specasm_line_t *line, char *buf)
 	return prv_dump_subtraction_e(line, buf, 1) + (buf - start);
 }
 
+#ifndef SPECASM_NO_NEXT
+static uint8_t prv_dump_mirror_e(const specasm_line_t *line, char *buf)
+{
+	buf[0] = 'a';
+
+	return 1;
+}
+
+static uint8_t prv_dump_mul_e(const specasm_line_t *line, char *buf)
+{
+	buf[0] = 'd';
+	buf[1] = ',';
+	buf[2] = ' ';
+	buf[3] = 'e';
+
+	return 4;
+}
+
+static uint8_t prv_dump_nextreg_e(const specasm_line_t *line, char *buf)
+{
+	char *start = buf;
+
+	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+		buf = prv_dump_exp_e(line, buf, line->data.op_code[2]);
+	else
+		buf += prv_dump_byte(buf, line->data.op_code[2],
+				     specasm_line_get_format(line));
+
+	buf[0] = ',';
+	buf[1] = ' ';
+	buf += 2;
+
+	if (line->data.op_code[1] == 0x92) {
+		buf[0] = 'a';
+		buf++;
+	} else {
+		buf += prv_dump_byte(buf, line->data.op_code[3],
+				     specasm_line_get_format2(line));
+	}
+
+	return buf - start;
+}
+#endif
+
 static uint8_t prv_dump_or_e(const specasm_line_t *line, char *buf)
 {
 	char *start = buf;
@@ -1001,7 +1095,7 @@ static uint8_t prv_dump_out_e(const specasm_line_t *line, char *buf)
 
 	*buf++ = '(';
 	if (op_code[0] == 0xD3)
-		buf = prv_dump_byte_imm_ind_e(line, buf);
+		buf = prv_dump_byte_imm_ind_e(line, buf, 1);
 	else
 		*buf++ = 'c';
 	buf[0] = ')';
@@ -1034,6 +1128,10 @@ static uint8_t prv_dump_sbc_e(const specasm_line_t *line, char *buf)
 
 static uint8_t prv_dump_stack(const specasm_line_t *line, char *buf)
 {
+#ifndef SPECASM_NO_NEXT
+	uint16_t val;
+	char *start;
+#endif
 	const uint8_t *op_code = line->data.op_code;
 	char a = 'a';
 	char b = 'f';
@@ -1044,6 +1142,17 @@ static uint8_t prv_dump_stack(const specasm_line_t *line, char *buf)
 	} else if (op_code[0] == 0xDD) {
 		a = 'i';
 		b = 'x';
+#ifndef SPECASM_NO_NEXT
+	} else if (op_code[0] == 0xED) {
+		start = buf;
+		memcpy(&val, &op_code[2], 2);
+		if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+			buf = prv_dump_jump_label_e(line, buf, val);
+		else
+			buf += prv_dump_word(buf, val,
+					     specasm_line_get_format(line));
+		return buf - start;
+#endif
 	} else {
 		switch ((op_code[0] >> 4) & 3) {
 		case SPECASM_BYTE_REG_BC - SPECASM_BYTE_REG_BC:
@@ -1105,6 +1214,17 @@ static uint8_t prv_dump_sub_e(const specasm_line_t *line, char *buf)
 
 	return prv_dump_arith_e(line, buf, 0xD6, 0x90) - start;
 }
+
+#ifndef SPECASM_NO_NEXT
+static uint8_t prv_dump_test_e(const specasm_line_t *line, char *buf)
+{
+	char *start = buf;
+
+	buf = prv_dump_byte_imm_ind_e(line, buf, 2);
+
+	return buf - start;
+}
+#endif
 
 static uint8_t prv_dump_xor_e(const specasm_line_t *line, char *buf)
 {
@@ -1277,6 +1397,28 @@ static specasm_line_opcode_dump_t dump_opcodes[] = {
 	{ prv_dump_equws_e },         /* SPECASM_LINE_TYPE_DW_SUB */
 	{ prv_dump_ld_imm_16_sub_e }, /* SPECASM_LINE_TYPE_LD_IMM_16_SUB */
 	{ prv_dump_ld_imm_8_sub_e },  /* SPECASM_LINE_TYPE_LD_IMM_8_SUB */
+#ifndef SPECASM_NO_NEXT
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDDRX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDDX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDIRX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDIX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDPIRX */
+	{ NULL },                     /* SPECASM_LINE_TYPE_LDWS */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BRLC */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BSLA */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BSRA */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BSRF */
+	{ prv_dump_barrel_e },        /* SPECASM_LINE_TYPE_BSRL */
+	{ NULL },                     /* SPECASM_LINE_TYPE_OUTINB */
+	{ NULL },                     /* SPECASM_LINE_TYPE_SWAPNIB */
+	{ NULL },                     /* SPECASM_LINE_TYPE_PIXELAD */
+	{ NULL },                     /* SPECASM_LINE_TYPE_PIXELDN */
+	{ NULL },                     /* SPECASM_LINE_TYPE_SETAE */
+	{ prv_dump_test_e },          /* SPECASM_LINE_TYPE_TEST */
+	{ prv_dump_mirror_e },        /* SPECASM_LINE_TYPE_MIRROR */
+	{ prv_dump_mul_e },           /* SPECASM_LINE_TYPE_MUL */
+	{ prv_dump_nextreg_e },       /* SPECASM_LINE_TYPE_NEXTREG */
+#endif
 	{ prv_dump_ds_e },            /* SPECASM_LINE_TYPE_REPB */
 	{ prv_dump_org_e },           /* SPECASM_LINE_TYPE_ORG */
 	{ NULL },                     /* SPECASM_LINE_TYPE_MAP */
