@@ -359,7 +359,7 @@ Here, the expression used in the im statement is invalid as it resolves to a val
 #### Label Subtraction
 
 > **Warning**
-> Label subtraction outside of expressions is deprecated.  This syntax has been rendered redundant by the introduction of expressions in Specasm v5.  It will probably be removed in the future to reclaim the bytes used to implement it.
+> Label subtraction outside of expressions is no longer supported as of Specasm v7.  This syntax was rendered redundant by the introduction of expressions in Specasm v5 and deprecated in that release.  The linker does still support label substraction so any .x files assembled with an earlier version of Specasm can sill be linked and binary compatibility with older versions of Specasm is maintained.  Any instructions in .x files that use label subtraction will be rewritten to use the new expression syntax when loaded into Specasm's editor.  The remainder of this section exists purely for historical value.
 
 Direct label subtraction is supported in certain instructions and directives without the use of an expression.
 
@@ -442,7 +442,7 @@ db -1, -2, -3, $20
 ; Mixing characters and decimals
 db 'A', 1, 2
 ```
-In addition to encoding numbers the **dw** directive can be used to encode the address of a label and also the difference between the addresses of two labels.  When used in this format, the **dw** directive can only contain a single argument.
+In addition to encoding numbers the **dw** directive can be used to encode the address of a label.  When used in this format, the **dw** directive can only contain a single argument.
 
 For example,
 
@@ -450,10 +450,10 @@ For example,
 dw data
 ```
 
-will encode the address of the label data directly into the program.  The address is encoded at link time when salink has figured out the final address of the label.
+will encode the address of the label data directly into the program.  The address is encoded at link time when salink has figured out the final address of the label.  To encode the difference between two labels the expression syntax must be used.
 
 ```
-dw end-start
+dw =end-start
 .start
 dw 10, 10
 db 1
@@ -462,10 +462,10 @@ db 1
 
 will store the value 5 in a 16 bit word in the final program.
 
-The **db** directive cannot be used to encode the address of a label as the address is unlikely to fit into a single byte.  It can however, be used to encode the difference between two labels providing the difference does fit into a byte.  If the labels are too far apart an error will be generated at link time.  When used in this form, no other numbers can follow the label subtraction on the same line.  For example,
+The **db** directive cannot be used to encode the address of a label as the address is unlikely to fit into a single byte.  It can however, be used to encode the difference between two labels using the expression syntax, providing the difference does fit into a byte.  If the labels are too far apart an error will be generated at link time.  When used in this form, no other numbers can follow the label subtraction on the same line.  For example,
 
 ```
-db end-start
+db =end-start
 .start
 dw 10, 10
 db 1

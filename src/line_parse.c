@@ -974,53 +974,6 @@ static uint8_t prv_parse_djnz_e(const char *args, specasm_line_t *line,
 	return args - start;
 }
 
-static const char *prv_parse_labels_e(const char *args, specasm_line_t *line,
-				      uint8_t *count, uint16_t *val,
-				      uint8_t *addr_fmt2)
-{
-	const char *args2;
-	uint8_t *labels = (uint8_t *)val;
-
-	/*
-	 * So this is all a bit hacky.  There aren't enough bits in
-	 * flags to store the address type for two addresses.  There's
-	 * only room for one.  However, all the instructions that allow
-	 * address subtraction have at least one spare byte in the opcode.
-	 * So, we'll store the flags for the second label in the address
-	 * bits, and the flags for the first label in the first unused
-	 * byte in the opcode.  If we ever add a second flags byte we
-	 * can clean this up.
-	 */
-
-	*count = 1;
-	while (*args == ' ')
-		++args;
-	args = prv_parse_jump_label_e(args, line, &labels[0]);
-	if (err_type != SPECASM_ERROR_OK)
-		return 0;
-	args2 = args;
-	while (*args2 == ' ')
-		++args2;
-	*addr_fmt2 = 0;
-	if (*args2 == '-') {
-		*addr_fmt2 = specasm_line_get_addr_type(line);
-
-		/* Again this is hacky.  specasm_line_set_addr_type assumes
-		 * that the address bits are zero.  If they're not it doesn't
-		 * work correctly.  We need to explicitly reset them.
-		 */
-
-		line->flags &= 0xF3;
-		*count = 2;
-		args2++;
-		while (*args2 == ' ')
-			++args2;
-		args = prv_parse_jump_label_e(args2, line, &labels[1]);
-	}
-
-	return args;
-}
-
 static uint8_t prv_signed_ok(uint8_t flags, uint8_t val)
 {
 	return (flags == SPECASM_FLAGS_NUM_SIGNED) ||
@@ -1050,8 +1003,6 @@ static uint8_t prv_parse_db_e(const char *args, specasm_line_t *line,
 	uint8_t flags;
 	uint8_t flags2;
 	uint8_t signed_ok;
-	uint8_t label_count;
-	uint8_t *op_code;
 	const char *args2;
 	uint8_t i = 0;
 	const char *start = args;
@@ -1065,25 +1016,8 @@ static uint8_t prv_parse_db_e(const char *args, specasm_line_t *line,
 	}
 
 	args = prv_get_byte_imm_e(args, &val, &flags);
-	if (err_type == SPECASM_ERROR_NUM_TOO_BIG)
+	if (err_type != SPECASM_ERROR_OK)
 		return 0;
-	if (err_type != SPECASM_ERROR_OK) {
-		args2 = start;
-		err_type = SPECASM_ERROR_OK;
-		op_code = &line->data.op_code[0];
-		args = prv_parse_labels_e(args2, line, &label_count,
-					  (uint16_t *)op_code, &op_code[2]);
-
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
-		if (label_count != 2) {
-			err_type = SPECASM_ERROR_BAD_LABEL;
-			return 0;
-		}
-
-		line->type = SPECASM_LINE_TYPE_DB_SUB;
-		return args - start;
-	}
 	line->data.op_code[0] = val;
 
 	for (i = 1; i < 4; i++) {
@@ -1126,7 +1060,6 @@ static uint8_t prv_parse_dw_e(const char *args, specasm_line_t *line,
 	uint8_t flags;
 	uint8_t flags2;
 	uint8_t signed_ok;
-	uint8_t label_count;
 	uint8_t *op_code;
 	const char *args2 = args;
 	int8_t sz = 1;
@@ -1170,12 +1103,11 @@ static uint8_t prv_parse_dw_e(const char *args, specasm_line_t *line,
 	} else {
 		err_type = SPECASM_ERROR_OK;
 		op_code = &line->data.op_code[0];
-		args = prv_parse_labels_e(args2, line, &label_count,
-					  (uint16_t *)op_code, &op_code[2]);
+		while (*args2 == ' ')
+			++args2;
+		args = prv_parse_jump_label_e(args2, line, op_code);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
-		if (label_count == 2)
-			line->type = SPECASM_LINE_TYPE_DW_SUB;
 	}
 
 	specasm_line_set_size(line, sz);
@@ -1810,40 +1742,6 @@ fail:
 	err_type = SPECASM_ERROR_BAD_REG;
 }
 
-static void prv_parse_ld_labels_e(specasm_line_t *line, uint8_t reg,
-				  uint16_t val, uint8_t label_count,
-				  uint8_t addr_fmt2)
-{
-	uint8_t flags2;
-	uint8_t *op_code;
-
-	flags2 = specasm_line_get_format(line);
-	if (reg <= SPECASM_BYTE_REG_A) {
-		if (label_count != 2) {
-			err_type = SPECASM_ERROR_BAD_LABEL;
-			return;
-		}
-		op_code = &line->data.op_code[0];
-		op_code[0] = 0x6 | (reg << 3);
-		*((uint16_t *)&op_code[1]) = val;
-		specasm_line_set_format(line, flags2);
-		specasm_line_set_size(line, 1);
-		line->type = SPECASM_LINE_TYPE_LD_IMM_8_SUB;
-	} else {
-		prv_ld_16bit_imm_e(line, reg, flags2, val);
-		if (err_type != SPECASM_ERROR_OK)
-			return;
-		if (label_count > 1) {
-			if (specasm_line_get_size(line) == 3) {
-				err_type = SPECASM_ERROR_BAD_LABEL;
-				return;
-			}
-			line->type = SPECASM_LINE_TYPE_LD_IMM_16_SUB;
-		}
-	}
-	line->data.op_code[3] = addr_fmt2;
-}
-
 static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 			      const specasm_opcode_t *op_entry)
 {
@@ -1857,8 +1755,6 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 	uint8_t flags;
 	uint8_t flags2;
 	uint8_t read;
-	uint8_t label_count;
-	uint8_t addr_fmt2;
 	uint8_t label_type;
 	uint8_t v;
 	const char *start = args;
@@ -1937,20 +1833,19 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 	} else if (err_type == SPECASM_ERROR_OK) {
 		prv_ld_imm_e(line, reg, off, flags, flags2, val);
 		return args2 - start;
-	} else if ((reg <= SPECASM_BYTE_REG_A) ||
-		   (reg >= SPECASM_BYTE_REG_BC && reg <= SPECASM_BYTE_REG_IY)) {
+	} else if ((reg >= SPECASM_BYTE_REG_BC) &&
+		   (reg <= SPECASM_BYTE_REG_IY)) {
 		/*
-		 * For 16 bit immediate loads we allow labels and label
-		 * subtraction in place of the 16 bit value.  For 8 bit
-		 * immediate loads we allow label subtraction.
+		 * For 16 bit immediate loads we allow labels in place of
+		 * the 16 bit value.
 		 */
 
 		err_type = SPECASM_ERROR_OK;
-		args2 = prv_parse_labels_e(args, line, &label_count, &val,
-					   &addr_fmt2);
+		args2 = prv_parse_jump_label_e(args, line, &v);
+		val = v;
 		if (err_type == SPECASM_ERROR_OK) {
-			prv_parse_ld_labels_e(line, reg, val, label_count,
-					      addr_fmt2);
+			prv_ld_16bit_imm_e(line, reg,
+					   specasm_line_get_format(line), val);
 			return args2 - start;
 		}
 	}

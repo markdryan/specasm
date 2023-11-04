@@ -946,7 +946,9 @@ static uint8_t prv_dump_subtraction_e(const specasm_line_t *line, char *buf,
 {
 	char *str;
 
-	str = prv_dump_jump_label_fmt_e(line, buf, line->data.op_code[id_buf],
+	buf[0] = '=';
+	str = prv_dump_jump_label_fmt_e(line, buf + 1,
+					line->data.op_code[id_buf],
 					line->data.op_code[id_buf + 2]);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
