@@ -1,4 +1,4 @@
-VPATH=../src
+VPATH=../../../src
 
 .PHONY: all
 all: specasm.tap salink.tap SAEXPORT SAIMPORT
@@ -54,7 +54,7 @@ SAIMPORT = \
 
 specasm.tap: $(SPECASM)
 	$(CC) $(CFLAGS) -zorg=24310 -startup=31 -o specasm-bare $^ -create-app
-	cat ../bas/SPECLD.TAP specasm-bare.tap > specasm.tap
+	cat ../../../bas/SPECLD.TAP specasm-bare.tap > specasm.tap
 
 salink.tap: $(SALINK)
 	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o salink $^ -create-app
@@ -74,8 +74,8 @@ release:
 	- rm -rf release
 	mkdir -p release/specasm
 	cp specasm.tap salink.tap release/specasm
-	cp ../COPYING release/specasm
+	cp ../../../COPYING release/specasm
 	cp SAIMPORT SAEXPORT *.X release/specasm
-	cp ../bas/INSTALL release/specasm
-	cp ../bas/REMOVE release/specasm
-	cd release && zip -r specasm.zip specasm
+	cp ../../../bas/INSTALL release/specasm
+	cp ../../../bas/REMOVE release/specasm
+	cd release && zip -r specasm48.zip specasm
