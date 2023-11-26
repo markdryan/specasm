@@ -16,6 +16,6 @@ SAIMPORT.X
 SAEXPORT.X
 build.sh
 compile.sh
-build/release
-build/unitzx
+build/48/specasm/release
+build/48/unit
 .DS_Store

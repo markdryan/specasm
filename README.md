@@ -62,14 +62,14 @@ Once the linker has finished a binary file will be created.  The name of the fil
 
 ## Building Specasm
 
-Specasm is built with [z88dk](https://github.com/z88dk/z88dk) and GNU Make.  Install a recent version and then
+Specasm is built with [z88dk](https://github.com/z88dk/z88dk) and GNU Make.  To build Specasm for the 48k Spectrum clone the repoistory and type
 
 ```
-cd build
+cd build/48/specasm
 make -j
 ```
 
-And then wait.   All the tap and dotx files will be created in the build directory.
+and then wait.   All the tap and dotx files will be created in the build directory.
 
 To create a zip file with all the files that need to be copied onto the spectrum, type
 
