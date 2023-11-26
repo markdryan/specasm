@@ -97,7 +97,7 @@
  * Start Spectrum Next instructions.
  */
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 #define SPECASM_LINE_TYPE_LDDRX 73
 #define SPECASM_LINE_TYPE_LDDX 74
 #define SPECASM_LINE_TYPE_LDIRX 75

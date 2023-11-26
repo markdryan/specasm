@@ -283,7 +283,7 @@ static uint8_t prv_dump_adc_e(const specasm_line_t *line, char *buf)
 static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 {
 	uint8_t reg1;
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	uint16_t val;
 	uint8_t reg2 = 0;
 #else
@@ -308,7 +308,7 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 		reg2 = (op_code[1] >> 4) & 3;
 		if (reg2 == 2)
 			reg2 = 4;
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	} else if (op_code[0] == 0xED) {
 		if (op_code[1] <= 0x33)
 			reg1 = 0x31;
@@ -330,7 +330,7 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	if (op_code[0] == 0xED) {
 		if (op_code[1] <= 0x33) {
 			buf[0] = 'a';
@@ -386,7 +386,7 @@ static uint8_t prv_dump_bit_e(const specasm_line_t *line, char *buf)
 	return buf - start;
 }
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 static uint8_t prv_dump_barrel_e(const specasm_line_t *line, char *buf)
 {
 	buf[0] = 'd';
@@ -558,7 +558,7 @@ static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 	    "(ix)",
 	    "\xfd"
 	    "(iy)",
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	    "\xed"
 	    "(c)",
 #endif
@@ -569,7 +569,7 @@ static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 	case 0xDD:
 	case 0xFD:
 	case 0xE9:
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	case 0xED:
 #endif
 		return prv_dump_fixed_e(op_code[0], buf, com,
@@ -1033,7 +1033,7 @@ static uint8_t prv_dump_ld_imm_8_sub_e(const specasm_line_t *line, char *buf)
 	return prv_dump_subtraction_e(line, buf, 1) + (buf - start);
 }
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 static uint8_t prv_dump_mirror_e(const specasm_line_t *line, char *buf)
 {
 	buf[0] = 'a';
@@ -1128,7 +1128,7 @@ static uint8_t prv_dump_sbc_e(const specasm_line_t *line, char *buf)
 
 static uint8_t prv_dump_stack(const specasm_line_t *line, char *buf)
 {
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	uint16_t val;
 	char *start;
 #endif
@@ -1142,7 +1142,7 @@ static uint8_t prv_dump_stack(const specasm_line_t *line, char *buf)
 	} else if (op_code[0] == 0xDD) {
 		a = 'i';
 		b = 'x';
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	} else if (op_code[0] == 0xED) {
 		start = buf;
 		memcpy(&val, &op_code[2], 2);
@@ -1215,7 +1215,7 @@ static uint8_t prv_dump_sub_e(const specasm_line_t *line, char *buf)
 	return prv_dump_arith_e(line, buf, 0xD6, 0x90) - start;
 }
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 static uint8_t prv_dump_test_e(const specasm_line_t *line, char *buf)
 {
 	char *start = buf;
@@ -1397,7 +1397,7 @@ static specasm_line_opcode_dump_t dump_opcodes[] = {
 	{ prv_dump_equws_e },         /* SPECASM_LINE_TYPE_DW_SUB */
 	{ prv_dump_ld_imm_16_sub_e }, /* SPECASM_LINE_TYPE_LD_IMM_16_SUB */
 	{ prv_dump_ld_imm_8_sub_e },  /* SPECASM_LINE_TYPE_LD_IMM_8_SUB */
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ NULL },                     /* SPECASM_LINE_TYPE_LDDRX */
 	{ NULL },                     /* SPECASM_LINE_TYPE_LDDX */
 	{ NULL },                     /* SPECASM_LINE_TYPE_LDIRX */

@@ -117,7 +117,7 @@ const test_t opcode_tests[] = {
 	{"add iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 	{"add  iy, sp", "add iy, sp", 2, { 0xFD, 0x39 }},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"add  hl, a", "add hl, a", 2, { 0xED, 0x31 }},
 	{"add  de, a", "add de, a", 2, { 0xED, 0x32 }},
 	{"add  bc, a", "add bc, a", 2, { 0xED, 0x33 }},
@@ -379,7 +379,7 @@ const test_t opcode_tests[] = {
 	{"bit 7,   l", "bit 7, l", 2, { 0xCB, 0X7D }},
 	{"bit $7,   l", "bit 7, l", 2, { 0xCB, 0X7D }},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"bsla de, b", "bsla de, b", 2, { 0xED, 0x28 }},
 	{"bsra de, b", "bsra de, b", 2, { 0xED, 0x29 }},
 	{"bsrl de, b", "bsrl de, b", 2, { 0xED, 0x2A }},
@@ -639,7 +639,7 @@ const test_t opcode_tests[] = {
 	{"jp no", "jp no", 3, {0xC3, 0x01, 0x00}},
 	{"jp   no", "jp no", 3, {0xC3, 0x01, 0x00}},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"jp (c)", "jp (c)", 2, {0xED, 0x98}},
 	{"jp  ( c )", "jp (c)", 2, {0xED, 0x98}},
 #endif
@@ -1344,7 +1344,7 @@ const test_t opcode_tests[] = {
 	{"ldd", "ldd", 2, {0xED, 0xA8}},
 	{"lddr", "lddr", 2, {0xED, 0xB8}},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"lddrx", "lddrx", 2, {0xED, 0xBC}},
 	{"lddx", "lddx", 2, {0xED, 0xAC}},
 	{"ldirx", "ldirx", 2, {0xED, 0xB4}},
@@ -1355,7 +1355,7 @@ const test_t opcode_tests[] = {
 
 	{"ldi", "ldi", 2, {0xED, 0xA0}},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"mirror a", "mirror a", 2, {0xED, 0x24}},
 	{"mirror   a", "mirror a", 2, {0xED, 0x24}},
 	{"mul d, e", "mul d, e", 2, {0xED, 0x30}},
@@ -1457,7 +1457,7 @@ const test_t opcode_tests[] = {
 	{"outd", "outd", 2, {0xED, 0xAB}},
 	{"outi", "outi", 2, {0xED, 0xA3}},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"outinb", "outinb", 2, {0xED, 0x90}},
 	{"pixelad", "pixelad", 2, {0xED, 0x94}},
 	{"pixeldn", "pixeldn", 2, {0xED, 0x93}},
@@ -1489,7 +1489,7 @@ const test_t opcode_tests[] = {
 	{"push iy", "push iy", 2, {0xFD, 0xE5}},
 	{"push   iy", "push iy", 2, {0xFD, 0xE5}},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"push $102", "push $102", 4, {0xED, 0x8A, 0x2, 0x1}},
 	{"push   258", "push 258", 4, {0xED, 0x8A, 0x2, 0x1}},
 	{"push -2", "push -2", 4, {0xED, 0x8A, 0xFE, 0xFF}},
@@ -2108,7 +2108,7 @@ const test_t opcode_tests[] = {
 	{"set =label,( hl )", "set =label, (hl)", 2, { 0xCB, 0xC6 }},
 	{"set =verylonglabel,( hl )", "set =verylonglabel, (hl)", 2, { 0xCB, 0XC6 }},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"setae", "setae", 2, { 0xED, 0x95 }},
 #endif
 
@@ -2214,7 +2214,7 @@ const test_t opcode_tests[] = {
 	{"sub =label1", "sub =label1", 2, { 0xD6, 0x5 }},
 	{"sub  =  label", "sub =label", 2, { 0xD6, 0x0 }},
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"swapnib", "swapnib", 2, { 0xED, 0x23 }},
 
 	{"test 40", "test 40", 3, { 0xED, 0x27, 0x28 }},
@@ -2529,7 +2529,7 @@ const bad_test_t bad_tests[] = {
 	{"bit =label, (iy + 10)", SPECASM_ERROR_BAD_EXPRESSION },
 	{"bit 0, (ix + =label)", SPECASM_ERROR_BAD_NUM },
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"bsla hl, b", SPECASM_ERROR_BAD_REG },
 	{"bsra de, a", SPECASM_ERROR_BAD_REG },
 	{"bsrl hl,", SPECASM_ERROR_BAD_REG },
@@ -2725,7 +2725,7 @@ const bad_test_t bad_tests[] = {
 	{"ld a, =", SPECASM_ERROR_BAD_EXPRESSION },
 	{"ld hl, (=(label1+1", SPECASM_ERROR_BAD_EXPRESSION },
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"mirror",  SPECASM_ERROR_BAD_REG },
 	{"mirror b",  SPECASM_ERROR_BAD_REG },
 	{"mirror hl",  SPECASM_ERROR_BAD_REG },
@@ -2992,7 +2992,7 @@ const bad_test_t bad_tests[] = {
 	{"sub hl", SPECASM_ERROR_BAD_REG },
 	{"sub f", SPECASM_ERROR_BAD_REG },
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{"test", SPECASM_ERROR_BAD_NUM },
 	{"test a", SPECASM_ERROR_BAD_NUM },
 	{"test $ffff", SPECASM_ERROR_NUM_TOO_BIG },

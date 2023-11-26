@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ ! -z "${SPECASM_NO_NEXT}" ]; then
+if [ -z "${SPECASM_TARGET_NEXT}" ]; then
     exit 0
 fi
 

@@ -30,7 +30,7 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "align", SPECASM_LINE_TYPE_ALIGN, },
 	{ "and", SPECASM_LINE_TYPE_AND, },
 	{ "bit", SPECASM_LINE_TYPE_BIT, },
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ "brlc", SPECASM_LINE_TYPE_BRLC, },
 	{ "bsla", SPECASM_LINE_TYPE_BSLA, },
 	{ "bsra", SPECASM_LINE_TYPE_BSRA, },
@@ -68,25 +68,25 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "ld", SPECASM_LINE_TYPE_LD, },
 	{ "ldd", SPECASM_LINE_TYPE_LDD, },
 	{ "lddr", SPECASM_LINE_TYPE_LDDR, },
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ "lddrx", SPECASM_LINE_TYPE_LDDRX, },
 	{ "lddx", SPECASM_LINE_TYPE_LDDX, },
 #endif
 	{ "ldi", SPECASM_LINE_TYPE_LDI, },
 	{ "ldir", SPECASM_LINE_TYPE_LDIR, },
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ "ldirx", SPECASM_LINE_TYPE_LDIRX, },
 	{ "ldix", SPECASM_LINE_TYPE_LDIX, },
 	{ "ldpirx", SPECASM_LINE_TYPE_LDPIRX, },
 	{ "ldws", SPECASM_LINE_TYPE_LDWS, },
 #endif
 	{ "map", SPECASM_LINE_TYPE_MAP, },
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ "mirror", SPECASM_LINE_TYPE_MIRROR, },
 	{ "mul", SPECASM_LINE_TYPE_MUL, },
 #endif
 	{ "neg", SPECASM_LINE_TYPE_NEG, },
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ "nextreg", SPECASM_LINE_TYPE_NEXTREG, },
 #endif
 	{ "nop", SPECASM_LINE_TYPE_NOP, },
@@ -97,7 +97,7 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "out", SPECASM_LINE_TYPE_OUT, },
 	{ "outd", SPECASM_LINE_TYPE_OUTD, },
 	{ "outi", SPECASM_LINE_TYPE_OUTI, },
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ "outinb", SPECASM_LINE_TYPE_OUTINB, },
 	{ "pixelad", SPECASM_LINE_TYPE_PIXELAD, },
 	{ "pixeldn", SPECASM_LINE_TYPE_PIXELDN, },
@@ -122,14 +122,14 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "sbc", SPECASM_LINE_TYPE_SBC, },
 	{ "scf", SPECASM_LINE_TYPE_SCF, },
 	{ "set", SPECASM_LINE_TYPE_SET, },
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ "setae", SPECASM_LINE_TYPE_SETAE, },
 #endif
 	{ "sla", SPECASM_LINE_TYPE_SLA, },
 	{ "sra", SPECASM_LINE_TYPE_SRA, },
 	{ "srl", SPECASM_LINE_TYPE_SRL, },
 	{ "sub", SPECASM_LINE_TYPE_SUB, },
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ "swapnib", SPECASM_LINE_TYPE_SWAPNIB, },
 	{ "test", SPECASM_LINE_TYPE_TEST, },
 #endif

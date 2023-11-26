@@ -870,7 +870,7 @@ static void prv_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
 	case SPECASM_LINE_TYPE_SBC:
 	case SPECASM_LINE_TYPE_SUB:
 	case SPECASM_LINE_TYPE_XOR:
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 		if ((line->type == SPECASM_LINE_TYPE_ADD) &&
 		    (line->data.op_code[0] == 0xED))
 			prv_eval_equ_16bit_e(line, obj, line_no, 2);
@@ -961,7 +961,7 @@ static void prv_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
 	case SPECASM_LINE_TYPE_DW:
 		prv_eval_equ_16bit_e(line, obj, line_no, 0);
 		break;
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	case SPECASM_LINE_TYPE_TEST:
 	case SPECASM_LINE_TYPE_NEXTREG:
 		prv_eval_equ_8bit_e(line, obj, line_no, 2);

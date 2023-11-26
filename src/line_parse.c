@@ -756,7 +756,7 @@ static uint8_t prv_parse_add_e(const char *args, specasm_line_t *line,
 	uint8_t off;
 	uint8_t i;
 	uint8_t flags;
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	uint16_t val;
 #endif
 	uint8_t opi = 0;
@@ -773,7 +773,7 @@ static uint8_t prv_parse_add_e(const char *args, specasm_line_t *line,
 		args += prv_parse_arith_gen_e(args, line, 0x80, 0x86, 0xC6);
 		return args - start;
 	case SPECASM_BYTE_REG_HL:
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	case SPECASM_BYTE_REG_BC:
 	case SPECASM_BYTE_REG_DE:
 #endif
@@ -792,7 +792,7 @@ static uint8_t prv_parse_add_e(const char *args, specasm_line_t *line,
 		goto bad_reg;
 	}
 	args += prv_parse_reg_e(args, &reg2, &off, &flags);
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	if (err_type != SPECASM_ERROR_OK) {
 		/*
 		 * 16 bit immediate cannot be added to ix and iy.
@@ -854,7 +854,7 @@ static uint8_t prv_parse_arith_e(const char *args, specasm_line_t *line,
 	return prv_parse_arith_gen_e(args, line, areg, areg | 6, aimm);
 }
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 static uint8_t prv_parse_barrel_e(const char *args, specasm_line_t *line,
 				  const specasm_opcode_t *op_entry)
 {
@@ -1361,7 +1361,7 @@ static uint8_t prv_parse_jp_e(const char *args, specasm_line_t *line,
 			op1 = 0xFD;
 			op2 = 0xE9;
 			break;
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 		case SPECASM_BYTE_REG_C_IND:
 			op1 = 0xED;
 			op2 = 0x98;
@@ -1938,7 +1938,7 @@ static uint8_t prv_parse_ld_e(const char *args, specasm_line_t *line,
 	return args - start;
 }
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 static uint8_t prv_parse_mirror_e(const char *args, specasm_line_t *line,
 				  const specasm_opcode_t *op_entry)
 {
@@ -2103,7 +2103,7 @@ static uint8_t prv_parse_push_pop_e(const char *args, specasm_line_t *line,
 	uint8_t off;
 	uint8_t read;
 	uint8_t flags;
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	const char *start;
 	uint16_t val;
 #endif
@@ -2113,7 +2113,7 @@ static uint8_t prv_parse_push_pop_e(const char *args, specasm_line_t *line,
 
 	read = prv_parse_reg_e(args, &reg, &off, &flags);
 	if (err_type != SPECASM_ERROR_OK) {
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 		if (line->type == SPECASM_LINE_TYPE_PUSH) {
 			err_type = SPECASM_ERROR_OK;
 			start = args;
@@ -2309,7 +2309,7 @@ end:
 	return read;
 }
 
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 static uint8_t prv_parse_test_e(const char *args, specasm_line_t *line,
 				const specasm_opcode_t *op_entry)
 {
@@ -2368,7 +2368,7 @@ const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_align_e, },                       // SPECASM_LINE_TYPE_ALIGN
 	{ prv_parse_arith_e, {0xE6, 0xA0} },          // SPECASM_LINE_TYPE_AND
 	{ prv_parse_bit_e, { 0x40 } },                // SPECASM_LINE_TYPE_BIT
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ prv_parse_barrel_e, { 0xED, 0x2C } },       // SPECASM_LINE_TYPE_BRLC
 	{ prv_parse_barrel_e, { 0xED, 0x28 } },       // SPECASM_LINE_TYPE_BSLA
 	{ prv_parse_barrel_e, { 0xED, 0x29 } },       // SPECASM_LINE_TYPE_BSRA
@@ -2406,25 +2406,25 @@ const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_ld_e, },                          // SPECASM_LINE_TYPE_LD
 	{ NULL, {0xED, 0xA8} },                       // SPECASM_LINE_TYPE_LDD
 	{ NULL, {0xED, 0xB8} },                       // SPECASM_LINE_TYPE_LDDR
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ NULL, {0xED, 0xBC} },                       // SPECASM_LINE_TYPE_LDDRX
 	{ NULL, {0xED, 0xAC} },                       // SPECASM_LINE_TYPE_LDDX
 #endif
 	{ NULL, {0xED, 0xA0} },                       // SPECASM_LINE_TYPE_LDI
 	{ NULL, {0xED, 0xB0} },                       // SPECASM_LINE_TYPE_LDIR
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ NULL, {0xED, 0xB4} },                       // SPECASM_LINE_TYPE_LDIRX
 	{ NULL, {0xED, 0xA4} },                       // SPECASM_LINE_TYPE_LDIX
 	{ NULL, {0xED, 0xB7} },                       // SPECASM_LINE_TYPE_LDPIRX
 	{ NULL, {0xED, 0xA5} },                       // SPECASM_LINE_TYPE_LDWS
 #endif
 	{ NULL, },                                    // SPECASM_LINE_TYPE_MAP
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ prv_parse_mirror_e, {0xED, 0x24} },         // SPECASM_LINE_TYPE_MIRROR
 	{ prv_parse_mul_e, {0xED, 0x30} },            // SPECASM_LINE_TYPE_MUL
 #endif
 	{ NULL, {0xED, 0x44} },                       // SPECASM_LINE_TYPE_NEG
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ prv_parse_nextreg_e, },                     // SPECASM_LINE_TYPE_NEXTREG
 #endif
 	{ NULL, },                                    // SPECASM_LINE_TYPE_NOP
@@ -2435,7 +2435,7 @@ const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_out_e, },                         // SPECASM_LINE_TYPE_OUT
 	{ NULL, {0xED, 0xAB} },                       // SPECASM_LINE_TYPE_OUTD
 	{ NULL, {0xED, 0xA3} },                       // SPECASM_LINE_TYPE_OUTI
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ NULL, {0xED, 0x90} },                       // SPECASM_LINE_TYPE_OUTINB
 	{ NULL, {0xED, 0x94} },                       // SPECASM_LINE_TYPE_PIXELAD
 	{ NULL, {0xED, 0x93} },                       // SPECASM_LINE_TYPE_PIXELDN
@@ -2460,14 +2460,14 @@ const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_adc_sbc_e, {0x42, 0x98} },        // SPECASM_LINE_TYPE_SBC
 	{ NULL, { 0x37 } },                           // SPECASM_LINE_TYPE_SCF
 	{ prv_parse_bit_e, { 0xC0 } },                // SPECASM_LINE_TYPE_SET
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ NULL, { 0xED, 0x95 } },                     // SPECASM_LINE_TYPE_SETAE
 #endif
 	{ prv_parse_shift_e, {0x26} },                // SPECASM_LINE_TYPE_SLA
 	{ prv_parse_shift_e, {0x2E} },                // SPECASM_LINE_TYPE_SRA
 	{ prv_parse_shift_e, {0x3E} },                // SPECASM_LINE_TYPE_SRL
 	{ prv_parse_arith_e, {0xD6, 0x90} },          // SPECASM_LINE_TYPE_SUB
-#ifndef SPECASM_NO_NEXT
+#ifdef SPECASM_TARGET_NEXT
 	{ NULL, {0xED, 0x23} },                       // SPECASM_LINE_TYPE_SWAPNIB
 	{ prv_parse_test_e, {0xED, 0x27} },           // SPECASM_LINE_TYPE_TEST
 #endif
