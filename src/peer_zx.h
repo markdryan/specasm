@@ -17,7 +17,11 @@
 #ifndef SPECASM_ZX_PEER_H
 #define SPECASM_ZX_PEER_H
 
+#ifdef SPECTRUM
 #include <arch/zx.h>
+#else
+#include <arch/zxn.h>
+#endif
 #include <z80.h>
 
 #include "util_print_zx.h"

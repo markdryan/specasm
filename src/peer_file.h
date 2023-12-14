@@ -17,10 +17,11 @@
 #ifndef SPECASM_PEER_FILE_H
 #define SPECASM_PEER_FILE_H
 
-#ifdef SPECTRUM
-#include <arch/zx/esxdos.h>
+#if defined(SPECTRUM) || defined(__ZXNEXT)
 typedef unsigned char specasm_handle_t;
 typedef unsigned char specasm_dir_t;
+#ifdef SPECTRUM
+#include <arch/zx/esxdos.h>
 typedef struct esxdos_dirent specasm_dirent_t;
 #define SPECASM_PATH_MAX ESXDOS_PATH_MAX
 #define specasm_readdir(dir, drent) esxdos_f_readdir(dir, drent)
@@ -28,6 +29,17 @@ typedef struct esxdos_dirent specasm_dirent_t;
 #define specasm_getdirname(d) (&d.dir[1])
 #define specasm_remove_file(f) (void)esxdos_f_unlink(f)
 #else
+#include <arch/zx/esxdos.h>
+typedef struct esxdos_dirent specasm_dirent_t;
+#define SPECASM_PATH_MAX ESX_PATHNAME_MAX
+#define specasm_readdir(dir, drent) esx_f_readdir(dir, drent)
+#define specasm_closedir(dir) esx_f_close(dir)
+#define specasm_getdirname(d) (&d.dir[1])
+#define specasm_remove_file(f) (void)esx_f_unlink(f)
+#endif
+
+#else
+
 #include <dirent.h>
 #include <limits.h>
 #include <stdint.h>

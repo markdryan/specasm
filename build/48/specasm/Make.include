@@ -24,6 +24,8 @@ saexport.o: ../src/saexport.c ../src/peer.h ../src/error.h ../src/peer_zx.h \
 salink.o: ../src/salink.c ../src/peer.h ../src/error.h ../src/peer_zx.h ../src/line.h \
 	  ../src/peer_file.h ../src/state_base.h ../src/strings.h \
 	  ../src/util_print_zx.h
+specasm.o: ../src/specasm.c ../src/editor.h ../src/peer.h ../src/error.h \
+  ../src/line.h ../src/peer_file.h ../src/state.h ../src/state_base.h ../src/strings.h
 peer_zx.o: ../src/peer_zx.c ../src/peer.h ../src/state.h ../src/state_base.h ../src/line.h \
 	   ../src/strings.h ../src/error.h ../src/util_print_zx.h
 peer_file_zx.o: ../src/peer_file_zx.c ../src/error.h ../src/peer_file.h
