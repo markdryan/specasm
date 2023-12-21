@@ -7,6 +7,8 @@ state_dump.o: ../src/state_dump.c ../src/state.h ../src/state_base.h ../src/line
   ../src/error.h ../src/strings.h
 state_parse.o: ../src/state_parse.c ../src/state.h ../src/state_base.h ../src/line.h \
   ../src/error.h ../src/strings.h
+specasm_next.o: ../src/specasm_next.c ../src/editor.h ../src/peer.h ../src/error.h \
+  ../src/line.h ../src/peer_file.h ../src/state.h ../src/state_base.h ../src/strings.h
 ld_parse.o: ../src/ld_parse.c ../src/line_common.h ../src/line.h ../src/error.h \
   ../src/line_parse_common.h ../src/peer.h ../src/peer_unit.h ../src/state.h \
   ../src/state_base.h ../src/strings.h
@@ -19,11 +21,15 @@ line_dump.o: ../src/line_dump.c ../src/line_common.h ../src/line.h ../src/error.
 line_dump_common.o: ../src/line_dump_common.c ../src/line_common.h ../src/line.h \
   ../src/error.h ../src/peer.h ../src/peer_zx.h ../src/state.h ../src/state_base.h \
   ../src/strings.h
+line_dump_banked.o: ../src/line_dump.c ../src/line_common.h ../src/line.h ../src/error.h \
+  ../src/peer.h ../src/peer_zx.h ../src/state.h ../src/state_base.h ../src/strings.h
 line_parse.o: ../src/line_parse.c ../src/line_common.h ../src/line.h ../src/error.h \
   ../src/peer.h ../src/peer_zx.h ../src/state.h ../src/state_base.h ../src/strings.h
 line_parse_common.o: ../src/line_parse_common.c ../src/line.h ../src/error.h \
   ../src/line_common.h ../src/line_parse_common.h ../src/state.h ../src/state_base.h \
   ../src/strings.h
+line_parse_banked.o: ../src/line_parse.c ../src/line_common.h ../src/line.h ../src/error.h \
+  ../src/peer.h ../src/peer_zx.h ../src/state.h ../src/state_base.h ../src/strings.h
 editor.o: ../src/editor.c ../src/editor.h ../src/peer.h ../src/error.h \
   ../src/peer_zx.h ../src/line.h ../src/state.h ../src/state_base.h ../src/strings.h \
   ../src/util_print_zx.h
@@ -36,12 +42,10 @@ saexport.o: ../src/saexport.c ../src/peer.h ../src/error.h ../src/peer_zx.h \
 salink.o: ../src/salink.c ../src/peer.h ../src/error.h ../src/peer_zx.h ../src/line.h \
 	  ../src/peer_file.h ../src/state_base.h ../src/strings.h \
 	  ../src/util_print_zx.h
-specasm.o: ../src/specasm.c ../src/editor.h ../src/peer.h ../src/error.h \
-  ../src/line.h ../src/peer_file.h ../src/state.h ../src/state_base.h ../src/strings.h
-peer_zx.o: ../src/peer_zx.c ../src/peer.h ../src/state.h ../src/state_base.h ../src/line.h \
+peer_next.o: ../src/peer_next.c ../src/peer.h ../src/state.h ../src/state_base.h ../src/line.h \
 	   ../src/strings.h ../src/error.h ../src/util_print_zx.h
-peer_file_zx.o: ../src/peer_file_zx.c ../src/error.h ../src/peer_file.h
-util_print_zx.o: ../src/util_print_zx.h
+peer_file_next.o: ../src/peer_file_next.c ../src/error.h ../src/peer_file.h
+util_print_next.o: ../src/util_print_next.c ../src/util_print_zx.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

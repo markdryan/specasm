@@ -14,11 +14,7 @@
  * limitations under the License.
 */
 
-#ifdef SPECTRUM
 #include <arch/zx.h>
-#else
-#include <arch/zxn.h>
-#endif
 
 #include "util_print_zx.h"
 

@@ -29,7 +29,7 @@ typedef struct esxdos_dirent specasm_dirent_t;
 #define specasm_getdirname(d) (&d.dir[1])
 #define specasm_remove_file(f) (void)esxdos_f_unlink(f)
 #else
-#include <arch/zx/esxdos.h>
+#include <arch/zxn/esxdos.h>
 typedef struct esxdos_dirent specasm_dirent_t;
 #define SPECASM_PATH_MAX ESX_PATHNAME_MAX
 #define specasm_readdir(dir, drent) esx_f_readdir(dir, drent)

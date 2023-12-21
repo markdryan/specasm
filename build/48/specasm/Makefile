@@ -10,9 +10,12 @@ include Make.include
 
 SPECASM = \
 	specasm.o \
+	ld_parse.o \
 	line_common.o \
 	line_dump.o \
+	line_dump_common.o \
 	line_parse.o \
+	line_parse_common.o \
 	error.o \
 	state_base.o \
 	state_dump.o \
@@ -35,6 +38,7 @@ SAEXPORT = \
 	line_common.o \
 	state_base.o \
 	line_dump.o \
+	line_dump_common.o \
 	state_dump.o \
 	peer_file_zx.o \
 	util_print_zx.o \
@@ -44,8 +48,10 @@ SAEXPORT = \
 SAIMPORT = \
 	error.o \
 	state_base.o \
+	ld_parse.o \
 	line_common.o \
 	line_parse.o \
+	line_parse_common.o \
 	state_parse.o \
 	peer_file_zx.o \
 	util_print_zx.o \

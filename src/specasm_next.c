@@ -25,16 +25,25 @@
 #include "line.h"
 #include "state.h"
 
-extern unsigned char _SYSVAR_LASTK;
+#define SPECASM_KEY_CALIBRATION 13
 
-int main()
+void specasm_peer_next_copy_chars(void);
+
+int main(void)
 {
 	uint8_t k;
+	uint16_t delay_base = ((200 / 11) * 11) / 10;
+	uint8_t new_key;
+	uint16_t i;
+	uint16_t delay;
 
 	specasm_init_dump_table();
 
 	zx_border(SPECASM_LABEL_BORDER);
 	zx_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
+	specasm_peer_next_copy_chars();
+	zx_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
+
 	err_type = SPECASM_ERROR_OK;
 	specasm_editor_reset();
 
@@ -43,15 +52,30 @@ int main()
 	// Make cursor flash
 	specasm_text_set_flash(col, line, FLASH);
 
-	intrinsic_ei();
-	in_wait_nokey();
 	do {
-		_SYSVAR_LASTK = 0;
-		for (; k = _SYSVAR_LASTK; k == 0);
-		specasm_handle_key_press(k);
-	}
-	while (!quitting);
-	in_wait_nokey();
+		delay =delay_base << (ZXN_READ_REG(REG_TURBO_MODE) & 3);
+		in_wait_key();
+		k = in_inkey();
+		if (!k)
+			continue;
+		do {
+			if (k == SPECASM_KEY_COMMAND) {
+				in_wait_nokey();
+				new_key = in_inkey();
+			} else {
+				for (i = 0; i < SPECASM_KEY_CALIBRATION; i++) {
+					specasm_sleep_ms(delay);
+					new_key = in_inkey();
+					if (k != new_key)
+						break;
+				}
+			}
+			specasm_handle_key_press(k);
+			k = new_key;
+		} while (k);
+	} while (!quitting);
+
+	zx_cls(PAPER_WHITE | INK_WHITE);
 
 	return 0;
 }

@@ -313,11 +313,12 @@ struct specasm_lines_t_ {
 typedef struct specasm_lines_t_ specasm_lines_t;
 
 void specasm_init_dump_table(void);
-char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags);
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 				 specasm_line_t *line);
 uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 			    uint8_t *label1_type);
 uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf);
-
+uint8_t specasm_dump_byte(char *buf, uint8_t v, uint8_t flags);
+uint8_t specasm_dump_word(char *buf, uint16_t v, uint8_t flags);
+char *specasm_dump_index(const uint8_t *op_code, char *buf, uint8_t flags);
 #endif
