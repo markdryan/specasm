@@ -49,13 +49,16 @@ SALINK =\
 	salink.c \
 	expression.c
 
+SAMAKE =\
+	samake.c
+
 TEST_CONTENT_ZX =\
 	test_content.c \
 	test_content_zx.c
 
 CFLAGS += -Wall -MMD -DUNITTESTS -Isrc
 
-all: unittests saimport saexport salink
+all: unittests saimport saexport salink samake
 
 unittests: $(BASE:%.c=%.o) $(COMMON:%.c=%.o) $(SRCS:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -72,8 +75,11 @@ salink: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SALINK:%.c=%.o)
 test_content_zx: $(TEST_CONTENT_ZX:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
+samake: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SAMAKE:%.c=%.o)
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
-	- rm *.d *.o unittests saimport saexport salink
+	- rm *.d *.o unittests saimport saexport salink samake
 
 -include $(BASE:%.c=%.d)
 -include $(COMMON:%.c=%.d)
@@ -82,4 +88,5 @@ clean:
 -include $(SAIMPORT:%.c=%.d)
 -include $(SAEXPORT:%.c=%.d)
 -include $(SALINK:%.c=%.d)
+-include $(SAMAKE:%.c=%.d)
 -include $(TEST_CONTENT_ZX:%.c=%.d)

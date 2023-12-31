@@ -1,7 +1,7 @@
 VPATH=../../../src
 
 .PHONY: all
-all: specasm.tap salink.tap SAEXPORT SAIMPORT
+all: specasm.tap salink.tap SAEXPORT SAIMPORT SAMAKE
 
 CC=zcc
 CFLAGS=+zx -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy
@@ -58,6 +58,14 @@ SAIMPORT = \
 	peer_zx.o \
 	saimport.o
 
+SAMAKE =\
+	samake.o \
+	error.o \
+	state_base.o \
+	peer_file_zx.o \
+	peer_zx.o
+
+
 specasm.tap: $(SPECASM)
 	$(CC) $(CFLAGS) -zorg=24310 -startup=31 -o specasm-bare $^ -create-app
 	cat ../../../bas/SPECLD.TAP specasm-bare.tap > specasm.tap
@@ -71,9 +79,12 @@ SAEXPORT: $(SAEXPORT)
 SAIMPORT: $(SAIMPORT)
 	$(CC) $(CFLAGS) -startup=30 -o $@ $(SAIMPORT) -subtype=dotx -Cz"--clean" -create-app
 
+SAMAKE: $(SAMAKE)
+	$(CC) $(CFLAGS) -startup=30 -o $@ $(SAMAKE) -subtype=dotx -Cz"--clean" -create-app
+
 clean:
 	- rm -rf specasm *.zip -rf unitzx
-	- rm *.X *.o *.bin *.tap SAIMPORT SAEXPORT
+	- rm *.X *.o *.bin *.tap SAIMPORT SAEXPORT SAMAKE
 
 .PHONY: release
 release:
@@ -81,7 +92,7 @@ release:
 	mkdir -p release/specasm
 	cp specasm.tap salink.tap release/specasm
 	cp ../../../COPYING release/specasm
-	cp SAIMPORT SAEXPORT *.X release/specasm
+	cp SAMAKE SAIMPORT SAEXPORT *.X release/specasm
 	cp ../../../bas/INSTALL release/specasm
 	cp ../../../bas/REMOVE release/specasm
 	cd release && zip -r specasm48.zip specasm

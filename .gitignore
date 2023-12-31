@@ -19,6 +19,10 @@ SAIMPORT.X
 SAEXPORT.X
 UNITNEXT
 UNITZX
+SAIMPORT.X
+SAEXPORT.X
+SAMAKE
+SAMAKE.X
 build.sh
 compile.sh
 build/48/specasm/release

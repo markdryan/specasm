@@ -65,3 +65,9 @@ specasm_dir_t specasm_opendir_e(const char *fname)
 
 	return d;
 }
+
+void specasm_file_stat_e(specasm_handle_t f, specasm_stat_t *buf)
+{
+	if (esx_f_fstat(f, buf))
+		err_type = SPECASM_ERROR_READ;
+}

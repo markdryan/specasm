@@ -47,6 +47,8 @@ peer_zx.o: peer_zx.c peer.h state.h state_base.h line.h \
 	   strings.h error.h util_print_zx.h
 peer_file_zx.o: peer_file_zx.c error.h peer_file.h
 util_print_zx.o: util_print_zx.h
+samake.o: samake.c peer.h error.h peer_zx.h line.h \
+  salink.h peer_file.h state_base.h strings.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

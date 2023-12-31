@@ -1,7 +1,7 @@
 VPATH=../../../src
 
 .PHONY: all
-all: SPECASM SALINK SAEXPORT SAIMPORT
+all: SPECASM SALINK SAEXPORT SAIMPORT SAMAKE
 
 CC=zcc
 CFLAGS=+zxn -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DSPECASM_TARGET_NEXT -DSPECASM_TARGET_NEXT_OPCODES
@@ -79,6 +79,13 @@ SAIMPORT = \
 	peer_next.o \
 	saimport.o
 
+SAMAKE =\
+	samake.o \
+	error.o \
+	state_base.o \
+	peer_file_next.o \
+	peer_next.o
+
 SPECASM: $(SPECASM)
 	$(CC) $(CFLAGS) -m -startup=31 -o $@ $^ -pragma-include:zpragma.inc -subtype=dotn $(CZFLAGS) -create-app
 
@@ -91,9 +98,12 @@ SAEXPORT: $(SAEXPORT)
 SAIMPORT: $(SAIMPORT)
 	$(CC) $(CFLAGS) -startup=30 -o $@ $(SAIMPORT) -subtype=dotn -Cz"--clean" -create-app
 
+SAMAKE: $(SAMAKE)
+	$(CC) $(CFLAGS) -startup=30 -o $@ $(SAMAKE) -subtype=dotn -Cz"--clean" -create-app
+
 clean:
 	- rm -rf specasm *.zip
-	- rm *.X *.o *.bin SPECASM SALINK SAIMPORT SAEXPORT
+	- rm *.X *.o *.bin SPECASM SALINK SAIMPORT SAEXPORT SAMAKE
 
 .PHONY: release
 release:
