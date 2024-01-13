@@ -43,7 +43,6 @@ SAEXPORT = \
 	line_dump_common.o \
 	state_dump.o \
 	peer_file_zx.o \
-	util_print_zx.o \
 	peer_zx.o \
 	saexport.o
 
@@ -56,7 +55,6 @@ SAIMPORT = \
 	line_parse_common.o \
 	state_parse.o \
 	peer_file_zx.o \
-	util_print_zx.o \
 	peer_zx.o \
 	saimport.o
 
