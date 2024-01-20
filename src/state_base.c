@@ -112,7 +112,13 @@ void specasm_load_e(const char *fname)
 		return;
 	}
 
-	if (SPECASM_VERSION >= state.version) {
+	/*
+	 * We use the top bit to distinguish between 48K and Next versions
+	 * of the file format.
+	 */
+
+	if (((SPECASM_VERSION & 0x8000) == (state.version & 0x8000)) &&
+	    (SPECASM_VERSION >= state.version)) {
 		state.version = SPECASM_VERSION;
 		return;
 	}

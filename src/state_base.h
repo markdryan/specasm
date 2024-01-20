@@ -17,8 +17,13 @@
 #ifndef SPECASM_STATE_READ_H
 #define SPECASM_STATE_READ_H
 
-#define SPECASM_VERSION 6
-#define SPECASM_VERSION_STR "v6"
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+#define SPECASM_VERSION 0x8007
+#define SPECASM_VERSION_STR "v7n"
+#else
+#define SPECASM_VERSION 7
+#define SPECASM_VERSION_STR "v7"
+#endif
 
 #include <stdint.h>
 
