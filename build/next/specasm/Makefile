@@ -108,10 +108,8 @@ clean:
 .PHONY: release
 release:
 	- rm -rf release
-	mkdir -p release/specasm
-	cp SPECASM SALINK release/specasm
-	cp ../../../COPYING release/specasm
-	cp SAIMPORT SAEXPORT *.X release/specasm
-	cp ../../../bas/INSTALL release/specasm
-	cp ../../../bas/REMOVE release/specasm
-	cd release && zip -r specasm48.zip specasm
+	mkdir -p release/specasmnext
+	cp SPECASM SALINK SAIMPORT SAEXPORT SAMAKE release/specasmnext
+	cp ../../../bas/next/INSTALL release/specasmnext
+	cp ../../../bas/next/REMOVE release/specasmnext
+	cd release && zip -r specasmnext.zip specasmnext

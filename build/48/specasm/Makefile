@@ -68,7 +68,7 @@ SAMAKE =\
 
 specasm.tap: $(SPECASM)
 	$(CC) $(CFLAGS) -zorg=24310 -startup=31 -o specasm-bare $^ -create-app
-	cat ../../../bas/SPECLD.TAP specasm-bare.tap > specasm.tap
+	cat ../../../bas/48/SPECLD.TAP specasm-bare.tap > specasm.tap
 
 salink.tap: $(SALINK)
 	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o salink $^ -create-app
@@ -93,6 +93,6 @@ release:
 	cp specasm.tap salink.tap release/specasm
 	cp ../../../COPYING release/specasm
 	cp SAMAKE SAIMPORT SAEXPORT *.X release/specasm
-	cp ../../../bas/INSTALL release/specasm
-	cp ../../../bas/REMOVE release/specasm
+	cp ../../../bas/48/INSTALL release/specasm
+	cp ../../../bas/48/REMOVE release/specasm
 	cd release && zip -r specasm48.zip specasm
