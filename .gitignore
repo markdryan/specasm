@@ -26,6 +26,8 @@ SAMAKE.X
 build.sh
 compile.sh
 !build/48/specasm/
+!bas/48/*.TAP
+!bas/*.TAP
 build/48/specasm/release/
 !build/next/specasm/
 build/next/specasm/release/

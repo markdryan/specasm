@@ -71,7 +71,8 @@ specasm.tap: $(SPECASM)
 	cat ../../../bas/48/SPECLD.TAP specasm-bare.tap > specasm.tap
 
 salink.tap: $(SALINK)
-	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o salink $^ -create-app
+	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o salink-bare $^ -Cz"--noloader" -create-app
+	cat ../../../bas/48/LINKLD.TAP salink-bare.tap > salink.tap
 
 SAEXPORT: $(SAEXPORT)
 	$(CC) $(CFLAGS) -startup=30 -o $@ $(SAEXPORT) -subtype=dotx -Cz"--clean" -create-app
