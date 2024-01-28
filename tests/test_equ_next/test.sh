@@ -49,7 +49,7 @@ if [ "$word" != "04 02" ]; then
 fi
 
 word=`od -An -j24 -tx1 -N2 equ | xargs`
-if [ "$word" != "10 01" ]; then
+if [ "$word" != "01 10" ]; then
     echo "push =(Size*17)"
     exit 1
 fi

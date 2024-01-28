@@ -354,6 +354,32 @@ static void prv_eval_equ_16bit_e(specasm_line_t *line, salink_obj_t *obj,
 	*((uint16_t *)&line->data.op_code[loc]) = exp;
 }
 
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+static void prv_eval_equ_push_imm_e(specasm_line_t *line, salink_obj_t *obj,
+				    unsigned int line_no)
+{
+	int16_t exp;
+	uint8_t exp_rev[2];
+
+	/*
+	 * The push imm instruction is weird in that the immediate is encoded
+	 * in big endian format.  If we're dealing with an expression this means
+	 * that the expression id will be in byte 3 and not byte 2 as one might
+	 * expect.
+	 *
+	 * We also need to make sure we reverse the bytes of the evaluated
+	 * expression.
+	 */
+
+	exp = prv_eval_equ_label(line, obj, line_no, line->data.op_code[3]);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	memcpy(exp_rev, &exp, 2);
+	line->data.op_code[2] = exp_rev[1];
+	line->data.op_code[3] = exp_rev[0];
+}
+#endif
+
 static void prv_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
 				    unsigned int line_no)
 {
@@ -470,7 +496,7 @@ static void prv_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
 		prv_eval_equ_8bit_e(line, obj, line_no, 2);
 		break;
 	case SPECASM_LINE_TYPE_PUSH:
-		prv_eval_equ_16bit_e(line, obj, line_no, 2);
+		prv_eval_equ_push_imm_e(line, obj, line_no);
 		break;
 #endif
 	default:
