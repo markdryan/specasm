@@ -14,14 +14,14 @@
  * limitations under the License.
 */
 
-#include <stdint.h>
 #include <arch/zxn.h>
+#include <stdint.h>
 
 #include "salink.h"
 
-#define SALINK_NEXT_EXPRESSION_BANK ((43<<1)+1)
-#define SALINK_NEXT_MAP_BANK ((44<<1)+1)
-#define SALINK_NEXT_LINK_OBJ_BANK ((45<<1)+1)
+#define SALINK_NEXT_EXPRESSION_BANK ((43 << 1) + 1)
+#define SALINK_NEXT_MAP_BANK ((44 << 1) + 1)
+#define SALINK_NEXT_LINK_OBJ_BANK ((45 << 1) + 1)
 
 extern unsigned char _z_page_table[];
 
@@ -78,4 +78,3 @@ void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
 	salink_equ_eval_global_banked_e(obj, global, label, depth);
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_LINK_OBJ_BANK]);
 }
-

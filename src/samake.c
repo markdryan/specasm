@@ -15,8 +15,8 @@
 */
 
 #include <inttypes.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -75,11 +75,11 @@ static uint8_t prv_parse_obj_e(const char *fname)
 		if (!bin_name[0] && ((line->type == SPECASM_LINE_TYPE_LL) ||
 				     (line->type == SPECASM_LINE_TYPE_SL))) {
 			if (line->type == SPECASM_LINE_TYPE_LL)
-				str = specasm_state_get_long_e(
-					line->data.label);
+				str =
+				    specasm_state_get_long_e(line->data.label);
 			else
-				str = specasm_state_get_short_e(
-					line->data.label);
+				str =
+				    specasm_state_get_short_e(line->data.label);
 			if (err_type != SPECASM_ERROR_OK)
 				return 0;
 			if (strcmp(str, "Main"))
@@ -95,9 +95,9 @@ static uint8_t prv_parse_obj_e(const char *fname)
 			sa = *((uint16_t *)&line->data.op_code[0]);
 			org_address = sa;
 			got_org = 1;
-			(void) utoa(sa, start_address, 10);
+			(void)utoa(sa, start_address, 10);
 			sa--;
-			(void) utoa(sa, clear_address, 10);
+			(void)utoa(sa, clear_address, 10);
 			if (bin_name[0])
 				return 1;
 		}
@@ -180,12 +180,12 @@ static uint8_t *prv_write_address(uint8_t *ptr, const char *address)
 	*ptr++ = '"';
 	memcpy(ptr, address, 5);
 	ptr += 5;
-	*ptr++ = '"';;
+	*ptr++ = '"';
 
 	return ptr;
 }
 
-static void prv_make_basic_file(uint8_t star, const char* code_name,
+static void prv_make_basic_file(uint8_t star, const char *code_name,
 				uint8_t code_name_len)
 {
 	uint16_t line_len;
@@ -193,7 +193,7 @@ static void prv_make_basic_file(uint8_t star, const char* code_name,
 
 	basic_buf[1] = 0xa;
 	basic_buf[4] = 0xfd; /* CLEAR */
-	(void) prv_write_address(&basic_buf[5], clear_address);
+	(void)prv_write_address(&basic_buf[5], clear_address);
 	basic_buf[13] = ':';
 	basic_buf[14] = 0xef; /* LOAD */
 	ptr = &basic_buf[15];
@@ -220,7 +220,7 @@ static void prv_make_basic_file(uint8_t star, const char* code_name,
 
 	line_len = ptr - &basic_buf[4];
 	memcpy(&basic_buf[2], &line_len, sizeof(uint16_t));
-	basic_prog_len = (uint16_t) (ptr - basic_buf);
+	basic_prog_len = (uint16_t)(ptr - basic_buf);
 }
 
 static void prv_make_3dos_header(void)
@@ -265,14 +265,14 @@ static specasm_handle_t prv_open_bin_e(uint16_t *bin_size)
 		goto close_in_f;
 	}
 
-	if (real_bin_size + (uint32_t) org_address > 0xffff) {
+	if (real_bin_size + (uint32_t)org_address > 0xffff) {
 		err_type = SAMAKE_ERROR_BIN_TOO_BIG;
 		printf("%s too big (%" PRIu32 " bytes) for org %" PRIu16 "\n",
 		       bin_name, real_bin_size, org_address);
 		goto close_in_f;
 	}
 
-	*bin_size = (uint16_t) real_bin_size;
+	*bin_size = (uint16_t)real_bin_size;
 
 	return in_f;
 
@@ -370,8 +370,8 @@ static void prv_make_code_header(uint16_t bin_size)
 
 	container.tap_block[0] = 0x13; /* Header len. */
 	container.tap_block[1] = 0;
-	container.tap_block[2] = 0;    /* Flag byte, 0 = header */
-	container.tap_block[3] = 3;    /* Type byte, 0 = program */
+	container.tap_block[2] = 0; /* Flag byte, 0 = header */
+	container.tap_block[3] = 3; /* Type byte, 0 = program */
 
 	/* Copy the name of the BASIC file, we'll just use the bin file */
 
@@ -509,7 +509,7 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 
 int main(int argc, char *argv[])
 {
-	const char* dir = ".";
+	const char *dir = ".";
 	uint8_t target_type = SAMAKE_TARGET_TYPE_BAS;
 	int ret = 0;
 

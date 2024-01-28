@@ -279,8 +279,8 @@ static uint8_t prv_parse_add_e(const char *args, specasm_line_t *line,
 		if (opi > 0)
 			return 0;
 		err_type = SPECASM_ERROR_OK;
-		args = specasm_parse_word_imm_or_exp_e(args, line, &val,
-						       &flags);
+		args =
+		    specasm_parse_word_imm_or_exp_e(args, line, &val, &flags);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 		op_code = &line->data.op_code[0];
@@ -740,7 +740,7 @@ static uint8_t prv_parse_im_e(const char *args, specasm_line_t *line,
 	const char *args2;
 
 	args2 = specasm_parse_byte_imm_or_exp_e(args, line, &val,
-					    &line->data.op_code[2]);
+						&line->data.op_code[2]);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
@@ -1105,7 +1105,8 @@ static uint8_t prv_parse_nextreg_e(const char *args, specasm_line_t *line,
 	args2 = args + specasm_parse_reg_e(args, &reg, &off, &flags);
 	if (err_type != SPECASM_ERROR_OK) {
 		err_type = SPECASM_ERROR_OK;
-		args = specasm_get_byte_imm_e(args, &line->data.op_code[3], &flags);
+		args = specasm_get_byte_imm_e(args, &line->data.op_code[3],
+					      &flags);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 		specasm_line_set_format2(line, flags);
@@ -1265,7 +1266,7 @@ static uint8_t prv_parse_rst_e(const char *args, specasm_line_t *line,
 	const char *start = args;
 
 	args = specasm_parse_byte_imm_or_exp_e(args, line, &val,
-					   &line->data.op_code[1]);
+					       &line->data.op_code[1]);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
@@ -1413,8 +1414,8 @@ static uint8_t prv_parse_test_e(const char *args, specasm_line_t *line,
 	op_code = &line->data.op_code[0];
 	op_code[0] = 0xED;
 	op_code[1] = 0x27;
-	args2 =
-	    specasm_parse_byte_imm_or_exp_e(args, line, &op_code[2], &op_code[2]);
+	args2 = specasm_parse_byte_imm_or_exp_e(args, line, &op_code[2],
+						&op_code[2]);
 	specasm_line_set_size(line, 2);
 
 	return args2 - args;

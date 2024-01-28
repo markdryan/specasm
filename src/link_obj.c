@@ -509,7 +509,6 @@ static void prv_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
 	specasm_line_set_addr_type(line, SPECASM_FLAGS_ADDR_NUM);
 }
 
-
 static uint8_t prv_add_label_e(salink_obj_t *obj, uint16_t size, uint8_t type,
 			       uint8_t id, uint16_t line_no)
 {

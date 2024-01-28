@@ -50,7 +50,7 @@ int main(void)
 	specasm_init_dump_table();
 
 	memset(&mode, 0, sizeof(mode));
-	(void) esx_ide_mode_set(&mode);
+	(void)esx_ide_mode_set(&mode);
 
 	zx_border(SPECASM_LABEL_BORDER);
 	zx_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);

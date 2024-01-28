@@ -21,8 +21,8 @@
 #include "line_parse_common.h"
 #include "state.h"
 
-const char *specasm_parse_jump_label_e(const char *args,
-				       specasm_line_t *line, uint8_t *label)
+const char *specasm_parse_jump_label_e(const char *args, specasm_line_t *line,
+				       uint8_t *label)
 {
 	uint8_t long_label;
 	uint8_t i = 0;
@@ -114,8 +114,8 @@ on_error:
 }
 
 const char *specasm_parse_word_imm_or_exp_e(const char *args,
-					    specasm_line_t *line,
-					    uint16_t *val, uint8_t *flags)
+					    specasm_line_t *line, uint16_t *val,
+					    uint8_t *flags)
 {
 	uint8_t label;
 
@@ -135,9 +135,8 @@ const char *specasm_parse_word_imm_or_exp_e(const char *args,
 	return args;
 }
 
-const char *
-specasm_parse_label_or_exp_e(const char *args, specasm_line_t *line,
-			     uint8_t *label)
+const char *specasm_parse_label_or_exp_e(const char *args, specasm_line_t *line,
+					 uint8_t *label)
 {
 	const char *args2;
 
@@ -403,8 +402,8 @@ on_error:
 	return NULL;
 }
 
-const char *specasm_get_byte_imm_ind_e(specasm_line_t *line,
-				       const char *args, uint8_t *val)
+const char *specasm_get_byte_imm_ind_e(specasm_line_t *line, const char *args,
+				       uint8_t *val)
 {
 	long v;
 	uint8_t flags;
@@ -455,8 +454,8 @@ const char *specasm_get_byte_imm_ind_e(specasm_line_t *line,
 }
 
 const char *specasm_parse_byte_imm_or_exp_e(const char *args,
-					    specasm_line_t *line,
-					    uint8_t *val, uint8_t *label)
+					    specasm_line_t *line, uint8_t *val,
+					    uint8_t *label)
 {
 	uint8_t flags;
 

@@ -22,8 +22,8 @@
 #define specasm_sleep_ms(a) z80_delay_ms(a)
 #else
 #include <arch/zxn.h>
-#define specasm_sleep_ms(a) \
-	z80_delay_ms((1 << (ZXN_READ_REG(REG_TURBO_MODE) & 3))*(a))
+#define specasm_sleep_ms(a)                                                    \
+	z80_delay_ms((1 << (ZXN_READ_REG(REG_TURBO_MODE) & 3)) * (a))
 #endif
 #include <z80.h>
 

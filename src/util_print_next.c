@@ -29,6 +29,8 @@
 
 static uint8_t specasm_font[SPECASM_NEXT_NUM_CHARS * 8];
 
+/* clang-format off */
+
 static void prv_write_chars(void) __naked
 {
 __asm
@@ -67,6 +69,8 @@ CHAR_LOOP:
 __endasm;
 }
 
+/* clang-format on */
+
 void specasm_peer_next_copy_chars(void)
 {
 	uint8_t i;
@@ -101,7 +105,7 @@ uint8_t specasm_util_print(const char *str, uint8_t x, uint8_t y, uint8_t attr)
 	bsptr = zx_cxy2saddr(x, y);
 	while (*str) {
 		*aptr++ = attr;
-		ch = *((uint8_t*) str);
+		ch = *((uint8_t *)str);
 		if (ch >= 32 && ch <= 143) {
 			cptr = &specasm_font[(ch - 32) * 8];
 			sptr = bsptr;

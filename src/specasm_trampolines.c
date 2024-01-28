@@ -14,14 +14,14 @@
  * limitations under the License.
 */
 
-#include <stdint.h>
 #include <arch/zxn.h>
+#include <stdint.h>
 
 #include "line.h"
 
-#define SPECASM_NEXT_PARSE_BANK ((43<<1)+1)
-#define SPECASM_NEXT_DUMP_BANK ((44<<1)+1)
-#define SPECASM_NEXT_PARSE_LD_BANK ((45<<1)+1)
+#define SPECASM_NEXT_PARSE_BANK ((43 << 1) + 1)
+#define SPECASM_NEXT_DUMP_BANK ((44 << 1) + 1)
+#define SPECASM_NEXT_PARSE_LD_BANK ((45 << 1) + 1)
 
 extern unsigned char _z_page_table[];
 
@@ -101,4 +101,3 @@ uint8_t specasm_parse_ld_e(const char *args, specasm_line_t *line,
 
 	return e;
 }
-

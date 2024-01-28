@@ -43,7 +43,6 @@ unsigned int obj_file_count;
 salink_global_t globals[MAX_GLOBALS];
 unsigned int global_count;
 
-
 #ifdef SPECASM_TARGET_NEXT
 void specasm_peer_next_copy_chars(void);
 #endif
@@ -136,7 +135,7 @@ int main(int argc, char *argv[])
 	struct esx_mode mode;
 
 	memset(&mode, 0, sizeof(mode));
-	(void) esx_ide_mode_set(&mode);
+	(void)esx_ide_mode_set(&mode);
 
 	/*
 	 * Link at top speed on a spectrum Next.
@@ -149,7 +148,7 @@ int main(int argc, char *argv[])
 	zx_cls(PAPER_WHITE | INK_BLACK);
 #endif
 
-	ret =  salink_link_e();
+	ret = salink_link_e();
 
 #ifdef SPECASM_TARGET_NEXT
 	ZXN_WRITE_REG(REG_TURBO_MODE, turbo);
