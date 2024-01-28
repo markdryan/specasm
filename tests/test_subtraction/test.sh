@@ -2,7 +2,7 @@
 
 set -e
 
-if [ -z "${SPECASM_TARGET_NEXT_OPCODES}" ]; then
+if [ ! -z "${SPECASM_TARGET_NEXT_OPCODES}" ]; then
     exit 0
 fi
 
