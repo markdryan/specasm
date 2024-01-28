@@ -1,6 +1,6 @@
 # Specasm
 
-Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums with an ESXDOS SD card solution.  It includes an editor, an assembler and a linker.
+Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums with an ESXDOS SD card solution, and the ZX Spectrum Next.  It includes an editor, an assembler and a linker.
 
 ## Editor/Assembler
 
@@ -74,7 +74,7 @@ The bottom row of the editors display is the status row.  It has three fields.  
 
 #### Mnemonics
 
-The assembler support all the documented z80 instructions.  All mnemonics are entered in lower case.  Commas, ',', are used to separate multiple arguments.  The condition codes for jump and call instructions are separated from the main mnemonic by a space and from the target address by a comma.  For example,
+The assembler support all the documented z80 instructions.  In addition, the ZX Spectrum Next version of Specasm supports all the Z80n instructions.  All mnemonics are entered in lower case.  Commas, ',', are used to separate multiple arguments.  The condition codes for jump and call instructions are separated from the main mnemonic by a space and from the target address by a comma.  For example,
 
 ```
 add a, c
@@ -261,58 +261,67 @@ The first two call statements in this example generate the same machine code ins
 
 The following instructions support expressions.
 
-| Instruction / Directive  |
-|--------------------------|
-| adc a, =expression       |
-| add a, =expression       |
-| and =expression          |
-| call =expression         |
-| cp =expression           |
-| jp =expression           |
-| in a, (=expression)      |
-| ld a, =expression        |
-| ld a, (=expression)      |
-| ld (=expression), a      |
-| ld b, =expression        |
-| ld c, =expression        |
-| ld d, =expression        |
-| ld e, =expression        |
-| ld h, =expression        |
-| ld l, =expression        |
-| ld bc, =expression       |
-| ld de, =expression       |
-| ld hl, =expression       |
-| ld hl, (=expression)     |
-| ld (hl), =expression     |
-| ld (=expression), hl     |
-| ld sp, =expression       |
-| out (=expression), a     |
-| or =expression           |
-| rst =expression          |
-| sbc a, =expression       |
-| sub a, expression        |
-| xor =expressio           |
-| bit =expression, [a-l]   |
-| bit =expression, (hl)    |
-| ld ix, =expression       |
-| ld iy, =expression       |
-| ld bc, (=expression)     |
-| ld (=expression), bc     |
-| ld de, (=expression)     |
-| ld (=expression), de     |
-| ld ix, (=expression)     |
-| ld (=expression), ix     |
-| ld iy, (=expression)     |
-| ld (=expression), iy     |
-| ld (=expression), sp     |
-| ld sp, (=expression)     |
-| im =expression           |
-| res =expression, [a-l]   |
-| res =expression, (hl)    |
-| set =expression, [a-l]   |
-| set =expression, (hl)    |
-| dw =expression           |
-| db =expression           |
+| Instruction / Directive       |
+|-------------------------------|
+| adc a, =expression            |
+| add a, =expression            |
+| add hl, =expression (nx)      |
+| add de, =expression (nx)      |
+| add bc, =expression (nx)      |
+| and =expression               |
+| call =expression              |
+| cp =expression                |
+| jp =expression                |
+| in a, (=expression)           |
+| ld a, =expression             |
+| ld a, (=expression)           |
+| ld (=expression), a           |
+| ld b, =expression             |
+| ld c, =expression             |
+| ld d, =expression             |
+| ld e, =expression             |
+| ld h, =expression             |
+| ld l, =expression             |
+| ld bc, =expression            |
+| ld de, =expression            |
+| ld hl, =expression            |
+| ld hl, (=expression)          |
+| ld (hl), =expression          |
+| ld (=expression), hl          |
+| ld sp, =expression            |
+| out (=expression), a          |
+| or =expression                |
+| rst =expression               |
+| sbc a, =expression            |
+| sub a, expression             |
+| xor =expressio                |
+| bit =expression, [a-l]        |
+| bit =expression, (hl)         |
+| ld ix, =expression            |
+| ld iy, =expression            |
+| ld bc, (=expression)          |
+| ld (=expression), bc          |
+| ld de, (=expression)          |
+| ld (=expression), de          |
+| ld ix, (=expression)          |
+| ld (=expression), ix          |
+| ld iy, (=expression)          |
+| ld (=expression), iy          |
+| ld (=expression), sp          |
+| ld sp, (=expression)          |
+| im =expression                |
+| nextreg =expression, imm (nx) |
+| nextreg =expression, a (nx)   |
+| push =expression (nx)         |
+| res =expression, [a-l]        |
+| res =expression, (hl)         |
+| set =expression, [a-l]        |
+| set =expression, (hl)         |
+| test =expression (nx)         |
+| dw =expression                |
+| db =expression                |
+
+The (nx) suffix indicates that the instruction is a Spectrum Next specific instruction.  The nextreg instruction only allows an expression in the first parameter.
 
 Expressions cannot be used as an offset in combination with an index register, e.g.,
 
@@ -359,7 +368,7 @@ Here, the expression used in the im statement is invalid as it resolves to a val
 #### Label Subtraction
 
 > **Warning**
-> Label subtraction outside of expressions is deprecated.  This syntax has been rendered redundant by the introduction of expressions in Specasm v5.  It will probably be removed in the future to reclaim the bytes used to implement it.
+> Label subtraction outside of expressions is no longer supported as of Specasm v7.  This syntax was rendered redundant by the introduction of expressions in Specasm v5 and deprecated in that release.  The linker does still support label substraction so any .x files assembled with an earlier version of Specasm can sill be linked and binary compatibility with older versions of Specasm is maintained.  Any instructions in .x files that use label subtraction will be rewritten to use the new expression syntax when loaded into Specasm's editor.  The remainder of this section exists purely for historical value.
 
 Direct label subtraction is supported in certain instructions and directives without the use of an expression.
 
@@ -421,7 +430,7 @@ The assembler provides three directives that can be used to store numeric consta
 | ds        | Encodes 1 or more copies of a given byte |
 
 
-Numbers can be specified as hex digits, signed and unsigned numbers or as characters.  There's one restriction here though.  If you specify multiple numbers on the same line the numbers must be of the same format, e.g., all hex digits or all characters.  Unsigned and singed numbers can be mixed as long as all the numbers can be represented by a signed number.  Here are some examples that are allowed
+Numbers can be specified as hex digits, signed and unsigned numbers or as characters.  There's one restriction here though.  If you specify multiple numbers on the same line the numbers must be of the same format, e.g., all hex digits or all characters.  Unsigned and signed numbers can be mixed as long as all the numbers can be represented by a signed number.  Here are some examples that are allowed
 
 ```
 db 10
@@ -442,7 +451,7 @@ db -1, -2, -3, $20
 ; Mixing characters and decimals
 db 'A', 1, 2
 ```
-In addition to encoding numbers the **dw** directive can be used to encode the address of a label and also the difference between the addresses of two labels.  When used in this format, the **dw** directive can only contain a single argument.
+In addition to encoding numbers the **dw** directive can be used to encode the address of a label.  When used in this format, the **dw** directive can only contain a single argument.
 
 For example,
 
@@ -450,10 +459,10 @@ For example,
 dw data
 ```
 
-will encode the address of the label data directly into the program.  The address is encoded at link time when salink has figured out the final address of the label.
+will encode the address of the label data directly into the program.  The address is encoded at link time when salink has figured out the final address of the label.  To encode the difference between two labels the expression syntax must be used.
 
 ```
-dw end-start
+dw =end-start
 .start
 dw 10, 10
 db 1
@@ -462,10 +471,10 @@ db 1
 
 will store the value 5 in a 16 bit word in the final program.
 
-The **db** directive cannot be used to encode the address of a label as the address is unlikely to fit into a single byte.  It can however, be used to encode the difference between two labels providing the difference does fit into a byte.  If the labels are too far apart an error will be generated at link time.  When used in this form, no other numbers can follow the label subtraction on the same line.  For example,
+The **db** directive cannot be used to encode the address of a label as the address is unlikely to fit into a single byte.  It can however, be used to encode the difference between two labels using the expression syntax, providing the difference does fit into a byte.  If the labels are too far apart an error will be generated at link time.  When used in this form, no other numbers can follow the label subtraction on the same line.  For example,
 
 ```
-db end-start
+db =end-start
 .start
 dw 10, 10
 db 1
@@ -523,6 +532,10 @@ db 1
 
 Once assembled and linked our binary would be 7 bytes in size.  The first 6 bytes would be 0s and the final byte would contain a 1.
 
+#### NBRK
+
+On the ZX Spectrum Next a pseudo instruction called NBRK is supported.  This generates the byte code sequence for NEXTREG 2, 8 which launches the Next's built in debugger.
+
 ## Limitations
 
 ### Strings
@@ -542,11 +555,14 @@ CLEAR 32767
 .saimport big.s
 ```
 
+> [!TIP]
+> Note the CLEAR statement is not needed on the ZX Spectrum Next as .saexport and .saimport are implemented as dotn files.
+
 A future 128kb version of Specasm will incorporate the import and export commands directly in the editor and will also contain a 'gc' command to allow the garbage collection to be performed in one simple step.
 
 ### Source files
 
-Specasm edits .x files, which are not text files. They're annotated object files, in which all the instructions are pre-assembled. This approach has some advantages and some disadvantages. The advantages are fast load and save times as there's no parsing required, and fast build times as the build, performed by the .salink command, consists of only one stage, the linker. The disadvantages are that it's more cumbersome to submit source files to source control as the source files are not text files. Separate tools need to be run, saimport and saexport that convert between .x files to .s files, before source code and be moved to and from source control. The other disadvantage is that there's a limited amount of memory per line (4 bytes). This means that it's not easy to support a complex expression syntax when specifying the arguments of instructions. In practice, this isn't much of an issue though as there isn't really enough memory to support such expressions anyway.
+Specasm edits .x files, which are not text files. They're annotated object files, in which all the instructions are pre-assembled. This approach has some advantages and some disadvantages. The advantages are fast load and save times as there's no parsing required, and fast build times as the build, performed by the .salink command, consists of only one stage, the linker. The disadvantages are that it's more cumbersome to submit source files to source control as the source files are not text files. Separate tools need to be run, saimport and saexport that convert between .x files to .s files, before source code and be moved to and from source control. The other disadvantage is that there's a limited amount of memory per line (5 bytes) and it's not possible to encode all the formatting and expression information into just five bytes.  For this reason Specasm places a restrictions on how some instructions and expressions can be written, e.g, expressions cannot be used as offsets to an index register.
 
 To convert a .s file, a text file containing specasm code, into a .x file you need to use the .saimport dotx command.  It accepts one or more command line parameters, which must be the paths of .s files.  It will convert each of these .s files to .x files.  For example, to convert the file hello.s into hello.x copy hello.s to the spectrum and type
 
@@ -555,7 +571,10 @@ CLEAR 32767
 .saimport *.s
 ```
 
-The reverse process can be performed using the .saexport dotx command.  Note the use of the CLEAR statement.  This needs to be executed before the .saimport or .saexport commands as these are dotx commands and part of their code is loaded and executed from BASIC's memory.  To ensure there's no interference between BASIC and the dotx commands, the CLEAR command must be issued before their use.  If you're executing a sequence of .saimport/.saexport commands, You only need to issue the CLEAR command once.
+> [!TIP]
+> Note the CLEAR statement is not needed on the ZX Spectrum Next.
+
+The reverse process can be performed using the .saexport command.  Note the use of the CLEAR statement.  This needs to be executed on the 48Kb or 128Kb Spectrum before the .saimport or .saexport commands as these are dotx commands and part of their code is loaded and executed from BASIC's memory.  To ensure there's no interference between BASIC and the dotx commands, the CLEAR command must be issued before their use.  If you're executing a sequence of .saimport/.saexport commands, You only need to issue the CLEAR command once.  The CLEAR statement is not needed at all on the ZX Spectrum Next which implements saexport and saimport using dotn commands.
 
 ## Program structure
 
@@ -602,7 +621,7 @@ org 23760
 
 will cause the linked program to be assembled at 23760.
 
-The linker doesn't currently create a loader program or a tap file so this needs to be done manually.  It can be scripted using BASIC and the relevant ESXDOS commands.
+The linker doesn't currently create a loader program or a tap file.  This can however be done using the samake command.
 
 ### Libraries
 
@@ -625,7 +644,36 @@ Here are some examples of their use
 -lib/math.x
 ```
 
+## Creating Loaders with SAMAKE
+
+Salink generates a raw binary file.  Before the binary can be executed, memory needs to be reserved, the binary needs to be loaded into memory at the address at which it was assembled and, finally, it needs to be inovked.  Assuming that the binary was assembled to the default address, i.e., 32768, and is called "bin", this can all be achieved in BASIC as follows.
+
+```
+CLEAR 32767: LOAD * "bin" CODE 32768: RANDOMIZE USR 32768
+```
+
+> [!TIP]
+> Note LOAD * is simply LOAD on the ZX Spectrum Next.
+
+Typing this is a bit cumbersome, and also error prone.  For this reason Specasm includes a tool called samake that can automatically create loaders.
+
+Currently, samake is capable of creating two types of loaders, BASIC loaders with a +3DOS header than can be loaded directly from the SD card, and tap loaders which bundle a BASIC loader and the binary file together in a tap file.
+
+Executing
+
+```
+CLEAR 32767
+.samake
+```
+
+> [!TIP]
+> Note the CLEAR statement is not needed on the ZX Spectrum Next as .samakek is implemented as a dotn file.
+
+will automatically create a BASIC loader.  The name of the loader will be derived from the .x file that contains the .Main label.  The address at which the loader loads the code is defined by the org statement in the x files, or 32768 if no org statement is provided.
+
+Samake takes two optional arguments.  The first argument specifies the type of loader to be created, and can currently be set to either "bas" (the default) or "tap".  The second argument specifies the directory containing the Specasm project.  If the second argument is not specified, samake assumes the current directory.
 
 
+## Versions, Binary and Source code Compatibility
 
-
+There are two separate versions of Specasm, one for the 48kb and 128kb ZX Spectrums and one for the ZX Spectrum Next.  The two versions are incompatible with each other.  The 48kb version will not work on the Next and the Next version will not work on an original Spectrum.  The two versions are also binary incompatible with each other.  .x files created on the ZX Spectrum Next cannot be loaded by Specasm on the 48kb and vice-versa.  Both versions of Specasm are source code compatible however, provided that the sources do not contain any of the Z80N instructions.  The same .s file can be assembled by .saimport on both the Next and the 48kb Spectrum.

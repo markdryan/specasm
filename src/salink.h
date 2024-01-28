@@ -20,6 +20,7 @@
 #include <stdint.h>
 
 #include "line.h"
+#include "peer_file.h"
 
 #define MAX_FILES 64
 #define MAX_GLOBALS 128
@@ -111,4 +112,30 @@ unsigned int salink_find_local_label_e(const char *str, int len,
 unsigned int salink_find_global_label_e(const char *str, salink_obj_t *obj);
 const char *salink_get_label_str_e(uint8_t id, uint8_t label_type);
 
+extern unsigned int buf_count;
+
+#define MAX_PENDING_X_FILES (MAX_BUFFER_SIZE / (MAX_FNAME + 1))
+#define SALINK_FIELD_COL 1
+#define SALINK_VAL_COL 15
+#define SALINK_FIELD_NAME_ROW 2
+#define SALINK_FIELD_STARTADDR_ROW 4
+#define SALINK_FIELD_FILES_ROW 6
+#define SALINK_FIELD_GLOBALS_ROW 8
+#define SALINK_FIELD_SIZE_ROW 10
+#define SALINK_FIELD_MAP_ROW 12
+#define SALINK_FIELD_MAX_ROW SALINK_FIELD_MAP_ROW
+#define SALINK_STATUS_ROW SALINK_FIELD_MAX_ROW + 2
+
+typedef union {
+	char file_buf[MAX_BUFFER_SIZE];
+	char fname[MAX_PENDING_X_FILES][MAX_FNAME + 1];
+} salink_buf_t;
+
+extern salink_buf_t buf;
+extern char map_name[MAX_FNAME + 1];
+extern unsigned int global_count;
+extern salink_obj_t obj_files[MAX_FILES];
+extern unsigned int obj_file_count;
+extern char image_name[MAX_FNAME + 1];
+extern unsigned int bin_size;
 #endif

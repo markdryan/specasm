@@ -30,6 +30,13 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "align", SPECASM_LINE_TYPE_ALIGN, },
 	{ "and", SPECASM_LINE_TYPE_AND, },
 	{ "bit", SPECASM_LINE_TYPE_BIT, },
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ "brlc", SPECASM_LINE_TYPE_BRLC, },
+	{ "bsla", SPECASM_LINE_TYPE_BSLA, },
+	{ "bsra", SPECASM_LINE_TYPE_BSRA, },
+	{ "bsrf", SPECASM_LINE_TYPE_BSRF, },
+	{ "bsrl", SPECASM_LINE_TYPE_BSRL, },
+#endif
 	{ "call", SPECASM_LINE_TYPE_CALL, },
 	{ "ccf", SPECASM_LINE_TYPE_CCF, },
 	{ "cp", SPECASM_LINE_TYPE_CP, },
@@ -61,10 +68,28 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "ld", SPECASM_LINE_TYPE_LD, },
 	{ "ldd", SPECASM_LINE_TYPE_LDD, },
 	{ "lddr", SPECASM_LINE_TYPE_LDDR, },
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ "lddrx", SPECASM_LINE_TYPE_LDDRX, },
+	{ "lddx", SPECASM_LINE_TYPE_LDDX, },
+#endif
 	{ "ldi", SPECASM_LINE_TYPE_LDI, },
 	{ "ldir", SPECASM_LINE_TYPE_LDIR, },
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ "ldirx", SPECASM_LINE_TYPE_LDIRX, },
+	{ "ldix", SPECASM_LINE_TYPE_LDIX, },
+	{ "ldpirx", SPECASM_LINE_TYPE_LDPIRX, },
+	{ "ldws", SPECASM_LINE_TYPE_LDWS, },
+#endif
 	{ "map", SPECASM_LINE_TYPE_MAP, },
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ "mirror", SPECASM_LINE_TYPE_MIRROR, },
+	{ "mul", SPECASM_LINE_TYPE_MUL, },
+	{ "nbrk", SPECASM_LINE_TYPE_NBRK, },
+#endif
 	{ "neg", SPECASM_LINE_TYPE_NEG, },
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ "nextreg", SPECASM_LINE_TYPE_NEXTREG, },
+#endif
 	{ "nop", SPECASM_LINE_TYPE_NOP, },
 	{ "or", SPECASM_LINE_TYPE_OR, },
 	{ "org", SPECASM_LINE_TYPE_ORG, },
@@ -73,6 +98,11 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "out", SPECASM_LINE_TYPE_OUT, },
 	{ "outd", SPECASM_LINE_TYPE_OUTD, },
 	{ "outi", SPECASM_LINE_TYPE_OUTI, },
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ "outinb", SPECASM_LINE_TYPE_OUTINB, },
+	{ "pixelad", SPECASM_LINE_TYPE_PIXELAD, },
+	{ "pixeldn", SPECASM_LINE_TYPE_PIXELDN, },
+#endif
 	{ "pop", SPECASM_LINE_TYPE_POP, },
 	{ "push", SPECASM_LINE_TYPE_PUSH, },
 	{ "res", SPECASM_LINE_TYPE_RES, },
@@ -93,10 +123,17 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "sbc", SPECASM_LINE_TYPE_SBC, },
 	{ "scf", SPECASM_LINE_TYPE_SCF, },
 	{ "set", SPECASM_LINE_TYPE_SET, },
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ "setae", SPECASM_LINE_TYPE_SETAE, },
+#endif
 	{ "sla", SPECASM_LINE_TYPE_SLA, },
 	{ "sra", SPECASM_LINE_TYPE_SRA, },
 	{ "srl", SPECASM_LINE_TYPE_SRL, },
 	{ "sub", SPECASM_LINE_TYPE_SUB, },
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{ "swapnib", SPECASM_LINE_TYPE_SWAPNIB, },
+	{ "test", SPECASM_LINE_TYPE_TEST, },
+#endif
 	{ "xor", SPECASM_LINE_TYPE_XOR, },
 };
 

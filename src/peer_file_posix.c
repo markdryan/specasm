@@ -81,3 +81,9 @@ uint8_t specasm_readdir(specasm_dir_t dir, specasm_dirent_t *dirent)
 
 	return 1;
 }
+
+void specasm_file_stat_e(specasm_handle_t f, specasm_stat_t *buf)
+{
+	if (fstat(fileno(f), buf))
+		err_type = SPECASM_ERROR_READ;
+}

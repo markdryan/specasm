@@ -1,10 +1,13 @@
 #!/bin/bash
 
 set -e
-rm subtraction 2>/dev/null 1>&2 || true
-rm *.x 2>/dev/null 1>&2 || true
 
-../../saimport *.s
+if [ ! -z "${SPECASM_TARGET_NEXT_OPCODES}" ]; then
+    exit 0
+fi
+
+rm subtraction 2>/dev/null 1>&2 || true
+
 ../../salink 2>/dev/null 1>&2
 diff=`od -An -tx1 -N3 subtraction | xargs`
 if [ "$diff" != "21 ff 00" ]; then
@@ -32,5 +35,4 @@ if [ "$diff" != "ff" ]; then
 fi
 
 rm subtraction
-rm *.x
 

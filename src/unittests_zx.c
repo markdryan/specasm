@@ -17,8 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <arch/zx.h>
-
 #include "error.h"
 #include "peer.h"
 #include "peer_file.h"
@@ -26,6 +24,13 @@
 #include "test_content.h"
 #include "test_content_zx.h"
 #include "util_print_zx.h"
+
+#ifdef SPECASM_TARGET_NEXT
+#include <arch/zxn.h>
+void specasm_peer_next_copy_chars(void);
+#else
+#include <arch/zx.h>
+#endif
 
 #define UNITTEST_ZX_TEST_LINE 0
 #define UNITTEST_ZX_FORMAT_LINE 1
@@ -312,6 +317,20 @@ static int prv_test_old_version(void)
 
 int main(int argc, char *argv[])
 {
+#ifdef SPECASM_TARGET_NEXT
+	uint8_t turbo;
+
+	/*
+	 * Run tests at top speed on a spectrum Next.
+	 */
+
+	turbo = ZXN_READ_REG(REG_TURBO_MODE);
+	ZXN_WRITE_REG(REG_TURBO_MODE, turbo | 3);
+	zx_cls(PAPER_WHITE | INK_WHITE);
+	specasm_peer_next_copy_chars();
+	zx_cls(PAPER_WHITE | INK_BLACK);
+#endif
+
 	specasm_init_dump_table();
 
 	specasm_error_init(err_type);
@@ -321,6 +340,10 @@ int main(int argc, char *argv[])
 	if (prv_opcode_tests() || prv_format_tests() || prv_bad_tests() ||
 	    prv_test_old_version())
 		return 1;
+
+#ifdef SPECASM_TARGET_NEXT
+	ZXN_WRITE_REG(REG_TURBO_MODE, turbo);
+#endif
 
 	return 0;
 }

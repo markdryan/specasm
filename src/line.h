@@ -92,7 +92,59 @@
 #define SPECASM_LINE_TYPE_DW_SUB 70
 #define SPECASM_LINE_TYPE_LD_IMM_16_SUB 71
 #define SPECASM_LINE_TYPE_LD_IMM_8_SUB 72
+
+/*
+ * Start Spectrum Next instructions.
+ */
+
+/*
+ * This is a real mess. Putting the Next instructions here
+ * means that 48Kb .x files cannot be used on a Next, even
+ * though the Next instruction set is a superset of the 48ks.
+ *
+ * They can't be moved later though as then the type will
+ * overflow when the SPECASM_LINE_TYPE_EXP_ADJ is added when
+ * the instructions appear in an expression.
+ */
+
+/*
+ * We reserve two spare instructions so we can add some new
+ * instructions without breaking backwards compatibility.
+ */
+
+#define SPECASM_LINE_TYPE_NEXT_START (SPECASM_LINE_TYPE_LD_IMM_8_SUB + 3)
+
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+#define SPECASM_LINE_TYPE_LDDRX SPECASM_LINE_TYPE_NEXT_START
+#define SPECASM_LINE_TYPE_LDDX (SPECASM_LINE_TYPE_NEXT_START + 1)
+#define SPECASM_LINE_TYPE_LDIRX (SPECASM_LINE_TYPE_NEXT_START + 2)
+#define SPECASM_LINE_TYPE_LDIX (SPECASM_LINE_TYPE_NEXT_START + 3)
+#define SPECASM_LINE_TYPE_LDPIRX (SPECASM_LINE_TYPE_NEXT_START + 4)
+#define SPECASM_LINE_TYPE_LDWS (SPECASM_LINE_TYPE_NEXT_START + 5)
+#define SPECASM_LINE_TYPE_BRLC (SPECASM_LINE_TYPE_NEXT_START + 6)
+#define SPECASM_LINE_TYPE_BSLA (SPECASM_LINE_TYPE_NEXT_START + 7)
+#define SPECASM_LINE_TYPE_BSRA (SPECASM_LINE_TYPE_NEXT_START + 8)
+#define SPECASM_LINE_TYPE_BSRF (SPECASM_LINE_TYPE_NEXT_START + 9)
+#define SPECASM_LINE_TYPE_BSRL (SPECASM_LINE_TYPE_NEXT_START + 10)
+#define SPECASM_LINE_TYPE_OUTINB (SPECASM_LINE_TYPE_NEXT_START + 11)
+#define SPECASM_LINE_TYPE_SWAPNIB (SPECASM_LINE_TYPE_NEXT_START + 12)
+#define SPECASM_LINE_TYPE_PIXELAD (SPECASM_LINE_TYPE_NEXT_START + 13)
+#define SPECASM_LINE_TYPE_PIXELDN (SPECASM_LINE_TYPE_NEXT_START + 14)
+#define SPECASM_LINE_TYPE_SETAE (SPECASM_LINE_TYPE_NEXT_START + 15)
+#define SPECASM_LINE_TYPE_TEST (SPECASM_LINE_TYPE_NEXT_START + 16)
+#define SPECASM_LINE_TYPE_MIRROR (SPECASM_LINE_TYPE_NEXT_START + 17)
+#define SPECASM_LINE_TYPE_MUL (SPECASM_LINE_TYPE_NEXT_START + 18)
+#define SPECASM_LINE_TYPE_NEXTREG (SPECASM_LINE_TYPE_NEXT_START + 19)
+#define SPECASM_LINE_TYPE_NBRK (SPECASM_LINE_TYPE_NEXT_START + 20)
+
+#define SPECASM_LINE_TYPE_SIMPLE_MAX SPECASM_LINE_TYPE_NBRK
+#else
 #define SPECASM_LINE_TYPE_SIMPLE_MAX SPECASM_LINE_TYPE_LD_IMM_8_SUB
+#endif
+/*
+ * End Spectrum Next instructions.
+ */
+
 #define SPECASM_LINE_TYPE_DS (SPECASM_LINE_TYPE_SIMPLE_MAX + 1)
 #define SPECASM_LINE_TYPE_ORG (SPECASM_LINE_TYPE_SIMPLE_MAX + 2)
 #define SPECASM_LINE_TYPE_MAP (SPECASM_LINE_TYPE_SIMPLE_MAX + 3)
@@ -124,7 +176,7 @@
 
 #define SPECASM_LINE_TYPE_EXP_ADJ 160
 
-#define SPECASM_MAX_MNEMOM 5
+#define SPECASM_MAX_MNEMOM 7
 #define SPECASM_MAX_LINES 512
 #define SPECASM_MAX_ROWS 23
 #define SPECASM_LINE_MAX_LEN 32
@@ -208,11 +260,20 @@
  * res =expression, (hl)
  * set =expression, [a-l]
  * set =expression, (hl)
-
  *
  * In these cases the label id in op_code[2] and set the addr flag
  * to indicate whether it's a long or short label.  op_code[1] is
  * set as though the integer was 0.
+ *
+ * test = expression
+ * nextreg =expression, a
+ * nextreg =expression, imm
+ * add hl, =expression
+ * add de, =expression
+ * add bc, =expression
+ *
+ * In these cases the label id in op_code[2] and set the addr flag
+ * to indicate whether it's a long or short label.
  *
  * db =expression
  * dw =expression
@@ -271,11 +332,12 @@ struct specasm_lines_t_ {
 typedef struct specasm_lines_t_ specasm_lines_t;
 
 void specasm_init_dump_table(void);
-char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags);
 uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 				 specasm_line_t *line);
 uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 			    uint8_t *label1_type);
 uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf);
-
+uint8_t specasm_dump_byte(char *buf, uint8_t v, uint8_t flags);
+uint8_t specasm_dump_word(char *buf, uint16_t v, uint8_t flags);
+char *specasm_dump_index(const uint8_t *op_code, char *buf, uint8_t flags);
 #endif

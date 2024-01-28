@@ -20,8 +20,14 @@ jobs:
       run: |
         ./unittests
         cd tests && ./tests.sh
+    - name: next
+      run: |
+        make clean
+        CFLAGS="-DSPECASM_TARGET_NEXT_OPCODES" make -j
+        ./unittests
+        cd tests && SPECASM_TARGET_NEXT_OPCODES=1 ./tests.sh
     - name: sanatizer
       run: |
         make clean
-        CFLAGS="-g -fsanitize=address -fno-omit-frame-pointer -Wall -Werror" make
+        CFLAGS="-DSPECASM_TARGET_NEXT_OPCODES -g -fsanitize=address -fno-omit-frame-pointer -Wall -Werror" make
         ./unittests

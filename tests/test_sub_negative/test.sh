@@ -1,13 +1,14 @@
 #!/bin/bash
 
 set -e
-rm subtraction 2>/dev/null 1>&2 || true
-rm *.x 2>/dev/null 1>&2 || true
 
-../../saimport *.s
+if [ -z "${SPECASM_TARGET_NEXT_OPCODES}" ]; then
+    exit 0
+fi
+
+rm subtraction 2>/dev/null 1>&2 || true
+
 if ../../salink 2>/dev/null 1>&2 ; then
     exit 1
 fi
-
-rm *.x
 

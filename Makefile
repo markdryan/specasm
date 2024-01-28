@@ -11,7 +11,10 @@ SRCS =\
 	editor.c \
 	editor_tests.c \
 	editor_test_content.c \
+	ld_parse.c \
 	line_parse.c \
+	line_parse_common.c \
+	line_dump_common.c \
 	line_dump.c \
 	peer_unit.c \
 	peer_posix_screen.c \
@@ -28,18 +31,26 @@ POSIX = \
 	peer_text_screen.c
 
 SAIMPORT =\
+	ld_parse.c \
 	line_parse.c \
+	line_parse_common.c \
 	saimport.c \
 	state_parse.c 
 
 SAEXPORT =\
 	line_dump.c \
+	line_dump_common.c \
 	state_dump.c \
 	saexport.c
 
 SALINK =\
+	link_obj.c \
+	map.c \
 	salink.c \
 	expression.c
+
+SAMAKE =\
+	samake.c
 
 TEST_CONTENT_ZX =\
 	test_content.c \
@@ -47,7 +58,7 @@ TEST_CONTENT_ZX =\
 
 CFLAGS += -Wall -MMD -DUNITTESTS -Isrc
 
-all: unittests saimport saexport salink
+all: unittests saimport saexport salink samake
 
 unittests: $(BASE:%.c=%.o) $(COMMON:%.c=%.o) $(SRCS:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -64,8 +75,11 @@ salink: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SALINK:%.c=%.o)
 test_content_zx: $(TEST_CONTENT_ZX:%.c=%.o)
 	$(CC) $(CFLAGS) -o $@ $^
 
+samake: $(BASE:%.c=%.o) $(POSIX:%.c=%.o) $(SAMAKE:%.c=%.o)
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
-	- rm *.d *.o unittests saimport saexport salink
+	- rm *.d *.o unittests saimport saexport salink samake
 
 -include $(BASE:%.c=%.d)
 -include $(COMMON:%.c=%.d)
@@ -74,4 +88,5 @@ clean:
 -include $(SAIMPORT:%.c=%.d)
 -include $(SAEXPORT:%.c=%.d)
 -include $(SALINK:%.c=%.d)
+-include $(SAMAKE:%.c=%.d)
 -include $(TEST_CONTENT_ZX:%.c=%.d)

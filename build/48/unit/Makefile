@@ -1,4 +1,4 @@
-VPATH=../src
+VPATH=../../../src
 
 .PHONY: all
 all: unitzx.tap
@@ -11,9 +11,12 @@ include Make.include
 UNITZX = \
 	error.o \
 	state_base.o \
+	ld_parse.o \
 	line_common.o \
 	line_dump.o \
+	line_dump_common.o \
 	line_parse.o \
+	line_parse_common.o \
 	state_dump.o \
 	state_parse.o \
 	peer_file_zx.o \
@@ -32,6 +35,6 @@ clean:
 tests:
 	- rm -rf tests
 	mkdir tests
-	cd .. && make -f Makefile test_content_zx
-	../test_content_zx tests
+	cd ../../.. && make -f Makefile test_content_zx
+	../../../test_content_zx tests
 	cp unitzx.tap tests

@@ -68,3 +68,37 @@ void specasm_util_clear(uint8_t x, uint8_t y, uint8_t l, uint8_t attr)
 		bsptr++;
 	}
 }
+
+void specasm_text_set_flash(uint8_t x, uint8_t y, uint8_t attr)
+{
+	uint8_t *aptr = zx_cxy2aaddr(x, y);
+
+	*aptr &= ~((uint8_t)FLASH);
+	*aptr |= attr;
+}
+
+void specasm_text_printch(char ch, uint8_t x, uint8_t y, uint8_t attr)
+{
+	uint8_t *cptr;
+	uint8_t *aptr = zx_cxy2aaddr(x, y);
+	uint8_t *sptr = zx_cxy2saddr(x, y);
+	uint8_t i;
+
+	*aptr = attr;
+	cptr = (uint8_t *)15360 + (((uint8_t)ch) * 8);
+	i = 8;
+	do {
+		*sptr = *cptr++;
+		sptr += 256;
+		i--;
+	} while (i != 0);
+}
+
+void specasm_screen_flush(uint16_t peer_last_row)
+{
+	uint8_t *posn_x = (uint8_t *)23688;
+	uint8_t *posn_y = (uint8_t *)23689;
+
+	*posn_x = 33;
+	*posn_y = 24 - peer_last_row;
+}

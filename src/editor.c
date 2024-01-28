@@ -16,6 +16,7 @@
 
 #include "editor.h"
 #include "line.h"
+#include "line_parse_common.h"
 #include "peer.h"
 #include "state.h"
 
@@ -50,6 +51,7 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 	uint8_t label_col;
 	uint8_t com_col;
 	uint8_t data_col;
+	uint8_t equ_col;
 	uint8_t type;
 	const specasm_line_t *line;
 
@@ -58,11 +60,13 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 		label_col = SPECASM_SELECT_COLOUR;
 		com_col = SPECASM_SELECT_COLOUR;
 		data_col = SPECASM_SELECT_COLOUR;
+		equ_col = SPECASM_SELECT_COLOUR;
 	} else {
 		code_col = SPECASM_CODE_COLOUR;
 		label_col = SPECASM_LABEL_COLOUR;
 		com_col = SPECASM_COMMENT_COLOUR;
 		data_col = SPECASM_DATA_COLOUR;
+		equ_col = SPECASM_EQU_COLOUR;
 	}
 
 	line = &state.lines.lines[l];
@@ -77,7 +81,7 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 		return;
 
 	if (type == SPECASM_LINE_TYPE_EQU) {
-		col = SPECASM_EQU_COLOUR;
+		col = equ_col;
 	} else if ((type == SPECASM_LINE_TYPE_LL) ||
 		   (type == SPECASM_LINE_TYPE_SL)) {
 		col = label_col;
