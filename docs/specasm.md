@@ -667,7 +667,7 @@ CLEAR 32767
 ```
 
 > [!TIP]
-> Note the CLEAR statement is not needed on the ZX Spectrum Next as .samakek is implemented as a dotn file.
+> Note the CLEAR statement is not needed on the ZX Spectrum Next as .samake is implemented as a dotn file.
 
 will automatically create a BASIC loader.  The name of the loader will be derived from the .x file that contains the .Main label.  The address at which the loader loads the code is defined by the org statement in the x files, or 32768 if no org statement is provided.
 

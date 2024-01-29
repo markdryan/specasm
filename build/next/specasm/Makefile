@@ -109,6 +109,7 @@ clean:
 release:
 	- rm -rf release
 	mkdir -p release/specasmnext
+	cp ../../../COPYING release/specasmnext
 	cp SPECASM SALINK SAIMPORT SAEXPORT SAMAKE release/specasmnext
 	cp ../../../bas/next/INSTALL release/specasmnext
 	cp ../../../bas/next/REMOVE release/specasmnext
