@@ -617,12 +617,12 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 			reset = 1;
 			current_fname[0] = 0;
 		} else {
+			if (err_type == SPECASM_ERROR_OK)
+				strcpy(current_fname, com);
 			line = row = col = select_end = select_start = 0;
 			specasm_cls(SPECASM_CODE_COLOUR |
 				    SPECASM_LABEL_BACKGROUND);
 			prv_draw_screen(0);
-			if (err_type == SPECASM_ERROR_OK)
-				strcpy(current_fname, com);
 		}
 	} else if (com[0] == 's' && com[1] == ' ') {
 		com = prv_complete_filename_e(com, len);
@@ -1373,6 +1373,47 @@ void specasm_handle_key_press(uint8_t k)
 	else
 		prv_keypress(k);
 }
+
+#ifdef SPECASM_TARGET_NEXT
+void specasm_editor_preload(const char *fname)
+{
+	char *completed_fname;
+	size_t len = strlen(fname);
+
+	if (len > MAX_FNAME) {
+		err_type = SPECASM_ERROR_BAD_FNAME;
+		goto on_error;
+	}
+
+	/*
+	 * We re-use prv_complete_filename_e here to avoid having to
+	 * duplicate the code.  This function expects to be passed a
+	 * buffer (which in effect is a pointer to the start of the
+	 * line_buf buffer), the first character of which is 'l' which it skips.
+	 * So we'll just duplicate this setup so we can re-use the code.
+	 */
+
+	line_buf[0] = ' ';
+	strcpy(&line_buf[1], fname);
+	completed_fname = prv_complete_filename_e(line_buf, len);
+
+	specasm_load_e(completed_fname);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	strcpy(current_fname, completed_fname);
+	line = row = col = select_end = select_start = 0;
+	prv_draw_screen(0);
+
+	return;
+
+on_error:
+	prv_draw_error();
+	specasm_sleep_ms(1000);
+	err_type = SPECASM_ERROR_OK;
+	specasm_editor_reset();
+}
+#endif
 
 void specasm_editor_reset(void)
 {

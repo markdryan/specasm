@@ -6,6 +6,9 @@ Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums with
 
 The editor can be launched from the command line using the .specasm command.  Specasm is an integrated editor/assembler.
 
+> [!TIP]
+> The ZX Spectrum Next version of Specasm allows the name of a single .x file to be passed on the command line.  This file will be automatically loaded into the editor on startup, e.g., .specasm game.x.
+
 The editor allows one single source, .x, file to be edited at any one time.  Each such file can contain a maximum of 512 lines.  Each line can be
 
 - An empty line
