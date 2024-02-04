@@ -280,8 +280,17 @@ static uint8_t prv_parse_include_e(const char *str, char type, uint8_t i,
 		;
 
 	l = (k - i) + 1;
-	line->type = (type == '-') ? SPECASM_LINE_TYPE_INC_SHORT
-				   : SPECASM_LINE_TYPE_INC_SYS_SHORT;
+	switch (type) {
+	case '-':
+		line->type = SPECASM_LINE_TYPE_INC_SHORT;
+		break;
+	case '+':
+		line->type = SPECASM_LINE_TYPE_INC_SYS_SHORT;
+		break;
+	default:
+		line->type = SPECASM_LINE_TYPE_INC_BIN_SHORT;
+		break;
+	}
 
 	memcpy(scratch, &str[i], l);
 	scratch[l] = 0;
@@ -407,7 +416,7 @@ void specasm_parse_line_e(unsigned int l, const char *str)
 
 	if (str[i] == '"' || str[i] == '\'' || str[i] == '@' || str[i] == '#')
 		i = prv_parse_string_e(str, str[i], i + 1, line);
-	else if (str[i] == '+' || str[i] == '-')
+	else if (str[i] == '+' || str[i] == '-' || str[i] == '!')
 		i = prv_parse_include_e(str, str[i], i + 1, line);
 	else
 		i = specasm_parse_mnemomic_e(str, i, line);

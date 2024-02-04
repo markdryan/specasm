@@ -2408,6 +2408,9 @@ const format_test_t format_tests[] = {
 	{"+  sub.x", "+sub.x", SPECASM_LINE_TYPE_INC_SYS_SHORT},
 	{"+a/very/long/path", "+a/very/long/path",
 	 SPECASM_LINE_TYPE_INC_SYS_LONG},
+	{"!  sub.x", "!sub.x", SPECASM_LINE_TYPE_INC_BIN_SHORT},
+	{"!a/very/long/path", "!a/very/long/path",
+	 SPECASM_LINE_TYPE_INC_BIN_LONG},
 	{".size equ 10 * 10", ".size equ 10 * 10", SPECASM_LINE_TYPE_EQU},
 	{".size  equ  10  *  10", ".size equ 10  *  10", SPECASM_LINE_TYPE_EQU},
 	{".longlabel1234 equ longlabel1234", ".longlabel1234 equ longlabel1234",
@@ -2424,6 +2427,7 @@ const bad_test_t bad_tests[] = {
 	{"addd", SPECASM_ERROR_BAD_MNENOMIC },
 	{"-", SPECASM_ERROR_BAD_MNENOMIC },
 	{"+", SPECASM_ERROR_BAD_MNENOMIC },
+	{"!", SPECASM_ERROR_BAD_MNENOMIC },
 	{"$", SPECASM_ERROR_BAD_MNENOMIC },
 	{"ADD", SPECASM_ERROR_BAD_MNENOMIC },
 

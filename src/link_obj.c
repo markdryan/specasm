@@ -162,6 +162,69 @@ static void prv_resolve_relative_address_e(salink_obj_t *obj,
 	line->data.op_code[1] = (int8_t)(diff - 2);
 }
 
+static void prv_flush_write_buf_e(specasm_handle_t out_f)
+{
+	if (buf_count > 0) {
+		specasm_file_write_e(out_f, buf.file_buf, buf_count);
+		if (err_type != SPECASM_ERROR_OK)
+			return;
+		bin_size += buf_count;
+		buf_count = 0;
+	}
+}
+
+static uint16_t prv_write_bin_file_e(specasm_handle_t out_f,
+				     specasm_line_t *line)
+{
+	specasm_handle_t in_f;
+	size_t read;
+	specasm_error_t err;
+	const char *fname;
+	uint16_t file_size = 0;
+
+	/*
+	 * Flush the buffer to make things a bit simpler.
+	 */
+
+	prv_flush_write_buf_e(out_f);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	fname = salink_get_label_str_e(line->data.label, line->type);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	in_f = specasm_file_ropen_e(fname);
+	if (err_type != SPECASM_ERROR_OK) {
+		snprintf(error_buf, sizeof(error_buf), "Can't open %s", fname);
+		err_type = SALINK_ERROR_CANT_OPEN;
+		return 0;
+	}
+
+	do {
+		read = specasm_file_read_e(in_f, buf.file_buf, MAX_BUFFER_SIZE);
+		if (err_type != SPECASM_ERROR_OK)
+			break;
+
+		file_size += read;
+		if (read < MAX_BUFFER_SIZE) {
+			buf_count = read;
+			break;
+		}
+
+		buf_count = MAX_BUFFER_SIZE;
+		prv_flush_write_buf_e(out_f);
+		if (err_type != SPECASM_ERROR_OK)
+			break;
+	} while (1);
+
+	err = err_type;
+	specasm_file_close_e(in_f);
+	err_type = err;
+
+	return file_size;
+}
+
 static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 			     uint16_t size)
 {
@@ -171,12 +234,10 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 	const char *data;
 
 	if ((buf_count + size > MAX_BUFFER_SIZE) ||
-	    ((buf_count > 0) && (line->type == SPECASM_LINE_TYPE_DS))) {
-		specasm_file_write_e(f, buf.file_buf, buf_count);
+	    (line->type == SPECASM_LINE_TYPE_DS)) {
+		prv_flush_write_buf_e(f);
 		if (err_type != SPECASM_ERROR_OK)
 			return;
-		bin_size += buf_count;
-		buf_count = 0;
 	}
 
 	if (line->type <= SPECASM_LINE_TYPE_SIMPLE_MAX) {
@@ -194,11 +255,10 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 				buf_count = to_set;
 				return;
 			}
-			specasm_file_write_e(f, buf.file_buf, MAX_BUFFER_SIZE);
+			buf_count = MAX_BUFFER_SIZE;
+			prv_flush_write_buf_e(f);
 			if (err_type != SPECASM_ERROR_OK)
 				return;
-			bin_size += MAX_BUFFER_SIZE;
-			buf_count = 0;
 			to_set =
 			    size < MAX_BUFFER_SIZE ? size : MAX_BUFFER_SIZE;
 		} while (1);
@@ -290,7 +350,6 @@ static uint16_t prv_align_e(specasm_handle_t f, uint16_t align)
 	buf_count += adjust;
 	return adjust;
 }
-
 
 static uint8_t prv_add_label_e(salink_obj_t *obj, uint16_t size, uint8_t type,
 			       uint8_t id, uint16_t line_no)
@@ -493,6 +552,48 @@ static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj,
 	label->type = SALINK_LABEL_TYPE_EQU_GLOBAL;
 }
 
+static uint16_t prv_inc_bin_size_e(specasm_line_t *line, uint16_t size)
+{
+	const char *fname;
+	specasm_handle_t in_f;
+	specasm_stat_t stat_buf;
+	uint32_t bin_size;
+	uint32_t new_size;
+	specasm_error_t err;
+
+	fname = salink_get_label_str_e(line->data.label, line->type);
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	in_f = specasm_file_ropen_e(fname);
+	if (err_type != SPECASM_ERROR_OK)
+		goto cant_open;
+
+	specasm_file_stat_e(in_f, &stat_buf);
+	err = err_type;
+	specasm_file_close_e(in_f);
+	err_type = err;
+	if (err_type != SPECASM_ERROR_OK)
+		goto cant_open;
+
+	bin_size = specasm_get_file_size(&stat_buf);
+	new_size = bin_size + size;
+
+	if ((new_size < bin_size) || (bin_size > 0xffff)) {
+		snprintf(error_buf, sizeof(error_buf), "no room for %s", fname);
+		err_type = SALINK_ERROR_PROGRAM_TOO_BIG;
+		return 0;
+	}
+
+	return (uint16_t)new_size;
+
+cant_open:
+	snprintf(error_buf, sizeof(error_buf), "Can't open or stat %s", fname);
+	err_type = SALINK_ERROR_CANT_OPEN;
+
+	return 0;
+}
+
 static void prv_parse_obj_e(const char *fname)
 {
 	uint16_t i;
@@ -555,6 +656,9 @@ static void prv_parse_obj_e(const char *fname)
 		} else if ((line->type >= SPECASM_LINE_TYPE_INC_SYS_SHORT) &&
 			   (line->type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
 			prv_add_queued_file_e(fname, "/specasm/", line);
+		} else if ((line->type == SPECASM_LINE_TYPE_INC_BIN_SHORT) ||
+			   (line->type == SPECASM_LINE_TYPE_INC_BIN_LONG)) {
+			size = prv_inc_bin_size_e(line, size);
 		} else {
 			size += specasm_compute_line_size(line);
 		}
@@ -737,6 +841,10 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 		case SPECASM_LINE_TYPE_DJNZ:
 			prv_resolve_relative_address_e(obj, line, i, offset);
 			break;
+		case SPECASM_LINE_TYPE_INC_BIN_SHORT:
+		case SPECASM_LINE_TYPE_INC_BIN_LONG:
+			offset += prv_write_bin_file_e(f, line);
+			continue;
 		default:
 			break;
 		}

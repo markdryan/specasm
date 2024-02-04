@@ -647,6 +647,35 @@ Here are some examples of their use
 -lib/math.x
 ```
 
+### Binary files
+
+Specasm supports one directive that allows a file to be inserted directly into the final binary at the position at which the directive appears.  This is useful when including binary data directly into your final executable rather than shipping it as a separate file and reading it in at runtime,  or encoding it using db or dw statements, which isn't really practical when there's a lot of data.
+
+| Directive    | Description                                                                                |
+|--------------|--------------------------------------------------------------------------------------------|
+| ! <filename> | Filename is either an absolute or a relative path (relative to the current .x file)        |
+
+For example,
+
+```
+  ; load pointer to sprite data into hl
+
+  ld hl, sprites
+
+  ; Load size of sprite file into bc
+
+  ld bc, =sprite_end-sprites
+
+  ; do something with the sprites
+
+  ret
+.sprites
+! spritefile
+.sprite_end
+```
+
+The data in spritefile will be inserted between the .sprites and .sprite_end label in the final binary by the linker.  The register bc will contain the size of that file.
+
 ## Creating Loaders with SAMAKE
 
 Salink generates a raw binary file.  Before the binary can be executed, memory needs to be reserved, the binary needs to be loaded into memory at the address at which it was assembled and, finally, it needs to be inovked.  Assuming that the binary was assembled to the default address, i.e., 32768, and is called "bin", this can all be achieved in BASIC as follows.
