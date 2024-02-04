@@ -25,8 +25,8 @@
 
 extern unsigned char _z_page_table[];
 
-int16_t salink_equ_eval_banked_e(salink_obj_t *obj, const char *str,
-				 uint16_t line_no);
+void salink_apply_expressions_banked_e(specasm_line_t *line, salink_obj_t *obj,
+				       unsigned int line_no);
 void salink_equ_eval_global_banked_e(salink_obj_t *obj, salink_global_t *global,
 				     salink_label_t *label, uint8_t depth);
 void specasm_write_map_banked_e(void);
@@ -50,20 +50,17 @@ void specasm_write_map_e(void)
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_LINK_OBJ_BANK]);
 }
 
-int16_t salink_equ_eval_e(salink_obj_t *obj, const char *str, uint16_t line_no)
+void salink_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
+				unsigned int line_no)
 {
-	int16_t v;
-
 	/*
 	 * Only called from the link_obj page, so we map it back
 	 * in once our call has finished.
 	 */
 
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_EXPRESSION_BANK]);
-	v = salink_equ_eval_banked_e(obj, str, line_no);
+	salink_apply_expressions_banked_e(line, obj, line_no);
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_LINK_OBJ_BANK]);
-
-	return v;
 }
 
 void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
