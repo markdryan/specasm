@@ -30,12 +30,67 @@
 
 void specasm_peer_next_copy_chars(void);
 
-int main(int argc, char *argv[])
+static uint8_t prv_calibration_loop(uint8_t k, uint16_t delay,
+				    uint8_t calibration)
+{
+	uint8_t new_key;
+	uint8_t i;
+
+	for (i = 0; i < calibration; i++) {
+		specasm_sleep_ms(delay);
+		new_key = in_inkey();
+		if (k != new_key) {
+			if ((k >= 'A') && (k <= 'Z') && ((k | 32) == new_key))
+				continue;
+			return new_key;
+		}
+	}
+
+	return k;
+}
+
+static void prv_main_loop(void)
 {
 	uint8_t k;
-	uint16_t delay = ((200 / 11) * 11) / 10;
 	uint8_t new_key;
-	uint16_t i;
+	const uint16_t delay = ((200 / 11) * 11) / 10;
+
+	do {
+		in_wait_key();
+		k = in_inkey();
+		if (!k)
+			continue;
+		do {
+			if (k == SPECASM_KEY_COMMAND) {
+				in_wait_nokey();
+				specasm_handle_key_press(k);
+				break;
+			}
+
+			new_key = prv_calibration_loop(k, delay,
+						       SPECASM_KEY_CALIBRATION);
+
+			specasm_handle_key_press(k);
+
+			while (k == new_key) {
+				new_key = prv_calibration_loop(
+				    k, delay / 2, SPECASM_KEY_CALIBRATION / 2);
+				if (k == new_key)
+					specasm_handle_key_press(k);
+			}
+
+			if (k == SPECASM_KEY_DELETE) {
+				in_wait_nokey();
+				k = 0;
+			} else {
+				k = new_key;
+			}
+		} while (k);
+	} while (!quitting);
+}
+
+int main(int argc, char *argv[])
+{
 	uint8_t turbo;
 	struct esx_mode mode;
 
@@ -69,27 +124,7 @@ int main(int argc, char *argv[])
 	// Make cursor flash
 	specasm_text_set_flash(col, line, FLASH);
 
-	do {
-		in_wait_key();
-		k = in_inkey();
-		if (!k)
-			continue;
-		do {
-			if (k == SPECASM_KEY_COMMAND) {
-				in_wait_nokey();
-				new_key = in_inkey();
-			} else {
-				for (i = 0; i < SPECASM_KEY_CALIBRATION; i++) {
-					specasm_sleep_ms(delay);
-					new_key = in_inkey();
-					if (k != new_key)
-						break;
-				}
-			}
-			specasm_handle_key_press(k);
-			k = new_key;
-		} while (k);
-	} while (!quitting);
+	prv_main_loop();
 
 	zx_cls(PAPER_WHITE | INK_WHITE);
 	ZXN_WRITE_REG(REG_TURBO_MODE, turbo);

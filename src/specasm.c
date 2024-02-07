@@ -27,6 +27,74 @@
 
 #define SPECASM_KEY_CALIBRATION 13
 
+static uint8_t prv_calibration_loop(uint8_t k, uint16_t delay,
+				    uint8_t calibration)
+{
+	uint8_t new_key;
+	uint8_t i;
+
+	for (i = 0; i < calibration; i++) {
+		specasm_sleep_ms(delay);
+		new_key = in_inkey();
+
+		if ((k >= 'A') && (k <= 'Z') && ((k | 32) == new_key))
+			continue;
+
+		if (k != new_key)
+			return new_key;
+	}
+
+	return k;
+}
+
+static void prv_main_loop(void)
+{
+	uint8_t k;
+	uint8_t new_key;
+	const uint16_t delay = ((200 / 11) * 11) / 10;
+
+	do {
+		in_wait_key();
+		k = in_inkey();
+		if (!k)
+			continue;
+		do {
+			if (k == SPECASM_KEY_COMMAND) {
+				in_wait_nokey();
+				specasm_handle_key_press(k);
+				break;
+			}
+
+			new_key = prv_calibration_loop(k, delay,
+						       SPECASM_KEY_CALIBRATION);
+
+			/* Check for common key escapes on the toastrack */
+
+			if (((k == '5') && (new_key == SPECASM_KEY_LEFT)) ||
+			    ((k == '8') && (new_key == SPECASM_KEY_RIGHT)) ||
+			    ((k == '0') && (new_key == SPECASM_KEY_DELETE))) {
+				k = new_key;
+				new_key = 0;
+			}
+
+			specasm_handle_key_press(k);
+
+			if (k == new_key) {
+				do {
+					new_key = prv_calibration_loop(
+					    k, delay / 2,
+					    SPECASM_KEY_CALIBRATION / 2);
+					if (k != new_key)
+						break;
+					specasm_handle_key_press(k);
+				} while (1);
+			}
+
+			k = new_key;
+		} while (k);
+	} while (!quitting);
+}
+
 int main()
 {
 	uint8_t k;
@@ -46,27 +114,8 @@ int main()
 
 	// Make cursor flash
 	specasm_text_set_flash(col, line, FLASH);
-	do {
-		in_wait_key();
-		k = in_inkey();
-		if (!k)
-			continue;
-		do {
-			if (k == SPECASM_KEY_COMMAND) {
-				in_wait_nokey();
-				new_key = in_inkey();
-			} else {
-				for (i = 0; i < SPECASM_KEY_CALIBRATION; i++) {
-					specasm_sleep_ms(delay);
-					new_key = in_inkey();
-					if (k != new_key)
-						break;
-				}
-			}
-			specasm_handle_key_press(k);
-			k = new_key;
-		} while (k);
-	} while (!quitting);
+
+	prv_main_loop();
 
 	return 0;
 }
