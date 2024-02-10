@@ -689,16 +689,23 @@ static void prv_process_queued_files_e(void)
 	}
 }
 
+static int prv_obj_file_cmp(const void *a, const void *b)
+{
+	const uint8_t *a_i = (const uint8_t *)a;
+	const uint8_t *b_i = (const uint8_t *)b;
+
+	return strcmp(obj_files[*a_i].fname, obj_files[*b_i].fname);
+}
+
 static uint8_t prv_order_objects_e(void)
 {
-	salink_obj_t tmp;
-	uint8_t loaded;
 	uint8_t i;
-	salink_global_t *glob;
 
 	/*
 	 * We want to put the object file with the Main label
-	 * first.
+	 * first.  The remaining object files are placed in
+	 * ascending order of their file names before being
+	 * written out to the final binary.
 	 */
 
 	if (main_index == SIZE_MAX) {
@@ -707,23 +714,20 @@ static uint8_t prv_order_objects_e(void)
 		return 0;
 	}
 
-	loaded = main_index == (obj_file_count - 1);
-	if (main_index > 0) {
-		memcpy(&tmp, &obj_files[0], sizeof(obj_files[0]));
-		memcpy(&obj_files[0], &obj_files[main_index],
-		       sizeof(obj_files[0]));
-		memcpy(&obj_files[main_index], &tmp, sizeof(obj_files[0]));
-		for (i = 0; i < global_count; i++) {
-			glob = &globals[i];
-			if (glob->obj_index == 0)
-				glob->obj_index = main_index;
-			else if (glob->obj_index == main_index)
-				glob->obj_index = 0;
-		}
-		main_index = 0;
+	for (i = 0; i < obj_file_count; i++)
+		obj_files_order[i] = i;
+
+	if (main_index != 0) {
+		obj_files_order[main_index] = 0;
+		obj_files_order[0] = main_index;
 	}
 
-	return loaded;
+	if (obj_file_count > 2) {
+		qsort(&obj_files_order[1], obj_file_count - 1, sizeof(uint8_t),
+		      prv_obj_file_cmp);
+	}
+
+	return main_index == (obj_file_count - 1);
 }
 
 static void prv_complete_absolutes_e(void)
@@ -738,7 +742,7 @@ static void prv_complete_absolutes_e(void)
 	uint16_t real_off = start_address;
 
 	for (i = 0; i < obj_file_count; i++) {
-		obj = &obj_files[i];
+		obj = &obj_files[obj_files_order[i]];
 		for (j = obj->label_start; j < obj->label_end; j++) {
 			label = &labels[j];
 
@@ -869,13 +873,13 @@ static void prv_link_e(uint8_t main_loaded)
 	unsigned int i;
 	specasm_handle_t f;
 	uint16_t offset = start_address;
-	salink_obj_t *obj = &obj_files[0];
+	salink_obj_t *obj = &obj_files[main_index];
 
 	f = specasm_file_wopen_e(image_name);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 	for (i = 0; i < obj_file_count; i++) {
-		obj = &obj_files[i];
+		obj = &obj_files[obj_files_order[i]];
 		if (i > 0 || !main_loaded) {
 			specasm_load_e(obj->fname);
 			if (err_type != SPECASM_ERROR_OK)

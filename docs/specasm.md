@@ -581,7 +581,13 @@ The reverse process can be performed using the .saexport command.  Note the use 
 
 ## Program structure
 
-A Specasm program is comprised of one or more .x files that occupy the same directory.  When you build a Specasm program with the .salink command it looks for all the .x files in the folder in which it is run, and links them all together, concatenating them all into one single file and resolving any addresses, e.g., jump targets.  One of the .x files in the current folder must contain a label called **Main**, .e.g, it must have the following statement somewhere within one of the files
+A Specasm program is comprised of one or more .x files.  When you build a Specasm program with the .salink command it looks for all the .x files in the folder in which it is run, and links them all together, concatenating them all into one single file and resolving any addresses, e.g., jump targets.
+
+> [!TIP]
+> Specasm programs can actually span multiple directories.  See the +, - and ! directives below.
+
+
+One of the .x files must contain a label called **Main**, .e.g, it must have the following statement somewhere within one of the files
 
 ```
 .Main
@@ -589,7 +595,9 @@ A Specasm program is comprised of one or more .x files that occupy the same dire
 
 The name of the resulting binary will be derived from the name of the .x file that contains the **Main** label.  So if a project places the Main label in a file called **game.x**, the name of the resulting binary created by salink will be **game**.
 
-The salink command will place the code from the .x file that declares the Main label first in the newly created binary.  The order in which the rest of the code is written to the binary is arbitrary and the user has no control over this.  They can however, ask the linker to generate a map file to figure out where all the symbols ended up.  This is done by specifying the **map** directive on one line of one .x file, e.g.,
+The salink command will place the code from the .x file that declares the Main label first in the newly created binary.  In Specasm versions v7 and eearlier, the order in which the rest of the code is written to the binary is arbitrary and the user has no control over this.  In Specasm v8 and above, the order in which the code from the remaining .x files is written to the target binary is defined by the alphabetical order (ascending) of their names.  Suppose our program consisted of 3 files, main.x, 02_code.x, 01_data.x, the data/code in main.x would be written first, followed by the contents of 01_data.x, and finally, by the contents of 02_code.x.
+
+You can ask the linker to generate a map file to figure out where all the symbols ended up.  This is done by specifying the **map** directive on one line of one .x file, e.g.,
 
 ```
 map
@@ -624,7 +632,7 @@ org 23760
 
 will cause the linked program to be assembled at 23760.
 
-The linker doesn't currently create a loader program or a tap file.  This can however be done using the samake command.
+The linker only creates pure binary files.  It isn't capable of creating a loader program or a tap file.  This is the task of the samake program, introduced in Specasm v7.  See below for more details.
 
 ### Libraries
 
