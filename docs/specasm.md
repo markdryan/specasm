@@ -634,7 +634,10 @@ will cause the linked program to be assembled at 23760.
 
 The linker only creates pure binary files.  It isn't capable of creating a loader program or a tap file.  This is the task of the samake program, introduced in Specasm v7.  See below for more details.
 
-### Libraries
+Specasm projects are not limited to the .x files in the main directory.  The '-' and '+' directives can be used to include .x files in other directories, allowing a Specasm project to span multiple directories.  See below for more details.
+
+
+### Multi-directory Projects and Libraries
 
 Specasm supports two directives that allow the user to include .x files from other directories in the final executable.
 
@@ -645,7 +648,9 @@ Specasm supports two directives that allow the user to include .x files from oth
 
 These are both linker directives rather than assembler directives.  The target of these directives are not included directly into the current source file.  Instead they are added to the final binary when it is linked.  The '-' directive is intended to be used to create custom libraries or to split your program into multiple folders.  The '+' directive is intended to be used to include .x files from a future Specasm standard library.  The trailing '.x' extension in <filename> is optional.
 
-Here are some examples of their use
+If the path passed to a '-' or a '+' directive is itself a directory, Specasm (v8 and above) will add all the .x files it can find in that directory, and only that directory, to the final binary.
+
+Here are some examples of '-' and '+'
 
 ```
 ; include /specasm/gr/rows.x
@@ -653,7 +658,31 @@ Here are some examples of their use
 
 ; include ./lib/math.x
 -lib/math.x
+
+; include all .x files in mylib
+; Specasm v8 and above.
+-mylib
 ```
+
+The '-' and '+' directives will not add .x files located in any sub-directory of an included directory.  For example,
+
+```
+-mylib
+```
+
+will add mylib/peqnp.x but it will not add mylib/tests/binpack.x.  If mylib/tests/binpack.x is needed in the project it will need to be included separately, either with a
+
+```
+-mylib/tests/binpack.x
+```
+
+or
+
+```
+-mylib/tests
+```
+
+if all the .x files in mylib/tests are to be part of the project.
 
 ### Binary files
 

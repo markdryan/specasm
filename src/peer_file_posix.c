@@ -87,3 +87,21 @@ void specasm_file_stat_e(specasm_handle_t f, specasm_stat_t *buf)
 	if (fstat(fileno(f), buf))
 		err_type = SPECASM_ERROR_READ;
 }
+
+uint8_t specasm_file_isdir(const char *fname)
+{
+	specasm_handle_t f;
+	specasm_stat_t buf;
+	int res;
+
+	f = fopen(fname, "r");
+	if (!f)
+		return 0;
+
+	res = fstat(fileno(f), &buf);
+	(void) fclose(f);
+	if (res)
+		return 0;
+
+	return buf.st_mode & S_IFDIR ? 1 : 0;
+}

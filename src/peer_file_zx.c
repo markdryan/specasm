@@ -14,6 +14,8 @@
  * limitations under the License.
 */
 
+#include <errno.h>
+
 #include "peer_file.h"
 #include "error.h"
 
@@ -70,4 +72,18 @@ void specasm_file_stat_e(specasm_handle_t f, specasm_stat_t *buf)
 {
 	if (esxdos_f_fstat(f, buf) < 0)
 		err_type = SPECASM_ERROR_READ;
+}
+
+uint8_t specasm_file_isdir(const char *fname)
+{
+	specasm_handle_t f;
+
+	errno = 0;
+	f = esxdos_f_open(fname, ESXDOS_MODE_R);
+	if (!errno) {
+		(void)esxdos_f_close(f);
+		return 0;
+	}
+
+	return errno == ESXDOS_EISDIR;
 }

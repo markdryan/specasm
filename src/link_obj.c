@@ -31,7 +31,8 @@ static size_t label_count;
 static size_t main_index = SIZE_MAX;
 static uint16_t start_address = 0x8000;
 
-static specasm_dirent_t dirent;
+static void prv_add_queued_filename_e(const char *base, const char *prefix,
+				      const char *str);
 
 static int prv_check_file(const char *fname)
 {
@@ -451,11 +452,81 @@ static void prv_add_align_e(salink_obj_t *obj, specasm_line_t *line,
 	label->data.off = size;
 }
 
-static void prv_add_queued_file_e(const char *base, const char *prefix,
-				  specasm_line_t *line)
+static void prv_stat_fname_e(const char *fname, specasm_stat_t *stat_buf)
 {
-	const char *str;
-	uint8_t id;
+	specasm_handle_t in_f;
+	specasm_error_t err;
+
+	in_f = specasm_file_ropen_e(fname);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	specasm_file_stat_e(in_f, stat_buf);
+	err = err_type;
+	specasm_file_close_e(in_f);
+	err_type = err;
+}
+
+static uint8_t prv_add_queued_dir_e(const char *fname)
+{
+	specasm_dir_t dir;
+	specasm_dirent_t dirent;
+	size_t fname_len;
+	char dir_name[MAX_FNAME+1];
+
+	/*
+	 * If we can't stat the filename we'll assume that it's just a .x file
+	 * without the extension.  If it isn't will catch the error later.
+	 */
+
+	if (!specasm_file_isdir(fname))
+		return 0;
+
+	fname_len = strlen(fname);
+	if (fname_len >= MAX_FNAME) {
+		err_type = SPECASM_ERROR_BAD_FNAME;
+		return 0;
+	}
+	dir = specasm_opendir_e(fname);
+	if (err_type != SPECASM_ERROR_OK) {
+		strcpy(error_buf, "Failed to read directory");
+		err_type = SALINK_ERROR_READDIR;
+		return 0;
+	}
+
+	strcpy(dir_name, fname);
+	dir_name[fname_len] = '/';
+	dir_name[fname_len + 1] = 0;
+
+	while (specasm_readdir(dir, &dirent)) {
+
+		/*
+		 * Make sure we only add .x files and not .x directories
+		 * or any directories for that matter.  Subdirectories need
+		 * to be explicitly added with a '-' or a '+' directive.
+		 */
+
+		if (specasm_isdirent_dir(dirent))
+			continue;
+		if (!prv_check_file(specasm_getdirname(dirent)))
+			continue;
+		prv_add_queued_filename_e(dir_name, "",
+					  specasm_getdirname(dirent));
+		if (err_type != SPECASM_ERROR_OK) {
+			specasm_closedir(dir);
+			return 0;
+		}
+	}
+	specasm_closedir(dir);
+
+	err_type = SPECASM_ERROR_OK;
+
+	return 1;
+}
+
+static void prv_add_queued_filename_e(const char *base, const char *prefix,
+				      const char *str)
+{
 	int space_needed;
 	int prefix_len;
 	int base_len;
@@ -470,8 +541,23 @@ static void prv_add_queued_file_e(const char *base, const char *prefix,
 		return;
 	}
 
-	id = line->data.label;
-	str = salink_get_label_str_e(id, line->type);
+	/*
+	 * Build up a path relative to the including path, providing
+	 * it's not a complete path.  So if the including file is
+	 * one/two.x and it includes does - three.x, then we get
+	 *
+	 * one/three.x
+	 *
+	 * If the including file is simple two.x then we get
+	 *
+	 * three.x
+	 *
+	 * If the including file is one/two/ we'd get
+	 *
+	 * one/two/three.x
+	 *
+	 * TODO: Need to update this to cope with drive letters.
+	 */
 
 	base_len = 0;
 	if (str[0] != '/') {
@@ -487,7 +573,7 @@ static void prv_add_queued_file_e(const char *base, const char *prefix,
 		return;
 	}
 
-	ptr = &buf.fname[queued_files++][0];
+	ptr = &buf.fname[queued_files][0];
 	start = ptr;
 	if (base_len) {
 		strncpy(ptr, base, base_len);
@@ -498,6 +584,18 @@ static void prv_add_queued_file_e(const char *base, const char *prefix,
 		ptr += prefix_len;
 	}
 	strcpy(ptr, str);
+
+	/*
+	 * Check to see whether this is a directory or not.
+	 * If so we add the files in this directory and return.
+	 */
+
+	if (prv_add_queued_dir_e(start))
+		return;
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	queued_files++;
 	if (start[space_needed - 2] != '.' &&
 	    (start[space_needed - 1] | 32) != 'x') {
 		if (space_needed + 2 > MAX_FNAME) {
@@ -508,6 +606,20 @@ static void prv_add_queued_file_e(const char *base, const char *prefix,
 		start[space_needed + 1] = 'x';
 		start[space_needed + 2] = 0;
 	}
+}
+
+static void prv_add_queued_file_e(const char *base, const char *prefix,
+				  specasm_line_t *line)
+{
+	uint8_t id;
+	const char *str;
+
+	id = line->data.label;
+	str = salink_get_label_str_e(id, line->type);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	prv_add_queued_filename_e(base, prefix, str);
 }
 
 static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj,
@@ -555,26 +667,21 @@ static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj,
 static uint16_t prv_inc_bin_size_e(specasm_line_t *line, uint16_t size)
 {
 	const char *fname;
-	specasm_handle_t in_f;
 	specasm_stat_t stat_buf;
 	uint32_t bin_size;
 	uint32_t new_size;
-	specasm_error_t err;
 
 	fname = salink_get_label_str_e(line->data.label, line->type);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	in_f = specasm_file_ropen_e(fname);
-	if (err_type != SPECASM_ERROR_OK)
-		goto cant_open;
-
-	specasm_file_stat_e(in_f, &stat_buf);
-	err = err_type;
-	specasm_file_close_e(in_f);
-	err_type = err;
-	if (err_type != SPECASM_ERROR_OK)
-		goto cant_open;
+	prv_stat_fname_e(fname, &stat_buf);
+	if (err_type != SPECASM_ERROR_OK) {
+		snprintf(error_buf, sizeof(error_buf),
+			 "Can't open or stat %s", fname);
+		err_type = SALINK_ERROR_CANT_OPEN;
+		return 0;
+	}
 
 	bin_size = specasm_get_file_size(&stat_buf);
 	new_size = bin_size + size;
@@ -586,12 +693,6 @@ static uint16_t prv_inc_bin_size_e(specasm_line_t *line, uint16_t size)
 	}
 
 	return (uint16_t)new_size;
-
-cant_open:
-	snprintf(error_buf, sizeof(error_buf), "Can't open or stat %s", fname);
-	err_type = SALINK_ERROR_CANT_OPEN;
-
-	return 0;
 }
 
 static void prv_parse_obj_e(const char *fname)
@@ -619,7 +720,7 @@ static void prv_parse_obj_e(const char *fname)
 	strcpy(obj->fname, fname);
 	obj->label_start = label_count;
 
-	specasm_load_e(fname);
+	specasm_load_e(obj->fname);
 	if (err_type != SPECASM_ERROR_OK) {
 		snprintf(error_buf, sizeof(error_buf), "Can't open %s", fname);
 		err_type = SALINK_ERROR_CANT_OPEN;
@@ -655,7 +756,7 @@ static void prv_parse_obj_e(const char *fname)
 			prv_add_queued_file_e(obj->fname, "", line);
 		} else if ((line->type >= SPECASM_LINE_TYPE_INC_SYS_SHORT) &&
 			   (line->type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
-			prv_add_queued_file_e(fname, "/specasm/", line);
+			prv_add_queued_file_e(obj->fname, "/specasm/", line);
 		} else if ((line->type == SPECASM_LINE_TYPE_INC_BIN_SHORT) ||
 			   (line->type == SPECASM_LINE_TYPE_INC_BIN_LONG)) {
 			size = prv_inc_bin_size_e(line, size);
@@ -728,6 +829,34 @@ static uint8_t prv_order_objects_e(void)
 	}
 
 	return main_index == (obj_file_count - 1);
+}
+
+static void prv_check_duplicate_objs_e(void)
+{
+	unsigned int i;
+	const char *fname1;
+
+	/*
+	 * It's not possible to include the main file twice as we'll get an
+	 * error telling us that the .Main label has been defined multiple
+	 * times.  Probably not worth the extra code to detect this case and
+	 * report this error instead.
+	 */
+
+	/*
+	 * We rely on the fact that all but the first object file are sorted
+	 * in ascending alphabetical order, so we only need obj_file_count - 2
+	 * comparisons.
+	 */
+
+	for (i = 1; i < obj_file_count - 1; i++) {
+		fname1 = obj_files[obj_files_order[i]].fname;
+		if (!strcmp(fname1, obj_files[obj_files_order[i + 1]].fname)) {
+			err_type = SALINK_ERROR_DUP_OBJ_FILE;
+			sprintf(error_buf, "%s included twice!", fname1);
+			return;
+		}
+	}
 }
 
 static void prv_complete_absolutes_e(void)
@@ -926,6 +1055,7 @@ static void prv_salink_e(void)
 {
 	uint8_t main_loaded;
 	char ibuf[16];
+	specasm_dirent_t dirent;
 
 	specasm_dir_t dir = specasm_opendir_e(".");
 	if (err_type != SPECASM_ERROR_OK) {
@@ -934,6 +1064,8 @@ static void prv_salink_e(void)
 		return;
 	}
 	while (specasm_readdir(dir, &dirent)) {
+		if (specasm_isdirent_dir(dirent))
+			continue;
 		if (!prv_check_file(specasm_getdirname(dirent)))
 			continue;
 		prv_parse_obj_e(specasm_getdirname(dirent));
@@ -957,6 +1089,10 @@ static void prv_salink_e(void)
 				 SPECASM_CODE_COLOUR);
 
 	main_loaded = prv_order_objects_e();
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	prv_check_duplicate_objs_e();
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
