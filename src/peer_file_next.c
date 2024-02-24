@@ -23,8 +23,9 @@ specasm_handle_t specasm_file_wopen_e(const char *fname)
 {
 	specasm_handle_t f;
 
+	errno = 0;
 	f = esx_f_open(fname, ESX_MODE_W | ESX_MODE_OPEN_CREAT_TRUNC);
-	if (!f)
+	if (errno)
 		err_type = SPECASM_ERROR_OPEN;
 
 	return f;
@@ -34,8 +35,9 @@ specasm_handle_t specasm_file_ropen_e(const char *fname)
 {
 	specasm_handle_t f;
 
+	errno = 0;
 	f = esx_f_open(fname, ESX_MODE_R);
-	if (!f)
+	if (errno)
 		err_type = SPECASM_ERROR_OPEN;
 
 	return f;
@@ -43,7 +45,9 @@ specasm_handle_t specasm_file_ropen_e(const char *fname)
 
 void specasm_file_write_e(specasm_handle_t f, const void *data, size_t size)
 {
-	if (esx_f_write(f, (void *)data, size) == 0)
+	errno = 0;
+	(void) esx_f_write(f, (void *)data, size);
+	if (errno)
 		err_type = SPECASM_ERROR_WRITE;
 }
 
@@ -61,8 +65,11 @@ void specasm_file_close_e(specasm_handle_t f) { (void)esx_f_close(f); }
 
 specasm_dir_t specasm_opendir_e(const char *fname)
 {
-	specasm_dir_t d = esx_f_opendir(fname);
-	if (!d)
+	specasm_dir_t d;
+
+	errno = 0;
+	d = esx_f_opendir(fname);
+	if (errno)
 		err_type = SPECASM_ERROR_OPEN;
 
 	return d;
@@ -70,20 +77,22 @@ specasm_dir_t specasm_opendir_e(const char *fname)
 
 void specasm_file_stat_e(specasm_handle_t f, specasm_stat_t *buf)
 {
-	if (esx_f_fstat(f, buf))
+	errno = 0;
+	(void) esx_f_fstat(f, buf);
+	if (errno)
 		err_type = SPECASM_ERROR_READ;
 }
 
 uint8_t specasm_file_isdir(const char *fname)
 {
-	specasm_handle_t f;
+	specasm_dir_t d;
 
 	errno = 0;
-	f = esx_f_open(fname, ESXDOS_MODE_R);
-	if (!errno) {
-		(void)esx_f_close(f);
+	d = esx_f_opendir(fname);
+	if (errno)
 		return 0;
-	}
 
-	return errno == ESX_EINVAL;
+	(void)esx_f_close(d);
+
+	return 1;
 }

@@ -596,6 +596,7 @@ static char *prv_complete_filename_e(char *com, uint8_t len)
 
 static uint8_t prv_long_command_e(char *com, uint8_t len)
 {
+	specasm_error_t old_err;
 	uint8_t reset = 0;
 
 	if (!strcmp(com, "sel")) {
@@ -617,12 +618,22 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 			reset = 1;
 			current_fname[0] = 0;
 		} else {
-			if (err_type == SPECASM_ERROR_OK)
+			old_err = err_type;
+			err_type = SPECASM_ERROR_OK;
+			if (old_err == SPECASM_ERROR_OK)
 				strcpy(current_fname, com);
 			line = row = col = select_end = select_start = 0;
 			specasm_cls(SPECASM_CODE_COLOUR |
 				    SPECASM_LABEL_BACKGROUND);
 			prv_draw_screen(0);
+			if (old_err != SPECASM_ERROR_OK) {
+				specasm_text_set_flash(command_col,
+						       SPECASM_MAX_ROWS, 0);
+				err_type = old_err;
+				prv_draw_error();
+				err_type = SPECASM_ERROR_OK;
+				specasm_sleep_ms(1000);
+			}
 		}
 	} else if (com[0] == 's' && com[1] == ' ') {
 		com = prv_complete_filename_e(com, len);
