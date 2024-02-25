@@ -36,6 +36,7 @@ SPECASM = \
 	line_dump_common.o \
 	line_parse_banked.o \
 	line_parse_common.o \
+	specasm_mainloop.o \
 	error.o \
 	state_base.o \
 	state_dump.o \
