@@ -17,6 +17,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+#include "clipboard.h"
+#endif
+
 #include "editor.h"
 #include "editor_test_content.h"
 #include "state.h"
@@ -88,6 +92,9 @@ static int prv_check_state(const editor_test_t *t)
 static int prv_run_test(const editor_test_t *t)
 {
 	specasm_editor_reset();
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	specasm_clip_reset();
+#endif
 	printf("%s: ", t->name);
 
 	for (size_t i = 0; i < strlen(t->input); i++) {

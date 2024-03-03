@@ -63,11 +63,19 @@ On entering command mode, a '>' prompt appears at the bottom of the screen.  Fro
 | g *line number* | Moves the cursor to the specified line number|
 | f *string* | Searches for the first instance of *string* starting from the current line.  There's no wrap around. |
 
+The Next version of Specasm uses one of the Next's 8Kb memory banks to implement a clipboard.  This provides a more traditional copy, cut and paste mechanism than the copy and move commands described above, and allows code to be copied from one file to another.  Clipboard support is provided via three new Next specific commands.
+
+| Command | Description |
+|---------|-------------|
+| x       | Replaces the contents of the clipboard with the selected code and deletes the code from the current file |
+| cc       | Replaces the contents of the clipboard with the selected code |
+| v        | Pastes the contents of the clipboard into the selected code at the cursor position |
+
 #### Selecting Mode
 
-The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c' and 'b' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.
+The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  On the Next, the selected lines may be cut to the clipboard by typing 'x'.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c','b', 'x' and 'cc' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.
 
-All of the four commands that manipulate selections, cancel the selection once they have finished executing.  So if you select a block of text, and then issue the 'b' command to count the number of bytes it consumes, you'll need to reselect the text once more to copy it.  In addition, the current selection is cancelled if you make any changes to the contents of the editor, e.g., edit an existing line or insert a new one.
+All of the six commands that manipulate selections, cancel the selection once they have finished executing.  So if you select a block of text, and then issue the 'b' command to count the number of bytes it consumes, you'll need to reselect the text once more to copy it.  In addition, the current selection is cancelled if you make any changes to the contents of the editor, e.g., edit an existing line or insert a new one.
 
 #### The Status Row
 

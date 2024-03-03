@@ -65,8 +65,17 @@
 
 const char *const formatted_test_data = FORMATTED_TEST_DATA
 	"                                ";
+
 const char *const formatted_test_data2x  = FORMATTED_TEST_DATA
 	FORMATTED_TEST_DATA
+	"                                ";
+
+const char *const formatted_clip_oom  = FORMATTED_TEST_DATA
+	"                                "
+	"                                "
+	"                                "
+	"                                "
+	"                                "
 	"                                ";
 
 const char *const formatted_last_deleted =
@@ -947,7 +956,8 @@ const editor_test_t editor_tests[] = {
 		EDITOR_KEY_COMMAND "c" EDITOR_KEY_ENTER,
 		&formatted_test_data2x[4 * SPECASM_LINE_MAX_LEN],
 		"",
-		{ .line = 26, .row = 22, .command_col = 3, .select_end = 432 },
+		{ .mode = 2,.line = 26, .row = 22, .command_col = 3,
+		  .select_end = 432 },
 		432,
 	},
 	{
@@ -1221,6 +1231,359 @@ const editor_test_t editor_tests[] = {
 		  .select_end = 2 },
 		11,
 	},
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	{
+		"simple_cut",
+		"ld a, 10" EDITOR_KEY_ENTER
+		"db 10" EDITOR_KEY_ENTER
+		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
+		"@hello" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP
+		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "x" EDITOR_KEY_ENTER,
+		"  bit 3, (ix+127)               "
+		"@hello                          "
+		EDITOR_BLANK_LINE,
+		"",
+		{ .row = 0, .line = 0, .command_col = 3 },
+		3,
+	},
+	{
+		"cut_and_paste_in_place",
+		test_data EDITOR_KEY_UP EDITOR_KEY_UP
+		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_UP
+		EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "x" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		&formatted_test_data[0],
+		"",
+		{ .line = 20, .command_col = 3, .row = 20 },
+		27,
+	},
+	{
+		"cut_and_paste_below",
+		";1" EDITOR_KEY_ENTER
+		";2" EDITOR_KEY_ENTER
+		";3" EDITOR_KEY_ENTER
+		";4" EDITOR_KEY_ENTER
+		";5" EDITOR_KEY_ENTER
+		";6" EDITOR_KEY_ENTER
+		";7" EDITOR_KEY_ENTER
+		";8" EDITOR_KEY_ENTER
+		";9" EDITOR_KEY_ENTER
+		";10" EDITOR_KEY_ENTER
+		";11" EDITOR_KEY_ENTER
+		";12" EDITOR_KEY_ENTER
+		";13" EDITOR_KEY_ENTER
+		";14" EDITOR_KEY_ENTER
+		EDITOR_BUF_START EDITOR_KEY_DOWN
+		EDITOR_KEY_COMMAND"sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_DOWN EDITOR_KEY_DOWN EDITOR_KEY_DOWN
+		EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "x" EDITOR_KEY_ENTER
+		EDITOR_BUF_END
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		";1                              "
+		";5                              "
+		";6                              "
+		";7                              "
+		";8                              "
+		";9                              "
+		";10                             "
+		";11                             "
+		";12                             "
+		";13                             "
+		";14                             "
+		";2                              "
+		";3                              "
+		";4                              "
+		EDITOR_BLANK_LINE,
+		"",
+		{ .line = 11, .command_col = 3, .row = 11 },
+		15,
+	},
+	{
+		"cut_and_paste_above",
+		";1" EDITOR_KEY_ENTER
+		";2" EDITOR_KEY_ENTER
+		";3" EDITOR_KEY_ENTER
+		";4" EDITOR_KEY_ENTER
+		";5" EDITOR_KEY_ENTER
+		";6" EDITOR_KEY_ENTER
+		";7" EDITOR_KEY_ENTER
+		";8" EDITOR_KEY_ENTER
+		";9" EDITOR_KEY_ENTER
+		";10" EDITOR_KEY_ENTER
+		";11" EDITOR_KEY_ENTER
+		";12" EDITOR_KEY_ENTER
+		";13" EDITOR_KEY_ENTER
+		";14" EDITOR_KEY_ENTER
+		EDITOR_BUF_END EDITOR_KEY_UP
+		EDITOR_KEY_COMMAND"sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_UP
+		EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "x" EDITOR_KEY_ENTER
+		EDITOR_BUF_START EDITOR_KEY_DOWN
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		";1                              "
+		";11                             "
+		";12                             "
+		";13                             "
+		";2                              "
+		";3                              "
+		";4                              "
+		";5                              "
+		";6                              "
+		";7                              "
+		";8                              "
+		";9                              "
+		";10                             "
+		";14                             "
+		EDITOR_BLANK_LINE,
+		"",
+		{ .line = 1, .command_col = 3, .row = 1 },
+		15,
+	},
+	{
+		"cut_all_test_data",
+		test_data
+		EDITOR_KEY_COMMAND "a" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "x" EDITOR_KEY_ENTER,
+		EDITOR_BLANK_LINE,
+		"",
+		{ .line = 0, .row = 0 },
+		1,
+	},
+	{
+		"cut_and_paste_test_data",
+		test_data
+		EDITOR_KEY_COMMAND "a" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "x" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		&formatted_test_data[0],
+		"",
+		{ .line = 0, .command_col = 3, .row = 0 },
+		28,
+	},
+	{
+		"copy_clip_into_selected_area",
+		"ld a, 10" EDITOR_KEY_ENTER
+		"db 10" EDITOR_KEY_ENTER
+		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
+		"@hello" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP
+		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_ENTER
+		EDITOR_KEY_DOWN
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		"  ld a, 10                      "
+		"  ld a, 10                      "
+		"db 10                           "
+		"db 10                           "
+		"  bit 3, (ix+127)               "
+		"@hello                          "
+		EDITOR_BLANK_LINE,
+		"",
+		{ .row = 1, .line = 1, .command_col = 3 },
+		7,
+	},
+	{
+		"copy_clip_above_selected_area",
+		"ld a, 10" EDITOR_KEY_ENTER
+		"db 10" EDITOR_KEY_ENTER
+		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
+		"@hello" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP
+		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		"db 10                           "
+		"  bit 3, (ix+127)               "
+		"  ld a, 10                      "
+		"db 10                           "
+		"  bit 3, (ix+127)               "
+		"@hello                          "
+		EDITOR_BLANK_LINE,
+		"",
+		{ .row = 0, .line = 0, .command_col = 3 },
+		7,
+	},
+	{
+		"copy_clip_below_selected_area",
+		"ld a, 10" EDITOR_KEY_ENTER
+		"db 10" EDITOR_KEY_ENTER
+		"bit 3, (ix + 127)" EDITOR_KEY_ENTER
+		"@hello" EDITOR_KEY_ENTER
+		EDITOR_BUF_START
+		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_DOWN EDITOR_KEY_DOWN EDITOR_KEY_ENTER
+		EDITOR_BUF_END
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		"  ld a, 10                      "
+		"db 10                           "
+		"  bit 3, (ix+127)               "
+		"@hello                          "
+		"  ld a, 10                      "
+		"db 10                           "
+		EDITOR_BLANK_LINE,
+		"",
+		{ .row = 4, .line = 4, .command_col = 3 },
+		7,
+	},
+	{
+		"copy_clip_whole_buffer",
+		test_data EDITOR_KEY_COMMAND "a" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		&formatted_test_data2x[4 * SPECASM_LINE_MAX_LEN],
+		"",
+		{ .line = 26, .row = 22, .command_col = 3 },
+		54,
+	},
+	{
+		"copy_clip_oom",
+		test_data EDITOR_KEY_COMMAND "a" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "a" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "a" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "a" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "a" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		&formatted_test_data2x[4 * SPECASM_LINE_MAX_LEN],
+		"",
+		{ .mode = 2, .line = 26, .row = 22, .command_col = 3,
+		  .select_end = 432 },
+		432,
+	},
+	{
+		"paste_clip_empty",
+		test_data
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		&formatted_test_data[4 * SPECASM_LINE_MAX_LEN],
+		"",
+		{ .line = 26, .row = 22, .command_col = 3 },
+		27,
+	},
+	{
+		"copy_clip_empty",
+		test_data
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER,
+		&formatted_test_data[4 * SPECASM_LINE_MAX_LEN],
+		"",
+		{ .line = 26, .row = 22, .command_col = 4 },
+		27,
+	},
+	{
+		"cut_clip_empty",
+		test_data
+		EDITOR_KEY_COMMAND "x" EDITOR_KEY_ENTER,
+		&formatted_test_data[4 * SPECASM_LINE_MAX_LEN],
+		"",
+		{ .line = 26, .row = 22, .command_col = 3 },
+		27,
+	},
+	{
+		"paste_clip_overwrite_1",
+		";1" EDITOR_KEY_ENTER
+		";2" EDITOR_KEY_ENTER
+		";3" EDITOR_KEY_ENTER
+		";4" EDITOR_KEY_ENTER
+		";5" EDITOR_KEY_ENTER
+		";6" EDITOR_KEY_ENTER
+		";7" EDITOR_KEY_ENTER
+		";8" EDITOR_KEY_ENTER
+		";9" EDITOR_KEY_ENTER
+		";10" EDITOR_KEY_ENTER
+		";11" EDITOR_KEY_ENTER
+		";12" EDITOR_KEY_ENTER
+		";13" EDITOR_KEY_ENTER
+		";14" EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_UP EDITOR_KEY_UP EDITOR_KEY_UP
+		EDITOR_KEY_UP EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_INSERT
+		EDITOR_BUF_START EDITOR_KEY_DOWN
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		";1                              "
+		";11                             "
+		";12                             "
+		";13                             "
+		";14                             "
+		";6                              "
+		";7                              "
+		";8                              "
+		";9                              "
+		";10                             "
+		";11                             "
+		";12                             "
+		";13                             "
+		";14                             "
+		EDITOR_BLANK_LINE,
+		"",
+		{ .line = 1, .command_col = 3, .row = 1, .ovr = 1 },
+		15,
+	},
+	{
+		"paste_clip_overwrite_2",
+		";1" EDITOR_KEY_ENTER
+		";2" EDITOR_KEY_ENTER
+		";3" EDITOR_KEY_ENTER
+		";4" EDITOR_KEY_ENTER
+		";5" EDITOR_KEY_ENTER
+		";6" EDITOR_KEY_ENTER
+		";7" EDITOR_KEY_ENTER
+		";8" EDITOR_KEY_ENTER
+		";9" EDITOR_KEY_ENTER
+		";10" EDITOR_KEY_ENTER
+		";11" EDITOR_KEY_ENTER
+		";12" EDITOR_KEY_ENTER
+		";13" EDITOR_KEY_ENTER
+		";14" EDITOR_KEY_ENTER
+		EDITOR_BUF_START
+		EDITOR_KEY_COMMAND "sel" EDITOR_KEY_ENTER
+		EDITOR_KEY_DOWN EDITOR_KEY_DOWN EDITOR_KEY_DOWN
+		EDITOR_KEY_DOWN EDITOR_KEY_ENTER
+		EDITOR_KEY_COMMAND "cc" EDITOR_KEY_ENTER
+		EDITOR_KEY_INSERT
+		EDITOR_BUF_END EDITOR_KEY_UP
+		EDITOR_KEY_COMMAND "v" EDITOR_KEY_ENTER,
+		";1                              "
+		";2                              "
+		";3                              "
+		";4                              "
+		";5                              "
+		";6                              "
+		";7                              "
+		";8                              "
+		";9                              "
+		";10                             "
+		";11                             "
+		";12                             "
+		";13                             "
+		";1                              "
+		";2                              "
+		";3                              "
+		";4                              ",
+		"",
+		{ .line = 13, .command_col = 3, .row = 13, .ovr = 1 },
+		17,
+	},
+#endif
 };
 
 const size_t editor_tests_count = sizeof(editor_tests) / sizeof(editor_test_t);

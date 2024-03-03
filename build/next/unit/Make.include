@@ -41,6 +41,7 @@ peer_file_next.o: peer_file_next.c error.h peer_file.h
 util_print_next.o: util_print_next.c util_print_zx.h
 samake.o: samake.c peer.h error.h peer_zx.h line.h \
   salink.h peer_file.h state_base.h strings.h
+clipboard_banked.o: clipboard.c clipboard.h line.h error.h
 
 unittests_zx.o: ../src/unittests_zx.c ../src/error.h ../src/line.h \
   ../src/state.h ../src/state_base.h ../src/strings.h ../src/test_content.h ../src/test_content_zx.h \

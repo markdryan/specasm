@@ -22,6 +22,7 @@
 #define SPECASM_NEXT_PARSE_BANK ((43 << 1) + 1)
 #define SPECASM_NEXT_DUMP_BANK ((44 << 1) + 1)
 #define SPECASM_NEXT_PARSE_LD_BANK ((45 << 1) + 1)
+#define SPECASM_NEXT_CLIP_BANK ((46 << 1) + 1)
 
 extern unsigned char _z_page_table[];
 
@@ -35,6 +36,10 @@ void specasm_init_dump_table_banked(void);
 uint8_t specasm_dump_opcode_banked_e(const specasm_line_t *line, char *buf);
 uint8_t specasm_parse_ld_banked_e(const char *args, specasm_line_t *line,
 				  const specasm_opcode_t *op_entry);
+void specasm_clip_reset_banked(void);
+void specasm_clip_add_line_banked_e(const char *line);
+uint16_t specasm_clip_get_line_banked(uint16_t ptr, char *buffer);
+uint16_t specasm_clip_get_line_count_banked(void);
 
 uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 			    uint8_t *label1_type)
@@ -100,4 +105,28 @@ uint8_t specasm_parse_ld_e(const char *args, specasm_line_t *line,
 	ZXN_WRITE_MMU7(_z_page_table[SPECASM_NEXT_PARSE_BANK]);
 
 	return e;
+}
+
+void specasm_clip_reset(void)
+{
+	ZXN_WRITE_MMU7(_z_page_table[SPECASM_NEXT_CLIP_BANK]);
+	specasm_clip_reset_banked();
+}
+
+void specasm_clip_add_line_e(const char *line)
+{
+	ZXN_WRITE_MMU7(_z_page_table[SPECASM_NEXT_CLIP_BANK]);
+	specasm_clip_add_line_banked_e(line);
+}
+
+uint16_t specasm_clip_get_line(uint16_t ptr, char *buffer)
+{
+	ZXN_WRITE_MMU7(_z_page_table[SPECASM_NEXT_CLIP_BANK]);
+	return specasm_clip_get_line_banked(ptr, buffer);
+}
+
+uint16_t specasm_clip_get_line_count(void)
+{
+	ZXN_WRITE_MMU7(_z_page_table[SPECASM_NEXT_CLIP_BANK]);
+	return specasm_clip_get_line_count_banked();
 }
