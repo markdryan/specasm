@@ -16,8 +16,8 @@
 
 #include <errno.h>
 
-#include "peer_file.h"
 #include "error.h"
+#include "peer_file.h"
 
 specasm_handle_t specasm_file_wopen_e(const char *fname)
 {
@@ -46,7 +46,7 @@ specasm_handle_t specasm_file_ropen_e(const char *fname)
 void specasm_file_write_e(specasm_handle_t f, const void *data, size_t size)
 {
 	errno = 0;
-	(void) esxdos_f_write(f, (void *)data, size);
+	(void)esxdos_f_write(f, (void *)data, size);
 	if (errno)
 		err_type = SPECASM_ERROR_WRITE;
 }
@@ -78,7 +78,7 @@ specasm_dir_t specasm_opendir_e(const char *fname)
 void specasm_file_stat_e(specasm_handle_t f, specasm_stat_t *buf)
 {
 	errno = 0;
-	(void) esxdos_f_fstat(f, buf);
+	(void)esxdos_f_fstat(f, buf);
 	if (errno)
 		err_type = SPECASM_ERROR_READ;
 }

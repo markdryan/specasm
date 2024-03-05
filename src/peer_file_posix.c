@@ -99,7 +99,7 @@ uint8_t specasm_file_isdir(const char *fname)
 		return 0;
 
 	res = fstat(fileno(f), &buf);
-	(void) fclose(f);
+	(void)fclose(f);
 	if (res)
 		return 0;
 

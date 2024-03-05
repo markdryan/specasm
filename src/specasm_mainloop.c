@@ -65,10 +65,8 @@ void specasm_main_loop(uint16_t delay, uint8_t calibration)
 			specasm_handle_key_press(k);
 
 			while (k == new_key) {
-				new_key =
-					prv_calibration_loop(k,
-						delay / 2,
-						calibration / 2);
+				new_key = prv_calibration_loop(k, delay / 2,
+							       calibration / 2);
 				if (k == new_key)
 					specasm_handle_key_press(k);
 			}

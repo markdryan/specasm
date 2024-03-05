@@ -32,13 +32,13 @@ void specasm_peer_write_state_e(const char *fname, uint16_t checksum)
 		return;
 	}
 
-	(void) esx_f_write(f, &state, sizeof(state));
+	(void)esx_f_write(f, &state, sizeof(state));
 	if (errno) {
 		err_type = SPECASM_ERROR_WRITE;
 		goto cleanup;
 	}
 
-	(void) esx_f_write(f, &checksum, sizeof(checksum));
+	(void)esx_f_write(f, &checksum, sizeof(checksum));
 	if (errno)
 		err_type = SPECASM_ERROR_WRITE;
 

@@ -472,7 +472,7 @@ static uint8_t prv_add_queued_dir_e(const char *fname)
 	specasm_dir_t dir;
 	specasm_dirent_t dirent;
 	size_t fname_len;
-	char dir_name[MAX_FNAME+1];
+	char dir_name[MAX_FNAME + 1];
 
 	/*
 	 * If we can't stat the filename we'll assume that it's just a .x file
@@ -677,8 +677,8 @@ static uint16_t prv_inc_bin_size_e(specasm_line_t *line, uint16_t size)
 
 	prv_stat_fname_e(fname, &stat_buf);
 	if (err_type != SPECASM_ERROR_OK) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "Can't open or stat %s", fname);
+		snprintf(error_buf, sizeof(error_buf), "Can't open or stat %s",
+			 fname);
 		err_type = SALINK_ERROR_CANT_OPEN;
 		return 0;
 	}

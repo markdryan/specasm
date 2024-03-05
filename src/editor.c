@@ -556,7 +556,7 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		break;
 #ifdef SPECASM_TARGET_NEXT_OPCODES
 	case 'x':
-		(void) prv_selecting_clip_cut_e();
+		(void)prv_selecting_clip_cut_e();
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 		break;
@@ -829,7 +829,7 @@ static void prv_goto(const char *num)
 			target = state.lines.num_lines - 1;
 	}
 
-	(void) prv_goto_line(target);
+	(void)prv_goto_line(target);
 }
 
 static void prv_find(const char *needle)
@@ -841,7 +841,7 @@ static void prv_find(const char *needle)
 		if (err_type != SPECASM_ERROR_OK)
 			return;
 		if (strstr(scratch, needle)) {
-			(void) prv_goto_line(l);
+			(void)prv_goto_line(l);
 			return;
 		}
 	}
@@ -1297,7 +1297,7 @@ static void prv_selecting_clip_paste_e(void)
 	if (line_count == 0)
 		return;
 
-	(void) prv_make_space_e(line_count);
+	(void)prv_make_space_e(line_count);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 

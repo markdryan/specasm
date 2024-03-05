@@ -46,7 +46,7 @@ void specasm_clip_add_line_e(const char *line)
 #endif
 {
 	uint8_t len;
-	const char* end_ptr;
+	const char *end_ptr;
 
 	/*
 	 * Skip leading and trailing white space.  We don't need to store this.
@@ -60,7 +60,8 @@ void specasm_clip_add_line_e(const char *line)
 	if (line == end_ptr) {
 		clip_buffer[clip_end_ptr++] = 0;
 	} else {
-		while (*line == ' ') line++;
+		while (*line == ' ')
+			line++;
 
 		len = end_ptr - line;
 		if (len + clip_end_ptr >= SPECASM_CLIP_MAX_SIZE) {
