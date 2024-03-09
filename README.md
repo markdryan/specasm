@@ -174,4 +174,4 @@ make -j
 make tests
 ```
 
-This will create a folder called tests in the unit folder.  Inside this folder are 3 files that need to be copied to the same directory on your spectrum.  The unitnext file is a dotn file which needs to be copied to the /dot directory.  Then make sure you are in the folder containing the test_bad and test_op files and type .unitnext.
+This will create a folder called tests in the unit folder.  Inside this folder are 3 files that need to be copied to the same directory on your Next.  Enter the folder and then type ../unitnext from the command line to launch the tests.
