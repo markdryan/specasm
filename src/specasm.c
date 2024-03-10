@@ -23,6 +23,7 @@
 
 #include "editor.h"
 #include "line.h"
+#include "specasm_mainloop.h"
 #include "state.h"
 
 #define SPECASM_KEY_CALIBRATION 13
@@ -33,7 +34,7 @@ int main()
 	uint8_t new_key;
 	uint16_t i;
 	uint8_t *ptr = (uint8_t *)23328;
-	uint16_t delay = ((200 / 11) * *ptr) / 10;
+	const uint16_t delay = ((200 / 11) * 11) / 10;
 
 	specasm_init_dump_table();
 
@@ -46,27 +47,8 @@ int main()
 
 	// Make cursor flash
 	specasm_text_set_flash(col, line, FLASH);
-	do {
-		in_wait_key();
-		k = in_inkey();
-		if (!k)
-			continue;
-		do {
-			if (k == SPECASM_KEY_COMMAND) {
-				in_wait_nokey();
-				new_key = in_inkey();
-			} else {
-				for (i = 0; i < SPECASM_KEY_CALIBRATION; i++) {
-					specasm_sleep_ms(delay);
-					new_key = in_inkey();
-					if (k != new_key)
-						break;
-				}
-			}
-			specasm_handle_key_press(k);
-			k = new_key;
-		} while (k);
-	} while (!quitting);
+
+	specasm_main_loop(delay, SPECASM_KEY_CALIBRATION);
 
 	return 0;
 }

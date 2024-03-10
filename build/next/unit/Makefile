@@ -16,6 +16,9 @@ line_dump_banked.o: line_dump.c
 ld_parse_banked.o: ld_parse.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45_H --constsegBANK_45_H --datasegBANK_45_H -c $<
 
+clipboard_banked.o: clipboard.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_46_H --constsegBANK_46_H --datasegBANK_46_H -c $<
+
 include Make.include
 
 UNITNEXT = \
@@ -23,6 +26,7 @@ UNITNEXT = \
 	state_base.o \
 	specasm_trampolines.o \
 	line_common.o \
+	clipboard_banked.o \
 	ld_parse_banked.o \
 	line_dump_banked.o \
 	line_dump_common.o \

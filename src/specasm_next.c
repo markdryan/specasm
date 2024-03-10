@@ -24,20 +24,18 @@
 
 #include "editor.h"
 #include "line.h"
+#include "specasm_mainloop.h"
 #include "state.h"
 
 #define SPECASM_KEY_CALIBRATION 13
 
 void specasm_peer_next_copy_chars(void);
 
-int main(void)
+int main(int argc, char *argv[])
 {
-	uint8_t k;
-	uint16_t delay = ((200 / 11) * 11) / 10;
-	uint8_t new_key;
-	uint16_t i;
 	uint8_t turbo;
 	struct esx_mode mode;
+	const uint16_t delay = ((200 / 11) * 11) / 10;
 
 	/*
 	 * The editor is nicer to use at 28Mhz.  We're running on
@@ -58,34 +56,18 @@ int main(void)
 	zx_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
 
 	err_type = SPECASM_ERROR_OK;
-	specasm_editor_reset();
+
+	if (argc > 1)
+		specasm_editor_preload(argv[1]);
+	else
+		specasm_editor_reset();
 
 	specasm_draw_status();
 
 	// Make cursor flash
 	specasm_text_set_flash(col, line, FLASH);
 
-	do {
-		in_wait_key();
-		k = in_inkey();
-		if (!k)
-			continue;
-		do {
-			if (k == SPECASM_KEY_COMMAND) {
-				in_wait_nokey();
-				new_key = in_inkey();
-			} else {
-				for (i = 0; i < SPECASM_KEY_CALIBRATION; i++) {
-					specasm_sleep_ms(delay);
-					new_key = in_inkey();
-					if (k != new_key)
-						break;
-				}
-			}
-			specasm_handle_key_press(k);
-			k = new_key;
-		} while (k);
-	} while (!quitting);
+	specasm_main_loop(delay, SPECASM_KEY_CALIBRATION);
 
 	zx_cls(PAPER_WHITE | INK_WHITE);
 	ZXN_WRITE_REG(REG_TURBO_MODE, turbo);

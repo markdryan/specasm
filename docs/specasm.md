@@ -6,6 +6,9 @@ Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums with
 
 The editor can be launched from the command line using the .specasm command.  Specasm is an integrated editor/assembler.
 
+> [!TIP]
+> The ZX Spectrum Next version of Specasm allows the name of a single .x file to be passed on the command line.  This file will be automatically loaded into the editor on startup, e.g., .specasm game.x.
+
 The editor allows one single source, .x, file to be edited at any one time.  Each such file can contain a maximum of 512 lines.  Each line can be
 
 - An empty line
@@ -60,11 +63,19 @@ On entering command mode, a '>' prompt appears at the bottom of the screen.  Fro
 | g *line number* | Moves the cursor to the specified line number|
 | f *string* | Searches for the first instance of *string* starting from the current line.  There's no wrap around. |
 
+The Next version of Specasm uses one of the Next's 8Kb memory banks to implement a clipboard.  This provides a more traditional copy, cut and paste mechanism than the copy and move commands described above, and allows code to be copied from one file to another.  Clipboard support is provided via three new Next specific commands.
+
+| Command | Description |
+|---------|-------------|
+| x       | Replaces the contents of the clipboard with the selected code and deletes the code from the current file |
+| cc       | Replaces the contents of the clipboard with the selected code |
+| v        | Pastes the contents of the clipboard into the selected code at the cursor position |
+
 #### Selecting Mode
 
-The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c' and 'b' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.
+The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  On the Next, the selected lines may be cut to the clipboard by typing 'x'.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c','b', 'x' and 'cc' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.
 
-All of the four commands that manipulate selections, cancel the selection once they have finished executing.  So if you select a block of text, and then issue the 'b' command to count the number of bytes it consumes, you'll need to reselect the text once more to copy it.  In addition, the current selection is cancelled if you make any changes to the contents of the editor, e.g., edit an existing line or insert a new one.
+All of the six commands that manipulate selections, cancel the selection once they have finished executing.  So if you select a block of text, and then issue the 'b' command to count the number of bytes it consumes, you'll need to reselect the text once more to copy it.  In addition, the current selection is cancelled if you make any changes to the contents of the editor, e.g., edit an existing line or insert a new one.
 
 #### The Status Row
 
@@ -578,7 +589,13 @@ The reverse process can be performed using the .saexport command.  Note the use 
 
 ## Program structure
 
-A Specasm program is comprised of one or more .x files that occupy the same directory.  When you build a Specasm program with the .salink command it looks for all the .x files in the folder in which it is run, and links them all together, concatenating them all into one single file and resolving any addresses, e.g., jump targets.  One of the .x files in the current folder must contain a label called **Main**, .e.g, it must have the following statement somewhere within one of the files
+A Specasm program is comprised of one or more .x files.  When you build a Specasm program with the .salink command it looks for all the .x files in the folder in which it is run, and links them all together, concatenating them all into one single file and resolving any addresses, e.g., jump targets.
+
+> [!TIP]
+> Specasm programs can actually span multiple directories.  See the +, - and ! directives below.
+
+
+One of the .x files must contain a label called **Main**, .e.g, it must have the following statement somewhere within one of the files
 
 ```
 .Main
@@ -586,7 +603,9 @@ A Specasm program is comprised of one or more .x files that occupy the same dire
 
 The name of the resulting binary will be derived from the name of the .x file that contains the **Main** label.  So if a project places the Main label in a file called **game.x**, the name of the resulting binary created by salink will be **game**.
 
-The salink command will place the code from the .x file that declares the Main label first in the newly created binary.  The order in which the rest of the code is written to the binary is arbitrary and the user has no control over this.  They can however, ask the linker to generate a map file to figure out where all the symbols ended up.  This is done by specifying the **map** directive on one line of one .x file, e.g.,
+The salink command will place the code from the .x file that declares the Main label first in the newly created binary.  In Specasm versions v7 and eearlier, the order in which the rest of the code is written to the binary is arbitrary and the user has no control over this.  In Specasm v8 and above, the order in which the code from the remaining .x files is written to the target binary is defined by the alphabetical order (ascending) of their names.  Suppose our program consisted of 3 files, main.x, 02_code.x, 01_data.x, the data/code in main.x would be written first, followed by the contents of 01_data.x, and finally, by the contents of 02_code.x.
+
+You can ask the linker to generate a map file to figure out where all the symbols ended up.  This is done by specifying the **map** directive on one line of one .x file, e.g.,
 
 ```
 map
@@ -621,9 +640,12 @@ org 23760
 
 will cause the linked program to be assembled at 23760.
 
-The linker doesn't currently create a loader program or a tap file.  This can however be done using the samake command.
+The linker only creates pure binary files.  It isn't capable of creating a loader program or a tap file.  This is the task of the samake program, introduced in Specasm v7.  See below for more details.
 
-### Libraries
+Specasm projects are not limited to the .x files in the main directory.  The '-' and '+' directives can be used to include .x files in other directories, allowing a Specasm project to span multiple directories.  See below for more details.
+
+
+### Multi-directory Projects and Libraries
 
 Specasm supports two directives that allow the user to include .x files from other directories in the final executable.
 
@@ -634,7 +656,9 @@ Specasm supports two directives that allow the user to include .x files from oth
 
 These are both linker directives rather than assembler directives.  The target of these directives are not included directly into the current source file.  Instead they are added to the final binary when it is linked.  The '-' directive is intended to be used to create custom libraries or to split your program into multiple folders.  The '+' directive is intended to be used to include .x files from a future Specasm standard library.  The trailing '.x' extension in <filename> is optional.
 
-Here are some examples of their use
+If the path passed to a '-' or a '+' directive is itself a directory, Specasm (v8 and above) will add all the .x files it can find in that directory, and only that directory, to the final binary.
+
+Here are some examples of '-' and '+'
 
 ```
 ; include /specasm/gr/rows.x
@@ -642,7 +666,60 @@ Here are some examples of their use
 
 ; include ./lib/math.x
 -lib/math.x
+
+; include all .x files in mylib
+; Specasm v8 and above.
+-mylib
 ```
+
+The '-' and '+' directives will not add .x files located in any sub-directory of an included directory.  For example,
+
+```
+-mylib
+```
+
+will add mylib/peqnp.x but it will not add mylib/tests/binpack.x.  If mylib/tests/binpack.x is needed in the project it will need to be included separately, either with a
+
+```
+-mylib/tests/binpack.x
+```
+
+or
+
+```
+-mylib/tests
+```
+
+if all the .x files in mylib/tests are to be part of the project.
+
+### Binary files
+
+Specasm supports one directive that allows a file to be inserted directly into the final binary at the position at which the directive appears.  This is useful when including binary data directly into your final executable rather than shipping it as a separate file and reading it in at runtime,  or encoding it using db or dw statements, which isn't really practical when there's a lot of data.
+
+| Directive    | Description                                                                                |
+|--------------|--------------------------------------------------------------------------------------------|
+| ! <filename> | Filename is either an absolute or a relative path (relative to the current .x file)        |
+
+For example,
+
+```
+  ; load pointer to sprite data into hl
+
+  ld hl, sprites
+
+  ; Load size of sprite file into bc
+
+  ld bc, =sprite_end-sprites
+
+  ; do something with the sprites
+
+  ret
+.sprites
+! spritefile
+.sprite_end
+```
+
+The data in spritefile will be inserted between the .sprites and .sprite_end label in the final binary by the linker.  The register bc will contain the size of that file.
 
 ## Creating Loaders with SAMAKE
 

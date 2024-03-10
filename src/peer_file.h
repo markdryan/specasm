@@ -30,16 +30,18 @@ typedef struct esxdos_stat specasm_stat_t;
 #define specasm_getdirname(d) (&d.dir[1])
 #define specasm_remove_file(f) (void)esxdos_f_unlink(f)
 #define specasm_get_file_size(stat_buf) (stat_buf)->size
+#define specasm_isdirent_dir(d) ((d).dir[0] & __esx_dir_a_dir)
 #else
 #include <arch/zxn/esxdos.h>
-typedef struct esxdos_dirent specasm_dirent_t;
+typedef struct esx_dirent specasm_dirent_t;
 typedef struct esx_stat specasm_stat_t;
 #define SPECASM_PATH_MAX ESX_PATHNAME_MAX
 #define specasm_readdir(dir, drent) esx_f_readdir(dir, drent)
 #define specasm_closedir(dir) esx_f_close(dir)
-#define specasm_getdirname(d) (&d.dir[1])
+#define specasm_getdirname(d) ((d).name)
 #define specasm_remove_file(f) (void)esx_f_unlink(f)
 #define specasm_get_file_size(stat_buf) (stat_buf)->size
+#define specasm_isdirent_dir(d) ((d).attr & ESX_DIR_A_DIR)
 #endif
 
 #else
@@ -61,6 +63,7 @@ uint8_t specasm_readdir(specasm_dir_t dir, specasm_dirent_t *dirent);
 #define specasm_remove_file(f) (void)remove(f)
 #define specasm_f_stat(f, stat_buf) fstat(f, stat_buf)
 #define specasm_get_file_size(stat_buf) (stat_buf)->st_size
+#define specasm_isdirent_dir(d) ((d).d_type & DT_DIR)
 #endif
 
 specasm_handle_t specasm_file_wopen_e(const char *fname);
@@ -70,5 +73,6 @@ size_t specasm_file_read_e(specasm_handle_t f, void *data, size_t size);
 void specasm_file_close_e(specasm_handle_t f);
 specasm_dir_t specasm_opendir_e(const char *fname);
 void specasm_file_stat_e(specasm_handle_t f, specasm_stat_t *buf);
+uint8_t specasm_file_isdir(const char *fname);
 
 #endif

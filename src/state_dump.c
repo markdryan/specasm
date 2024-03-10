@@ -60,7 +60,7 @@ void specasm_format_line_e(char *buf, unsigned int l)
 	char *comment_start;
 	char *start;
 	uint8_t i;
-	const char str_ids[] = {'\'', '"', '#', '@', '-', '+'};
+	const char str_ids[] = {'\'', '"', '#', '@', '-', '+', '!'};
 	const specasm_line_t *line = &state.lines.lines[l];
 	uint8_t type = specasm_line_get_adj_type(line);
 
@@ -88,7 +88,7 @@ void specasm_format_line_e(char *buf, unsigned int l)
 		goto clear;
 	}
 	if ((type >= SPECASM_LINE_TYPE_STR_SIN_SHORT) &&
-	    (type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
+	    (type <= SPECASM_LINE_TYPE_INC_BIN_LONG)) {
 		i = (type - SPECASM_LINE_TYPE_STR_SIN_SHORT) >> 1;
 		i = str_ids[i];
 		buf = prv_format_string_e(buf, line->type & 1, line->data.label,

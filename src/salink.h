@@ -61,6 +61,7 @@
 #define SALINK_ERROR_UNEXPECTED_EXP (SPECASM_MAX_ERRORS + 16)
 #define SALINK_ERROR_DIV_ZERO (SPECASM_MAX_ERRORS + 17)
 #define SALINK_ERROR_BAD_EXPRESSION (SPECASM_MAX_ERRORS + 18)
+#define SALINK_ERROR_DUP_OBJ_FILE (SPECASM_MAX_ERRORS + 19)
 
 /*
  * Label usage for EQU statements
@@ -136,6 +137,7 @@ extern char map_name[MAX_FNAME + 1];
 extern unsigned int global_count;
 extern salink_obj_t obj_files[MAX_FILES];
 extern unsigned int obj_file_count;
+extern uint8_t obj_files_order[MAX_FILES];
 extern char image_name[MAX_FNAME + 1];
 extern unsigned int bin_size;
 #endif

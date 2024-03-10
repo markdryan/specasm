@@ -21,7 +21,8 @@
 
 #include "salink.h"
 
-int16_t salink_equ_eval_e(salink_obj_t *obj, const char *str, uint16_t line_no);
+void salink_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
+				unsigned int line_no);
 void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
 			      salink_label_t *label, uint8_t depth);
 

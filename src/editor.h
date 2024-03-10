@@ -44,6 +44,13 @@ extern unsigned int line;
 extern uint8_t col;
 extern uint8_t quitting;
 
+#ifdef SPECASM_TARGET_NEXT
+/*
+ * Used to preload a .x file to edit on startup.  Assumes that the screen has
+ * already been cleared.
+ */
+void specasm_editor_preload(const char *fname);
+#endif
 void specasm_draw_status(void);
 void specasm_handle_key_press(uint8_t k);
 void specasm_editor_reset(void);

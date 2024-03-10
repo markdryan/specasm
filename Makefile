@@ -8,6 +8,7 @@ COMMON =\
 	line_common.c
 
 SRCS =\
+	clipboard.c \
 	editor.c \
 	editor_tests.c \
 	editor_test_content.c \

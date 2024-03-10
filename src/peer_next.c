@@ -18,24 +18,28 @@
 #include "state.h"
 
 #include <arch/zxn/esxdos.h>
+#include <errno.h>
 #include <intrinsic.h>
 
 void specasm_peer_write_state_e(const char *fname, uint16_t checksum)
 {
 	unsigned char f;
 
+	errno = 0;
 	f = esx_f_open(fname, ESX_MODE_W | ESX_MODE_OPEN_CREAT);
-	if (!f) {
+	if (errno) {
 		err_type = SPECASM_ERROR_OPEN;
 		return;
 	}
 
-	if (esx_f_write(f, &state, sizeof(state)) == 0) {
+	(void)esx_f_write(f, &state, sizeof(state));
+	if (errno) {
 		err_type = SPECASM_ERROR_WRITE;
 		goto cleanup;
 	}
 
-	if (esx_f_write(f, &checksum, sizeof(checksum)) == 0)
+	(void)esx_f_write(f, &checksum, sizeof(checksum));
+	if (errno)
 		err_type = SPECASM_ERROR_WRITE;
 
 cleanup:
@@ -47,8 +51,9 @@ uint16_t specasm_peer_read_state_e(const char *fname)
 	unsigned char f;
 	uint16_t checksum = 0;
 
+	errno = 0;
 	f = esx_f_open(fname, ESX_MODE_R);
-	if (!f) {
+	if (errno) {
 		err_type = SPECASM_ERROR_OPEN;
 		return 0;
 	}

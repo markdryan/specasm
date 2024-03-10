@@ -20,6 +20,10 @@
 #include "peer.h"
 #include "state.h"
 
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+#include "clipboard.h"
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -116,10 +120,16 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 
 static uint8_t prv_selecting_delete(void);
 static void prv_selecting_count(void);
-static void prv_selecting_copy(void);
+static void prv_selecting_copy_e(void);
 static void prv_selecting_move(void);
 static void prv_goto(const char *num);
 static void prv_find(const char *needle);
+
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+static void prv_selecting_clip_copy_e(void);
+static uint8_t prv_selecting_clip_cut_e(void);
+static void prv_selecting_clip_paste_e(void);
+#endif
 
 static void prv_num_to_char(char *buf, unsigned int num, uint8_t digits)
 {
@@ -526,7 +536,9 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		prv_selecting_count();
 		break;
 	case 'c':
-		prv_selecting_copy();
+		prv_selecting_copy_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
 		break;
 	case 'm':
 		prv_selecting_move();
@@ -542,6 +554,18 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		}
 		specasm_save_e(current_fname);
 		break;
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	case 'x':
+		(void)prv_selecting_clip_cut_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		break;
+	case 'v':
+		prv_selecting_clip_paste_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		break;
+#endif
 	default:
 		err_type = SPECASM_ERROR_BAD_COMMAND;
 		return 0;
@@ -596,6 +620,7 @@ static char *prv_complete_filename_e(char *com, uint8_t len)
 
 static uint8_t prv_long_command_e(char *com, uint8_t len)
 {
+	specasm_error_t old_err;
 	uint8_t reset = 0;
 
 	if (!strcmp(com, "sel")) {
@@ -617,12 +642,22 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 			reset = 1;
 			current_fname[0] = 0;
 		} else {
+			old_err = err_type;
+			err_type = SPECASM_ERROR_OK;
+			if (old_err == SPECASM_ERROR_OK)
+				strcpy(current_fname, com);
 			line = row = col = select_end = select_start = 0;
 			specasm_cls(SPECASM_CODE_COLOUR |
 				    SPECASM_LABEL_BACKGROUND);
 			prv_draw_screen(0);
-			if (err_type == SPECASM_ERROR_OK)
-				strcpy(current_fname, com);
+			if (old_err != SPECASM_ERROR_OK) {
+				specasm_text_set_flash(command_col,
+						       SPECASM_MAX_ROWS, 0);
+				err_type = old_err;
+				prv_draw_error();
+				err_type = SPECASM_ERROR_OK;
+				specasm_sleep_ms(1000);
+			}
 		}
 	} else if (com[0] == 's' && com[1] == ' ') {
 		com = prv_complete_filename_e(com, len);
@@ -635,6 +670,12 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 		prv_goto(&com[2]);
 	} else if (com[0] == 'f' && com[1] == ' ') {
 		prv_find(&com[2]);
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	} else if ((com[0] == 'c') && (com[1] == 'c')) {
+		prv_selecting_clip_copy_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+#endif
 	} else {
 		err_type = SPECASM_ERROR_BAD_COMMAND;
 		return 0;
@@ -738,12 +779,12 @@ static uint8_t prv_check_delete_line(void)
 	return 1;
 }
 
-static void prv_goto_line(unsigned int target)
+static uint8_t prv_goto_line(unsigned int target)
 {
 	unsigned int starting_line;
 
 	if (target == line)
-		return;
+		return 0;
 
 	starting_line = line - row;
 	line = target;
@@ -755,7 +796,7 @@ static void prv_goto_line(unsigned int target)
 	if ((line >= starting_line) &&
 	    (line < starting_line + SPECASM_MAX_ROWS)) {
 		row = line - starting_line;
-		return;
+		return 0;
 	}
 
 	if (line + SPECASM_MAX_ROWS <= state.lines.num_lines) {
@@ -766,6 +807,8 @@ static void prv_goto_line(unsigned int target)
 		row = line - starting_line;
 	}
 	prv_draw_screen(starting_line);
+
+	return 1;
 }
 
 static void prv_goto(const char *num)
@@ -786,7 +829,7 @@ static void prv_goto(const char *num)
 			target = state.lines.num_lines - 1;
 	}
 
-	prv_goto_line(target);
+	(void)prv_goto_line(target);
 }
 
 static void prv_find(const char *needle)
@@ -798,7 +841,7 @@ static void prv_find(const char *needle)
 		if (err_type != SPECASM_ERROR_OK)
 			return;
 		if (strstr(scratch, needle)) {
-			prv_goto_line(l);
+			(void)prv_goto_line(l);
 			return;
 		}
 	}
@@ -1167,6 +1210,123 @@ static uint8_t prv_selecting_delete(void)
 	return 1;
 }
 
+static uint16_t prv_make_space_e(uint16_t line_count)
+{
+	uint16_t size;
+	uint16_t lines_left;
+
+	size = line_count;
+	if (ovr) {
+		lines_left = state.lines.num_lines - line;
+		if (lines_left > size)
+			lines_left = size;
+		size -= lines_left;
+	}
+
+	if (size > 0) {
+		specasm_insert_lines_e(line, size);
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+	}
+
+	return size;
+}
+
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+
+static void prv_clip_copy_e(const char *command)
+{
+	unsigned int i;
+
+	specasm_clip_reset();
+	for (i = select_start; i < select_end; i++) {
+		specasm_format_line_e(line_buf, i);
+		if (err_type != SPECASM_ERROR_OK)
+			goto on_error;
+		specasm_clip_add_line_e(line_buf);
+		if (err_type != SPECASM_ERROR_OK)
+			goto on_error;
+	}
+
+	return;
+
+on_error:
+
+	/*
+	 * We need to put line_buf back the way it was.
+	 */
+
+	memset(line_buf, ' ', SPECASM_LINE_MAX_LEN);
+	line_buf[0] = '>';
+	line_buf[2] = command[0];
+	if (command[1])
+		line_buf[3] = command[1];
+}
+
+static void prv_selecting_clip_copy_e(void)
+{
+	if (select_start >= select_end)
+		return;
+	prv_clip_copy_e("cc");
+}
+
+static uint8_t prv_selecting_clip_cut_e(void)
+{
+	if (select_start >= select_end)
+		return 0;
+	prv_clip_copy_e("x");
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
+
+	if (!prv_selecting_delete())
+		return 0;
+
+	prv_draw_screen(line - row);
+	specasm_text_set_flash(col, row, SPECASM_FLASH);
+	specasm_draw_status();
+
+	return 1;
+}
+
+static void prv_selecting_clip_paste_e(void)
+{
+	uint16_t i;
+	uint16_t ptr = 0;
+	uint16_t line_count = specasm_clip_get_line_count();
+
+	if (line_count == 0)
+		return;
+
+	(void)prv_make_space_e(line_count);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	i = line;
+	ptr = specasm_clip_get_line(ptr, line_buf);
+	while (ptr) {
+		specasm_parse_line_e(i, line_buf);
+
+		/*
+		 * This can't really error unless there's some memory
+		 * corruption.  If we return an error here we'll need
+		 * to reset line_buf.  As this cannot happen it's not
+		 * worth the code to do it.  We'll clear the error here
+		 * to prevent the corrupted line_buf from being used
+		 * when the command prompt is redisplayed.
+		 */
+
+		err_type = SPECASM_ERROR_OK;
+		ptr = specasm_clip_get_line(ptr, line_buf);
+		i++;
+	}
+	prv_draw_screen(line - row);
+	if (select_start < select_end) {
+		select_end = select_start = 0;
+		specasm_draw_status();
+	}
+}
+#endif
+
 static void prv_selecting_count(void)
 {
 	uint16_t i;
@@ -1194,32 +1354,21 @@ static void prv_selecting_count(void)
 	select_start = select_end = 0;
 }
 
-static void prv_selecting_copy(void)
+static void prv_selecting_copy_e(void)
 {
 	uint16_t i;
 	uint16_t j;
-	uint16_t size;
-	uint16_t lines_left;
 	uint16_t src_index;
+	uint16_t size;
 	specasm_line_t *src;
 	specasm_line_t *dst;
 
 	if (select_start >= select_end)
 		return;
 
-	size = select_end - select_start;
-	if (ovr) {
-		lines_left = state.lines.num_lines - line;
-		if (lines_left > size)
-			lines_left = size;
-		size -= lines_left;
-	}
-
-	if (size > 0) {
-		specasm_insert_lines_e(line, size);
-		if (err_type != SPECASM_ERROR_OK)
-			return;
-	}
+	size = prv_make_space_e(select_end - select_start);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
 
 	j = line;
 	for (i = select_start; i < select_end; i++) {
@@ -1302,7 +1451,21 @@ static void prv_selecting_keypress(uint8_t k)
 
 	switch (k) {
 	case SPECASM_KEY_DELETE:
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	case 'x':
+		if (k == SPECASM_KEY_DELETE) {
+			update = prv_selecting_delete();
+		} else {
+			update = prv_selecting_clip_cut_e();
+			if (err_type != SPECASM_ERROR_OK) {
+				prv_draw_error();
+				specasm_sleep_ms(1000);
+				update = 1;
+			}
+		}
+#else
 		update = prv_selecting_delete();
+#endif
 	case ' ':
 		select_start = 0;
 		select_end = 0;
@@ -1373,6 +1536,47 @@ void specasm_handle_key_press(uint8_t k)
 	else
 		prv_keypress(k);
 }
+
+#ifdef SPECASM_TARGET_NEXT
+void specasm_editor_preload(const char *fname)
+{
+	char *completed_fname;
+	size_t len = strlen(fname);
+
+	if (len > MAX_FNAME) {
+		err_type = SPECASM_ERROR_BAD_FNAME;
+		goto on_error;
+	}
+
+	/*
+	 * We re-use prv_complete_filename_e here to avoid having to
+	 * duplicate the code.  This function expects to be passed a
+	 * buffer (which in effect is a pointer to the start of the
+	 * line_buf buffer), the first character of which is 'l' which it skips.
+	 * So we'll just duplicate this setup so we can re-use the code.
+	 */
+
+	line_buf[0] = ' ';
+	strcpy(&line_buf[1], fname);
+	completed_fname = prv_complete_filename_e(line_buf, len);
+
+	specasm_load_e(completed_fname);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	strcpy(current_fname, completed_fname);
+	line = row = col = select_end = select_start = 0;
+	prv_draw_screen(0);
+
+	return;
+
+on_error:
+	prv_draw_error();
+	specasm_sleep_ms(1000);
+	err_type = SPECASM_ERROR_OK;
+	specasm_editor_reset();
+}
+#endif
 
 void specasm_editor_reset(void)
 {
