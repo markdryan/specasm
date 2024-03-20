@@ -754,3 +754,33 @@ Samake takes two optional arguments.  The first argument specifies the type of l
 ## Versions, Binary and Source code Compatibility
 
 There are two separate versions of Specasm, one for the 48kb and 128kb ZX Spectrums and one for the ZX Spectrum Next.  The two versions are incompatible with each other.  The 48kb version will not work on the Next and the Next version will not work on an original Spectrum.  The two versions are also binary incompatible with each other.  .x files created on the ZX Spectrum Next cannot be loaded by Specasm on the 48kb and vice-versa.  Both versions of Specasm are source code compatible however, provided that the sources do not contain any of the Z80N instructions.  The same .s file can be assembled by .saimport on both the Next and the 48kb Spectrum.
+
+## ZX81 Support
+
+Version v9 and above of Specasm add support for generating binaries for the ZX81.  This support comes in two forms; a new linker directive and updates to samake.
+
+A new linker directive, **zx81**, has been added.  This directive can be placed anywhere in your program.  It is an instruction to the linker to transliterate any strings and characters it encounters from ASCII to the character encoding used by the ZX81.  This transliteration is performed on all string and character literals.  For example, consider the following code.
+
+```
+zx81
+db 'A'
+```
+
+This will generate a binary of one byte containing the decimal value 38, which corresponds to an 'A' in the ZX81 character encoding..  If the zx81 directive is removed, and we relink, the binary will contain a single byte, 65, corresponding to an ASCII 'A'.  Lower case letters, not supported by the ZX81, are converted to upper case before transliteration.  Other ASCII codes without ZX81 equivalents are replaced by '?' characters.
+
+The **zx81** directive will also change the default ORG address from 32768 to 16514.  This default can of course be overridden using the **org** directive.
+
+The samake tool has been updated to generate .p files.  For example, to generate a .p file simply type
+
+```
+CLEAR 32767
+.samake p
+```
+
+> [!TIP]
+> Note the CLEAR statement is not needed on the ZX Spectrum Next as .samake is implemented as a dotn file.
+
+The 'p' argument can be omitted if one of the .x files in the current directory contains a z81 directive.  Samake requires ZX81 binaries to have an org address of 16514.
+
+On the Spectrum Next, the generate .p file can be run from the browser which will execute it in the built-in ZX81 emulator.
+

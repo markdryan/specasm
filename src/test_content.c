@@ -2258,6 +2258,8 @@ const test_t opcode_tests[] = {
 	{"xor  =  label", "xor =label", 2, { 0xEE, 0x0 }},
 	{"xor  =  label1", "xor =label1", 2, { 0xEE, 0x5 }},
 
+	{"zx81", "zx81", 1, {0x0}},
+
 	{"ld a, $DD", "ld a, $DD", 2, {0x3E, 0xDD}},
 
 	{"db $DD", "db $DD", 1, {0xDD}},

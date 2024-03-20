@@ -1568,6 +1568,7 @@ static const specasm_opcode_t opcode_table[] = {
 	{ prv_parse_test_e, },                        // SPECASM_LINE_TYPE_TEST
 #endif
 	{ prv_parse_arith_e, {0xEE, 0xA8} },          // SPECASM_LINE_TYPE_XOR
+	{ NULL, },                                    // SPECASM_LINE_TYPE_ZX81
 };
 
 /* clang-format on */

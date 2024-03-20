@@ -1391,6 +1391,8 @@ static specasm_line_opcode_dump_t dump_opcodes[] = {
 	{ prv_dump_org_e },           /* SPECASM_LINE_TYPE_ORG */
 	{ NULL },                     /* SPECASM_LINE_TYPE_MAP */
 	{ prv_dump_align_e },         /* SPECASM_LINE_TYPE_ALIGN */
+	{ NULL },                     /* SPECASM_LINE_TYPE_EQU */
+	{ NULL },                     /* SPECASM_LINE_TYPE_ZX81 */
 };
 
 /* clang-format on */

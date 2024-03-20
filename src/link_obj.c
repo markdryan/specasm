@@ -26,6 +26,7 @@
 
 static uint8_t queued_files;
 static uint8_t got_org;
+static uint8_t got_zx81;
 static uint8_t map_file;
 static size_t label_count;
 static size_t main_index = SIZE_MAX;
@@ -226,12 +227,191 @@ static uint16_t prv_write_bin_file_e(specasm_handle_t out_f,
 	return file_size;
 }
 
+static char prv_to_zx81_char(char ch)
+{
+	uint8_t i;
+	const char conseq_ops[] = {
+		'"', '#', '$', ':', '?', '(', ')','>', '<',
+		'=', '+', '-', '*', '/', ';', ',', '.'
+	};
+
+	if (ch == ' ')
+		return 0;
+
+	for (i = 0; i < sizeof(conseq_ops); i++)
+		if (ch == conseq_ops[i])
+			return 11 + i;
+
+	if ((ch >= '0') && (ch <= '9'))
+		return ch - 20;
+
+	ch |= 32;
+	if ((ch >= 'a') && (ch <= 'z'))
+		return ch - 59;
+
+	return 15; // '?'
+}
+
+static void prv_to_zx81_str(char *str, uint8_t len)
+{
+	uint8_t i;
+
+	for (i = 0; i < len; i++)
+		str[i] = prv_to_zx81_char(str[i]);
+}
+
+static void prv_zx81_patch_opcode(specasm_line_t *line)
+{
+	uint8_t i;
+	char ch;
+	uint8_t oc;
+	const uint8_t *ptr;
+	uint8_t size;
+
+	/*
+	 * This is very, very fiddly.  We need to make sure we only update
+	 * instructions with characters, which is easier said than done.
+	 * We don't want to update instructions with numbers, labels or
+	 * expressions.  There's no consistent API to detect this so we
+	 * need to check on an instruction by instruction basis and write
+	 * lots of tests.
+	 */
+
+	/*
+	 * Character substitution is performed on the following
+	 * two byte instructions.
+	 *
+	 * adc a, 'A'
+	 * add a, 'A'
+	 * and 'A'
+	 * cp  'A'
+	 * ld (hl), 'A'
+	 * ld a, 'A'
+	 * ld b, 'A'
+	 * ld  c , 'A'
+	 * ld d, 'A'
+	 * ld e, 'A'
+	 * ld h, 'A'
+	 * ld l, 'A'
+	 * or 'A'
+	 * sbc a, 'A'
+	 * sub 'A'
+	 * xor 'A'
+	 */
+
+	const uint8_t two_byte_opcodes[] = {
+		0xce, 0xc6, 0xe6, 0xfe, 0x36, 0xf6, 0xde, 0xd6, 0xee,
+		0x3e, 0x06, 0x0e, 0x16, 0x1e, 0x26, 0x2e
+	};
+
+	/*
+	 * ld bc, 'A',
+	 * ld de, 'A'
+	 * ld hl, 'A'
+	 * ld sp, 'A'
+	 */
+
+	const uint8_t three_byte_opcodes[] = {
+		0x1, 0x11, 0x31, 0x21,
+	};
+
+	/*
+	 * ld (ix+1), 'A'
+	 * ld (iy+1), 'A'
+	 * ld ix, 'A'
+	 * ld iy, 'A'
+	 */
+
+	if (specasm_line_get_size(line) == 0)
+		return;
+
+	if (specasm_line_get_size(line) == 3) {
+		oc = line->data.op_code[0];
+		if ((oc != 0xfd) && (oc != 0xdd))
+			return;
+		oc = line->data.op_code[1];
+		if (oc == 0x36) {
+			if (specasm_line_get_format2(line) !=
+			    SPECASM_FLAGS_NUM_CHAR)
+				return;
+			ch = (char) line->data.op_code[3];
+			line->data.op_code[3] = (uint8_t) prv_to_zx81_char(ch);
+		} else if (oc == 0x21) {
+			if (specasm_line_get_addr_type(line))
+				return;
+			if (specasm_line_get_format(line) !=
+			    SPECASM_FLAGS_NUM_CHAR)
+				return;
+			ch = (char) line->data.op_code[2];
+			line->data.op_code[2] = (uint8_t) prv_to_zx81_char(ch);
+		}
+		return;
+	}
+
+	if (specasm_line_get_format(line) != SPECASM_FLAGS_NUM_CHAR)
+		return;
+
+	if (specasm_line_get_size(line) == 1) {
+		ptr = two_byte_opcodes;
+		size = sizeof(two_byte_opcodes);
+	} else  {
+		/*
+		 * Note, I would say that there's a bug here.
+		 * The addr_type should be NUM but it's not set
+		 * at all for LD BC,DE,HL, imm16.
+		 */
+
+		if (specasm_line_get_addr_type(line))
+			return;
+		ptr = three_byte_opcodes;
+		size = sizeof(three_byte_opcodes);
+	}
+
+	for (i = 0; i < size; i++)
+		if (line->data.op_code[0] == ptr[i]) {
+			ch = (char) line->data.op_code[1];
+			line->data.op_code[1] = (uint8_t)
+				prv_to_zx81_char(ch);
+			return;
+		}
+}
+
+static void prv_zx81_patch_db_dw(specasm_line_t *line)
+{
+	uint8_t i;
+	uint8_t step;
+	char ch;
+
+	if (specasm_line_get_format(line) != SPECASM_FLAGS_NUM_CHAR)
+		return;
+
+	if (line->type == SPECASM_LINE_TYPE_DB) {
+		step = 1;
+	} else {
+
+		/*
+		 * DWs can have labels in them as well as expressions so we
+		 * need to be careful here.
+		 */
+
+		if (specasm_line_get_addr_type(line))
+			return;
+		step = 2;
+	}
+
+	for (i = 0; i < specasm_line_get_size(line) + 1; i += step) {
+		ch = (char) line->data.op_code[i];
+		line->data.op_code[i] = (uint8_t) prv_to_zx81_char(ch);
+	}
+}
+
 static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 			     uint16_t size)
 {
 	unsigned int i;
 	unsigned int to_set;
 	uint8_t id;
+	uint8_t byt;
 	const char *data;
 
 	if ((buf_count + size > MAX_BUFFER_SIZE) ||
@@ -248,8 +428,12 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 	}
 
 	if (line->type == SPECASM_LINE_TYPE_DS) {
+		byt = line->data.op_code[0];
+		if (got_zx81 &&
+		    (specasm_line_get_format(line) == SPECASM_FLAGS_NUM_CHAR))
+			byt = prv_to_zx81_char(byt);
 		to_set = size < MAX_BUFFER_SIZE ? size : MAX_BUFFER_SIZE;
-		memset(&buf.file_buf[0], line->data.op_code[0], to_set);
+		memset(&buf.file_buf[0], byt, to_set);
 		do {
 			size -= to_set;
 			if (size == 0) {
@@ -276,6 +460,8 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 		id = line->data.label;
 		data = salink_get_label_str_e(id, line->type);
 		memcpy(&buf.file_buf[buf_count], data, size);
+		if (got_zx81)
+			prv_to_zx81_str(&buf.file_buf[buf_count], size);
 		buf_count += size;
 	}
 }
@@ -747,6 +933,8 @@ static void prv_parse_obj_e(const char *fname)
 			}
 			got_org = 1;
 			start_address = *((uint16_t *)&line->data.op_code[0]);
+		} else if (line->type == SPECASM_LINE_TYPE_ZX81) {
+			got_zx81 = 1;
 		} else if (line->type == SPECASM_LINE_TYPE_MAP) {
 			map_file = 1;
 		} else if (line->type == SPECASM_LINE_TYPE_ALIGN) {
@@ -933,6 +1121,22 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 		id_pos = 1;
 		line = &state.lines.lines[i];
 
+		/*
+		 * We want to do this here as we don't want to accidentally
+		 * replace numbers in instructions with expressions that cannot
+		 * be characters.  We can't do it after the expressions have
+		 * been applied as lines that started out as expressions don't
+		 * set the format bit correctly and we can't change it now.
+		 */
+
+		if (got_zx81) {
+		    if (line->type < SPECASM_LINE_TYPE_DB)
+			    prv_zx81_patch_opcode(line);
+		    else if ((line->type == SPECASM_LINE_TYPE_DB) ||
+			     (line->type == SPECASM_LINE_TYPE_DW))
+			    prv_zx81_patch_db_dw(line);
+		}
+
 		if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
 			salink_apply_expressions_e(line, obj, i);
 
@@ -1082,6 +1286,14 @@ static void prv_salink_e(void)
 
 	if (obj_file_count == 0)
 		return;
+
+	/*
+	 * Default to org 16514 on ZX81 if start address not explcitily
+	 * provided.
+	 */
+
+	if (got_zx81 && !got_org)
+		start_address = 16514;
 
 	itoa(start_address, ibuf, 16);
 	(void)specasm_text_print(ibuf, SALINK_VAL_COL + 1,
