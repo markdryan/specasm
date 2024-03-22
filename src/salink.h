@@ -26,7 +26,7 @@
 #define MAX_GLOBALS 128
 #define MAX_LABELS 1280
 #define MAX_BUFFER_SIZE 1024
-#define MAX_FNAME 28
+#define MAX_FNAME 42
 
 /*
  * All long labels must be odd.
