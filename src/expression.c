@@ -792,8 +792,12 @@ void salink_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
 			prv_eval_equ_16bit_e(line, obj, line_no, 1);
 			break;
 		case 0xDD:
-		case 0xED:
 		case 0xFD:
+			if (line->data.op_code[1] == 0x36) {
+				prv_eval_equ_8bit_e(line, obj, line_no, 3);
+				break;
+			}
+		case 0xED:
 			prv_eval_equ_16bit_e(line, obj, line_no, 2);
 			break;
 		}

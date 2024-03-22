@@ -283,6 +283,12 @@
  *
  * In this case the id is stored in op_code[0].  It's not possible to have
  * multiple expressions in a single db or dw statement.
+ *
+ * ld (ix+1), =expression
+ * ld (iy+1), =expression
+ *
+ * In this case the id is stored in op_code[3] and set the addr flag
+ * to indicate whether it's a long or short label.
  */
 
 #define SPECASM_FLAGS_EXP_LONG 0x80

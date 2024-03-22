@@ -205,6 +205,22 @@ if [ "$str" != "82 40" ]; then
     exit 1
 fi
 
+offset=245
+str=`od -An -j$offset -t x1 -N4 zx81 | xargs`
+if [ "$str" != "dd 36 01 41" ]; then
+    echo "Expected dd 36 01 41 at offset $offset"
+    echo "got      $str"
+    exit 1
+fi
+
+offset=249
+str=`od -An -j$offset -t x1 -N4 zx81 | xargs`
+if [ "$str" != "fd 36 01 41" ]; then
+    echo "Expected fd 36 01 41 at offset $offset"
+    echo "got      $str"
+    exit 1
+fi
+
 rm zx81
 rm *.x
 

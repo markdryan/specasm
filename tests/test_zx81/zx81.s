@@ -82,8 +82,8 @@ ld (iy+1), $41
 ld ix, $41
 ld iy, $41
 
-ld ix,  =notletter
-ld iy,  =notletter
+ld ix, =notletter
+ld iy, =notletter
 
 db 'A'
 db 'A', 'B', 'C', 'D'
@@ -103,3 +103,6 @@ ld iy, Main
 
 db ' '
 dw Main
+
+ld (ix+1), =notletter
+ld (iy+1), =notletter

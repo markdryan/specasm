@@ -21,6 +21,8 @@
 #include "peer.h"
 #include "state.h"
 
+static const char *codes_16bit[] = {"bc", "de", "hl", "sp", "ix", "iy", "(hl)"};
+
 static char *prv_dump_exp_e(const specasm_line_t *line, char *buf, uint8_t id);
 
 typedef uint8_t (*specasm_dump_opcode_fn_t)(const specasm_line_t *line,
@@ -222,11 +224,6 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 	uint8_t reg2;
 #endif
 	const char *code;
-#ifndef SPECASM_NEXT_BANKED
-	static const char *codes[] = {"bc", "de", "hl", "sp", "ix", "iy"};
-#else
-	const char *codes[] = {"bc", "de", "hl", "sp", "ix", "iy"};
-#endif
 	const uint8_t *op_code = line->data.op_code;
 
 	char *start = buf;
@@ -260,7 +257,7 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 		return prv_dump_arith_e(line, buf + 3, 0xC6, 0x80) - start;
 	}
 
-	code = codes[reg1];
+	code = codes_16bit[reg1];
 	while (*code)
 		*buf++ = *code++;
 	buf[0] = ',';
@@ -282,7 +279,7 @@ static uint8_t prv_dump_add_e(const specasm_line_t *line, char *buf)
 		return buf - start;
 	}
 #endif
-	code = codes[reg2];
+	code = codes_16bit[reg2];
 	while (*code)
 		*buf++ = *code++;
 	return buf - start;
@@ -630,13 +627,7 @@ static char *prv_dump_ld_16bit_imm_e(const specasm_line_t *line, char *buf,
 				     uint8_t reg, uint16_t val)
 {
 	const char *code;
-#ifndef SPECASM_NEXT_BANKED
-	static const char *codes[] = {"bc", "de", "hl",  "sp",
-				      "ix", "iy", "(hl)"};
-#else
-	const char *codes[] = {"bc", "de", "hl", "sp", "ix", "iy", "(hl)"};
-#endif
-	code = codes[reg];
+	code = codes_16bit[reg];
 	while (*code)
 		*buf++ = *code++;
 
@@ -767,13 +758,17 @@ static char *prv_dump_ld_ind_off_reg(const specasm_line_t *line, char *buf)
 
 static char *prv_dump_ld_ind_off_imm(const specasm_line_t *line, char *buf)
 {
-	buf = specasm_dump_index(line->data.op_code, buf,
-				 specasm_line_get_format(line));
+	const uint8_t *op_code = line->data.op_code;
+
+	buf = specasm_dump_index(op_code, buf, specasm_line_get_format(line));
 	buf[0] = ',';
 	buf[1] = ' ';
 	buf += 2;
-	buf += specasm_dump_byte(buf, line->data.op_code[3],
-				 specasm_line_get_format2(line));
+	if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
+		buf = prv_dump_exp_e(line, buf, op_code[3]);
+	else
+		buf += specasm_dump_byte(buf, op_code[3],
+					 specasm_line_get_format2(line));
 
 	return buf;
 }

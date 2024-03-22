@@ -739,6 +739,11 @@ const test_t opcode_tests[] = {
 	{"ld (ix+-1), -1", "ld (ix+-1), -1", 4, {0xDD, 0x36, 0xFF, 0xFF}},
 	{"ld (ix+32), -1", "ld (ix+32), -1", 4, {0xDD, 0x36, 0x20, 0xFF}},
 
+	{"ld (ix+32), =label1", "ld (ix+32), =label1", 4,
+	 {0xDD, 0x36, 0x20, 0x5}},
+	{"ld (ix+32), =verylonglabel1", "ld (ix+32), =verylonglabel1", 4,
+	 {0xDD, 0x36, 0x20, 0x1}},
+
 	{"ld (iy+1), a", "ld (iy+1), a", 3, {0xFD, 0x77, 0x1}},
 	{"ld ( iy + 1 ) ,  a", "ld (iy+1), a", 3, {0xFD, 0x77, 0x1}},
 	{"ld (iy+-1), a", "ld (iy+-1), a", 3, {0xFD, 0x77, 0xFF}},
@@ -797,6 +802,11 @@ const test_t opcode_tests[] = {
 	{"ld (iy+-1), $b", "ld (iy+-1), $B", 4, {0xFD, 0x36, 0xFF, 0xB}},
 	{"ld (iy+-1), -1", "ld (iy+-1), -1", 4, {0xFD, 0x36, 0xFF, 0xFF}},
 	{"ld (iy+32), -1", "ld (iy+32), -1", 4, {0xFD, 0x36, 0x20, 0xFF}},
+
+	{"ld (iy+32), =label1", "ld (iy+32), =label1", 4,
+	 {0xFD, 0x36, 0x20, 0x5}},
+	{"ld (iy+32), =verylonglabel1", "ld (iy+32), =verylonglabel1", 4,
+	 {0xFD, 0x36, 0x20, 0x1}},
 
 	{"ld (label), a", "ld (label), a", 3, {0x32, 0x00, 0x00}},
 	{"ld ( label ) ,  a", "ld (label), a", 3, {0x32, 0x00, 0x00}},

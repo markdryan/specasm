@@ -280,6 +280,7 @@ The following instructions support expressions.
 | add de, =expression (nx)      |
 | add bc, =expression (nx)      |
 | and =expression               |
+| bit =expression, [a-l]        |
 | call =expression              |
 | cp =expression                |
 | jp =expression                |
@@ -298,6 +299,8 @@ The following instructions support expressions.
 | ld hl, =expression            |
 | ld hl, (=expression)          |
 | ld (hl), =expression          |
+| ld (ix+n), = expression       |
+| ld (iy+n), = expression       |
 | ld (=expression), hl          |
 | ld sp, =expression            |
 | out (=expression), a          |
