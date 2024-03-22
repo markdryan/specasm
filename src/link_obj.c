@@ -29,7 +29,7 @@ static uint8_t got_org;
 static uint8_t got_zx81;
 static uint8_t map_file;
 static size_t label_count;
-static size_t main_index = SIZE_MAX;
+static uint8_t main_index = 0xff;
 static uint16_t start_address = 0x8000;
 
 static void prv_add_queued_filename_e(const char *base, const char *prefix,
@@ -997,7 +997,7 @@ static uint8_t prv_order_objects_e(void)
 	 * written out to the final binary.
 	 */
 
-	if (main_index == SIZE_MAX) {
+	if (main_index == 0xFF) {
 		strcpy(error_buf, "No Main label defined");
 		err_type = SALINK_ERROR_NO_MAIN;
 		return 0;
@@ -1021,7 +1021,7 @@ static uint8_t prv_order_objects_e(void)
 
 static void prv_check_duplicate_objs_e(void)
 {
-	unsigned int i;
+	uint8_t i;
 	const char *fname1;
 
 	/*
@@ -1049,7 +1049,7 @@ static void prv_check_duplicate_objs_e(void)
 
 static void prv_complete_absolutes_e(void)
 {
-	unsigned int i;
+	uint8_t i;
 	uint16_t j;
 	salink_obj_t *obj;
 	salink_label_t *label;
@@ -1203,7 +1203,7 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 static void prv_link_e(uint8_t main_loaded)
 {
 	char ibuf[16];
-	unsigned int i;
+	uint8_t i;
 	specasm_handle_t f;
 	uint16_t offset = start_address;
 	salink_obj_t *obj = &obj_files[main_index];

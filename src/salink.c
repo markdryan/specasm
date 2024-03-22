@@ -39,7 +39,7 @@ char map_name[MAX_FNAME + 1];
 
 salink_label_t labels[MAX_LABELS];
 salink_obj_t obj_files[MAX_FILES];
-unsigned int obj_file_count;
+uint8_t obj_file_count;
 uint8_t obj_files_order[MAX_FILES];
 salink_global_t globals[MAX_GLOBALS];
 unsigned int global_count;
