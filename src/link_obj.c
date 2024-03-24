@@ -227,19 +227,20 @@ static uint16_t prv_write_bin_file_e(specasm_handle_t out_f,
 	return file_size;
 }
 
+static const char zx81_conseq_ops[] = {
+	'"', '#', '$', ':', '?', '(', ')','>', '<',
+	'=', '+', '-', '*', '/', ';', ',', '.'
+};
+
 static char prv_to_zx81_char(char ch)
 {
 	uint8_t i;
-	const char conseq_ops[] = {
-		'"', '#', '$', ':', '?', '(', ')','>', '<',
-		'=', '+', '-', '*', '/', ';', ',', '.'
-	};
 
 	if (ch == ' ')
 		return 0;
 
-	for (i = 0; i < sizeof(conseq_ops); i++)
-		if (ch == conseq_ops[i])
+	for (i = 0; i < sizeof(zx81_conseq_ops); i++)
+		if (ch == zx81_conseq_ops[i])
 			return 11 + i;
 
 	if ((ch >= '0') && (ch <= '9'))
@@ -260,6 +261,16 @@ static void prv_to_zx81_str(char *str, uint8_t len)
 		str[i] = prv_to_zx81_char(str[i]);
 }
 
+static const uint8_t zx81_two_byte_opcodes[] = {
+	0xce, 0xc6, 0xe6, 0xfe, 0x36, 0xf6, 0xde, 0xd6, 0xee,
+	0x3e, 0x06, 0x0e, 0x16, 0x1e, 0x26, 0x2e
+};
+
+
+static const uint8_t zx81_three_byte_opcodes[] = {
+	0x1, 0x11, 0x31, 0x21,
+};
+
 static void prv_zx81_patch_opcode(specasm_line_t *line)
 {
 	uint8_t i;
@@ -277,53 +288,17 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 	 * lots of tests.
 	 */
 
+	if (specasm_line_get_size(line) == 0)
+		return;
+
 	/*
-	 * Character substitution is performed on the following
-	 * two byte instructions.
+	 * Check for the following 4 byte instructions.
 	 *
-	 * adc a, 'A'
-	 * add a, 'A'
-	 * and 'A'
-	 * cp  'A'
-	 * ld (hl), 'A'
-	 * ld a, 'A'
-	 * ld b, 'A'
-	 * ld  c , 'A'
-	 * ld d, 'A'
-	 * ld e, 'A'
-	 * ld h, 'A'
-	 * ld l, 'A'
-	 * or 'A'
-	 * sbc a, 'A'
-	 * sub 'A'
-	 * xor 'A'
-	 */
-
-	const uint8_t two_byte_opcodes[] = {
-		0xce, 0xc6, 0xe6, 0xfe, 0x36, 0xf6, 0xde, 0xd6, 0xee,
-		0x3e, 0x06, 0x0e, 0x16, 0x1e, 0x26, 0x2e
-	};
-
-	/*
-	 * ld bc, 'A',
-	 * ld de, 'A'
-	 * ld hl, 'A'
-	 * ld sp, 'A'
-	 */
-
-	const uint8_t three_byte_opcodes[] = {
-		0x1, 0x11, 0x31, 0x21,
-	};
-
-	/*
 	 * ld (ix+1), 'A'
 	 * ld (iy+1), 'A'
 	 * ld ix, 'A'
 	 * ld iy, 'A'
 	 */
-
-	if (specasm_line_get_size(line) == 0)
-		return;
 
 	if (specasm_line_get_size(line) == 3) {
 		oc = line->data.op_code[0];
@@ -351,9 +326,40 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 	if (specasm_line_get_format(line) != SPECASM_FLAGS_NUM_CHAR)
 		return;
 
+	/*
+	 * Character substitution is performed on the following
+	 * two byte instructions.
+	 *
+	 * adc a, 'A'
+	 * add a, 'A'
+	 * and 'A'
+	 * cp  'A'
+	 * ld (hl), 'A'
+	 * ld a, 'A'
+	 * ld b, 'A'
+	 * ld  c , 'A'
+	 * ld d, 'A'
+	 * ld e, 'A'
+	 * ld h, 'A'
+	 * ld l, 'A'
+	 * or 'A'
+	 * sbc a, 'A'
+	 * sub 'A'
+	 * xor 'A'
+	 */
+
+	/*
+	 * And on the following 3 byte sequences
+	 *
+	 * ld bc, 'A',
+	 * ld de, 'A'
+	 * ld hl, 'A'
+	 * ld sp, 'A'
+	 */
+
 	if (specasm_line_get_size(line) == 1) {
-		ptr = two_byte_opcodes;
-		size = sizeof(two_byte_opcodes);
+		ptr = zx81_two_byte_opcodes;
+		size = sizeof(zx81_two_byte_opcodes);
 	} else  {
 		/*
 		 * Note, I would say that there's a bug here.
@@ -363,8 +369,8 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 
 		if (specasm_line_get_addr_type(line))
 			return;
-		ptr = three_byte_opcodes;
-		size = sizeof(three_byte_opcodes);
+		ptr = zx81_three_byte_opcodes;
+		size = sizeof(zx81_three_byte_opcodes);
 	}
 
 	for (i = 0; i < size; i++)
