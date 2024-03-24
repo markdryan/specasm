@@ -43,6 +43,10 @@ uint8_t obj_file_count;
 uint8_t obj_files_order[MAX_FILES];
 salink_global_t globals[MAX_GLOBALS];
 unsigned int global_count;
+uint8_t queued_files;
+
+extern const char *empty_str = "";
+extern const char *specasm_str = "/specasm/";
 
 #ifdef SPECASM_TARGET_NEXT
 void specasm_peer_next_copy_chars(void);
@@ -68,6 +72,18 @@ const char *salink_get_label_str_e(uint8_t id, uint8_t label_type)
 		return specasm_state_get_long_e(id);
 	else
 		return specasm_state_get_short_e(id);
+}
+
+uint8_t salink_check_file(const char *fname)
+{
+	char *period;
+
+	period = strchr(fname, '.');
+
+	if (!period)
+		return 0;
+
+	return ((period[1] == 'x' || period[1] == 'X') && period[2] == 0);
 }
 
 /*

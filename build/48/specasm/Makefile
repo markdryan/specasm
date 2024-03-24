@@ -33,6 +33,7 @@ SALINK = \
 	map.o \
 	state_base.o \
 	peer_file_zx.o \
+	queued_files.o \
 	util_print_zx.o \
 	peer_zx.o
 

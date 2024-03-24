@@ -25,6 +25,9 @@ expression_banked.o: expression.c
 map_banked.o: map.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_44_H --constsegBANK_44_H --datasegBANK_44_H -c $<
 
+queued_files_banked.o: queued_files.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_44_H --constsegBANK_44_H --datasegBANK_44_H -c $<
+
 link_obj_banked.o: link_obj.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45_H --constsegBANK_45_H --datasegBANK_45_H -c $<
 
@@ -55,6 +58,7 @@ SALINK = \
 	expression_banked.o \
 	link_obj_banked.o \
 	map_banked.o \
+	queued_files_banked.o \
 	salink_trampolines.o \
 	state_base.o \
 	peer_file_next.o \

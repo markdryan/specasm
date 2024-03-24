@@ -21,31 +21,16 @@
 #include "expression.h"
 #include "map.h"
 #include "peer.h"
+#include "queued_files.h"
 #include "salink.h"
 #include "state_base.h"
 
-static uint8_t queued_files;
 static uint8_t got_org;
 static uint8_t got_zx81;
 static uint8_t map_file;
 static size_t label_count;
 static uint8_t main_index = 0xff;
 static uint16_t start_address = 0x8000;
-
-static void prv_add_queued_filename_e(const char *base, const char *prefix,
-				      const char *str);
-
-static int prv_check_file(const char *fname)
-{
-	char *period;
-
-	period = strchr(fname, '.');
-
-	if (!period)
-		return 0;
-
-	return ((period[1] == 'x' || period[1] == 'X') && period[2] == 0);
-}
 
 static void prv_init_out_fnames(salink_obj_t *obj)
 {
@@ -659,161 +644,6 @@ static void prv_stat_fname_e(const char *fname, specasm_stat_t *stat_buf)
 	err_type = err;
 }
 
-static uint8_t prv_add_queued_dir_e(const char *fname)
-{
-	specasm_dir_t dir;
-	specasm_dirent_t dirent;
-	size_t fname_len;
-	char dir_name[MAX_FNAME + 1];
-
-	/*
-	 * If we can't stat the filename we'll assume that it's just a .x file
-	 * without the extension.  If it isn't will catch the error later.
-	 */
-
-	if (!specasm_file_isdir(fname))
-		return 0;
-
-	fname_len = strlen(fname);
-	if (fname_len >= MAX_FNAME) {
-		err_type = SPECASM_ERROR_BAD_FNAME;
-		return 0;
-	}
-	dir = specasm_opendir_e(fname);
-	if (err_type != SPECASM_ERROR_OK) {
-		strcpy(error_buf, "Failed to read directory");
-		err_type = SALINK_ERROR_READDIR;
-		return 0;
-	}
-
-	strcpy(dir_name, fname);
-	dir_name[fname_len] = '/';
-	dir_name[fname_len + 1] = 0;
-
-	while (specasm_readdir(dir, &dirent)) {
-
-		/*
-		 * Make sure we only add .x files and not .x directories
-		 * or any directories for that matter.  Subdirectories need
-		 * to be explicitly added with a '-' or a '+' directive.
-		 */
-
-		if (specasm_isdirent_dir(dirent))
-			continue;
-		if (!prv_check_file(specasm_getdirname(dirent)))
-			continue;
-		prv_add_queued_filename_e(dir_name, "",
-					  specasm_getdirname(dirent));
-		if (err_type != SPECASM_ERROR_OK) {
-			specasm_closedir(dir);
-			return 0;
-		}
-	}
-	specasm_closedir(dir);
-
-	err_type = SPECASM_ERROR_OK;
-
-	return 1;
-}
-
-static void prv_add_queued_filename_e(const char *base, const char *prefix,
-				      const char *str)
-{
-	int space_needed;
-	int prefix_len;
-	int base_len;
-	char *ptr;
-	char *start;
-	char *slash;
-
-	if (queued_files == MAX_PENDING_X_FILES) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "Pending file limit %d reached", MAX_PENDING_X_FILES);
-		err_type = SALINK_ERROR_TOO_MANY_FILES;
-		return;
-	}
-
-	/*
-	 * Build up a path relative to the including path, providing
-	 * it's not a complete path.  So if the including file is
-	 * one/two.x and it includes does - three.x, then we get
-	 *
-	 * one/three.x
-	 *
-	 * If the including file is simple two.x then we get
-	 *
-	 * three.x
-	 *
-	 * If the including file is one/two/ we'd get
-	 *
-	 * one/two/three.x
-	 *
-	 * TODO: Need to update this to cope with drive letters.
-	 */
-
-	base_len = 0;
-	if (str[0] != '/') {
-		slash = strrchr(base, '/');
-		if (slash)
-			base_len = (slash - base) + 1;
-	}
-
-	prefix_len = strlen(prefix);
-	space_needed = strlen(str) + prefix_len + base_len;
-	if (space_needed > MAX_FNAME) {
-		err_type = SPECASM_ERROR_BAD_FNAME;
-		return;
-	}
-
-	ptr = &buf.fname[queued_files][0];
-	start = ptr;
-	if (base_len) {
-		strncpy(ptr, base, base_len);
-		ptr += base_len;
-	}
-	if (prefix_len) {
-		strcpy(ptr, prefix);
-		ptr += prefix_len;
-	}
-	strcpy(ptr, str);
-
-	/*
-	 * Check to see whether this is a directory or not.
-	 * If so we add the files in this directory and return.
-	 */
-
-	if (prv_add_queued_dir_e(start))
-		return;
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-
-	queued_files++;
-	if (start[space_needed - 2] != '.' &&
-	    (start[space_needed - 1] | 32) != 'x') {
-		if (space_needed + 2 > MAX_FNAME) {
-			err_type = SPECASM_ERROR_BAD_FNAME;
-			return;
-		}
-		start[space_needed] = '.';
-		start[space_needed + 1] = 'x';
-		start[space_needed + 2] = 0;
-	}
-}
-
-static void prv_add_queued_file_e(const char *base, const char *prefix,
-				  specasm_line_t *line)
-{
-	uint8_t id;
-	const char *str;
-
-	id = line->data.label;
-	str = salink_get_label_str_e(id, line->type);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-
-	prv_add_queued_filename_e(base, prefix, str);
-}
-
 static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj,
 				uint16_t line_no)
 {
@@ -947,10 +777,10 @@ static void prv_parse_obj_e(const char *fname)
 			prv_add_align_e(obj, line, size);
 		} else if ((line->type >= SPECASM_LINE_TYPE_INC_SHORT) &&
 			   (line->type <= SPECASM_LINE_TYPE_INC_LONG)) {
-			prv_add_queued_file_e(obj->fname, "", line);
+			salink_add_queued_file_e(obj->fname, empty_str, line);
 		} else if ((line->type >= SPECASM_LINE_TYPE_INC_SYS_SHORT) &&
 			   (line->type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
-			prv_add_queued_file_e(obj->fname, "/specasm/", line);
+			salink_add_queued_file_e(obj->fname, specasm_str, line);
 		} else if ((line->type == SPECASM_LINE_TYPE_INC_BIN_SHORT) ||
 			   (line->type == SPECASM_LINE_TYPE_INC_BIN_LONG)) {
 			size = prv_inc_bin_size_e(line, size);
@@ -1276,7 +1106,7 @@ static void prv_salink_e(void)
 	while (specasm_readdir(dir, &dirent)) {
 		if (specasm_isdirent_dir(dirent))
 			continue;
-		if (!prv_check_file(specasm_getdirname(dirent)))
+		if (!salink_check_file(specasm_getdirname(dirent)))
 			continue;
 		prv_parse_obj_e(specasm_getdirname(dirent));
 		if (err_type != SPECASM_ERROR_OK) {
