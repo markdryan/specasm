@@ -62,6 +62,7 @@
 #define SALINK_ERROR_DIV_ZERO (SPECASM_MAX_ERRORS + 17)
 #define SALINK_ERROR_BAD_EXPRESSION (SPECASM_MAX_ERRORS + 18)
 #define SALINK_ERROR_DUP_OBJ_FILE (SPECASM_MAX_ERRORS + 19)
+#define SALINK_ERROR_NO_TESTS (SPECASM_MAX_ERRORS + 20)
 
 /*
  * Label usage for EQU statements
@@ -133,6 +134,10 @@ typedef union {
 	char fname[MAX_PENDING_X_FILES][MAX_FNAME + 1];
 } salink_buf_t;
 
+#define SALINK_MODE_LINK 0
+#define SALINK_MODE_TEST 1
+#define SALINK_MODE_MAX 2
+
 extern salink_buf_t buf;
 extern char map_name[MAX_FNAME + 1];
 extern unsigned int global_count;
@@ -144,4 +149,7 @@ extern unsigned int bin_size;
 extern uint8_t queued_files;
 extern const char *empty_str;
 extern const char *specasm_str;
+extern uint8_t link_mode;
+extern uint8_t got_test;
+
 #endif

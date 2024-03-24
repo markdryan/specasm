@@ -28,6 +28,7 @@ static uint8_t prv_add_queued_dir_e(const char *fname)
 	specasm_dir_t dir;
 	specasm_dirent_t dirent;
 	size_t fname_len;
+	char *period;
 	char dir_name[MAX_FNAME + 1];
 
 	/*
@@ -64,8 +65,20 @@ static uint8_t prv_add_queued_dir_e(const char *fname)
 
 		if (specasm_isdirent_dir(dirent))
 			continue;
-		if (!salink_check_file(specasm_getdirname(dirent)))
+
+		/*
+		 * We don't use salink_check_file here as .t files must be
+		 * explictly included.  They are not included when including
+		 * a directory.
+		 */
+
+		period = strchr(specasm_getdirname(dirent), '.');
+		if (!period || !period[1] || period[2])
 			continue;
+
+		if (!((period[1] == 'x') || (period[1] == 'X')))
+			continue;
+
 		prv_add_queued_filename_e(dir_name, "",
 					  specasm_getdirname(dirent));
 		if (err_type != SPECASM_ERROR_OK) {
@@ -151,6 +164,19 @@ static void prv_add_queued_filename_e(const char *base, const char *prefix,
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
+	ptr = &start[space_needed - 2];
+
+	/*
+	 * .t files can be explicitly included but shouldn't be added to the
+	 * main binary.
+	 */
+
+	if (ptr[0] == '.' && (ptr[1] | 32) == 't') {
+		if (link_mode == SALINK_MODE_LINK) {
+			got_test = 1;
+			return;
+		}
+	}
 	queued_files++;
 	if (start[space_needed - 2] != '.' &&
 	    (start[space_needed - 1] | 32) != 'x') {

@@ -787,3 +787,164 @@ The 'p' argument can be omitted if one of the .x files in the current directory 
 
 On the Spectrum Next, the generate .p file can be run from the browser which will execute it in the built-in ZX81 emulator.
 
+## Unit Tests
+
+Specasm v9 adds basic support for unit testing.  Test content is placed in a .t file.  .t files are binary files like .x files that can be edited by Specasm but are intended to contain test code only.  .t files can be saexported and saimported to and from .ts source files.  .t files can be included in the same directory as the .x files that constitute the main program.  When salink is run it builds a main binary out of all the .x files in the project.  In Specasm v9, if the project contains any .t files, it will also generate a second binary that contains the contents of all the .t and all the .x files in the project.  The second binary has the same name as the main binary with a '.tst' extension appended.
+
+Tests can be added to .t files simply by adding a function identified with global label that begins with the word 'Test'.  These Test functions are intended to exercise some part of the main programm, returning with bc = 0 if the test passed or any value but 0 if the test failed.   Samake has been updated to generate BASIC test harnesses that will load the test binary, execute all the Test functions in sequence and printing an indication as to whether each test passed or failed.  The test harness interprets the failure codes returned in the bc register pair in two ways.
+
+1. If the value in bc is less than the ORG address of the program, 32768 by default on the Spectrum, the value is interpreted as an integer error code and output as such.
+2. If the value in bc is greater than or equal to the ORG address, it is interpreted as a null terminated string containing an error message.  The test harness will output the string on a new line, before executing the next test.
+
+As an example, consider a directory with two files, main.x and test.x.  main.x contains
+
+```
+; Carry flag set on failure
+.Main
+.Magic
+  or a
+  ret nz
+  scf
+  ret
+```
+
+and test.t contains
+
+```
+.TestMagicNonZero
+  ld a, 1
+  call Magic
+  jr c, fail
+  ld bc, 0
+  ret
+
+.TestMagicZero
+  xor a
+  call Magic
+  jr c, fail
+  ld bc, 0
+  ret
+
+.fail
+  ld bc, 1
+  ret
+```
+
+Two binaries will be created when salink is run in this directory, main which will contain only the Magic function, and main.tst which will contain the Magic function in addition to the two Test functions.
+
+A test harness can then be created and executed by typing
+
+```
+samake tst
+LOAD * "unit.bas"
+```
+
+> [!TIP]
+> Note LOAD * is simply LOAD on the ZX Spectrum Next.
+
+You should see something like
+
+```
+TestMagicNonZero: OK
+TestMagicZero: FAIL (1)
+```
+
+printed on the screen.
+
+The BASIC test harnesses locate the Test functions by means of a jump table added to the end of the test binary.  The harnesses should not need to be regenerated unless the ORG address or the name of the program changes.  Existing harnesses should be able to pick up any new Test functions added to the project by inspecting the jump table, which will have been updated by the linker.
+
+### .t Files and the Main Label
+
+Normally, when you try to link a binary with salink, the linker will complain if none of the .x files that comprise the project contain a Main label.  In Specasm v9 the linker will not generate an error if the project happens to contain a .t file with a Main label.  In this case the main binary will not be created, but the test binary will be.  This is useful when splitting your program up accross multiple directories.  An error will still be generated if none of the .t files in the project contain a Main label.
+
+### Including .t Files
+
+.t files are ignored when including directories with the - or + directives.  They can however be individually included by name.  For example,
+
+```
+- module
+```
+
+will add all the .x files in module to the project but will not add any .t files it may contain.
+
+```
+- module/test.t
+```
+
+on the other hand will add module/test.t to the project.
+
+### Map Files and Unit Tests
+
+Map directives can be included in .t files just as they can in .x files.  A map file will be generated for the test binary if the map directive is included in any of the .x or .t files that comprise the project.  The map file generated for the test binary will have a .tmt extension and the file will contain the addresses for all the symbols in the test binary including the addresses of the test functions themselves.  If the map directive is included in a .t file and there are no map directives in any of the .x files that make up the project, a map file will only be generated for the test binary.  In this case no map file will be generated for the main binary, assuming that the main binary be generated.
+
+## Project Structure Revisited
+
+Large projects should be divided across multiple directories.  Each well defined piece of functionality should be separated out into a module and placed in its own folder.  This folder should contain the .x files that implement the functionality and the .t files that provide the unit tests.  The Main label should be present in one of the .t module files and not in the one of the .x files.  This guarantees that when salink is run in a module's directory, the linker will only generate a test binary.  There's no point in generating a module binary that wil probably not be used.  The top level folder will the contain the main routine in a .x file and a Main label.  It will use the - directive to include all modules.  When salink is run in the top level folder, only one binary, the program executable will be created.  No test binaries will be created as .t files are not added to a project by directory inclusion.  An example directory hierarchy for an interpreter might look like this.
+
+```
+-- Inter
+    +-- inter.x  (contains Main label)
+    +-- inter    (program binary)
+    +-- lexer
+          +-- lexer.x
+          +-- test.t (contains Main label)
+	  +-- test.tst (test binary)
+	  +-- unit.bas (test harness)
+    +-- parser
+          +-- parser.x
+	  +-- tree.x
+          +-- test.t (contains Main label)
+	  +-- test.tst (test binary)
+	  +-- unit.bas (test harness)
+    +-- codegen
+          +-- codgen.x
+          +-- test.t (contains Main label)
+	  +-- test.tst (test binary)
+	  +-- unit.bas (test harness)
+    +-- vm
+          +-- vm.x
+          +-- test.t (contains Main label)
+	  +-- test.tst (test binary)
+	  +-- unit.bas (test harness)
+```
+
+and the start of the inter.x file would look something like this
+
+```
+-lexer
+-parser
+-codegen
+-vm
+.Main
+...
+```
+
+Now suppose we wanted to update our interpreter so that it ran on both the ZX Spectrum and the ZX81.  We might end up with something like this.
+
+```
+-- Inter
+    +-- zx81
+          +-- inter81.x  (contains Main label and zx81 statement)
+	  +-- porting.x  (zx81 specific code))
+          +-- inter81    (program binary)
+    +-- spectrum
+          +-- inter82.x  (contains Main label)
+	  +-- porting.x  (spectrum specific code)
+          +-- inter82    (program binary)
+    +-- lexer
+    +-- parser
+    +-- codegen
+    +-- vm
+```
+
+The inter81.x file might look something like this
+
+```
+-../lexer
+-../parser
+-../codegen
+-../vm
+zx81
+.Main
+...
+```

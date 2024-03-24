@@ -41,18 +41,32 @@ static void prv_init_out_fnames(salink_obj_t *obj)
 			break;
 		image_name[i] = obj->fname[i];
 	}
+	if (link_mode == SALINK_MODE_TEST) {
+		if (i + 4 > MAX_FNAME)
+			i = MAX_FNAME - 4;
+		image_name[i++] = '.';
+		image_name[i++] = 't';
+		image_name[i++] = 's';
+		image_name[i++] = 't';
+	}
 	image_name[i] = 0;
 
 	(void)specasm_text_print(image_name, SALINK_VAL_COL + 1,
 				 SALINK_FIELD_NAME_ROW, SPECASM_CODE_COLOUR);
 
 	strcpy(map_name, image_name);
-	if (i + 4 > MAX_FNAME)
-		i = MAX_FNAME - 4;
-	map_name[i] = '.';
-	map_name[i + 1] = 'm';
-	map_name[i + 2] = 'a';
-	map_name[i + 3] = 'p';
+	if (link_mode == SALINK_MODE_LINK) {
+		if (i + 4 > MAX_FNAME)
+			i = MAX_FNAME - 4;
+		map_name[i] = '.';
+		map_name[i + 1] = 'm';
+		map_name[i + 2] = 'a';
+		map_name[i + 3] = 'p';
+	} else {
+		i -= 3;
+		map_name[i] = 't';
+		map_name[i + 1] = 'm';
+	}
 }
 
 static salink_label_t *prv_find_local_label(salink_obj_t *obj, uint8_t lng,
@@ -833,12 +847,6 @@ static uint8_t prv_order_objects_e(void)
 	 * written out to the final binary.
 	 */
 
-	if (main_index == 0xFF) {
-		strcpy(error_buf, "No Main label defined");
-		err_type = SALINK_ERROR_NO_MAIN;
-		return 0;
-	}
-
 	for (i = 0; i < obj_file_count; i++)
 		obj_files_order[i] = i;
 
@@ -1036,6 +1044,68 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 	return offset;
 }
 
+/*
+ * Format of the Test Table
+ *
+ * - 1 or more variable sized entries.  Each entry has a
+ *   - 2 byte address
+ *   - a null terminated string containing the test name
+ * - 2 byte absolute address pointing to the start of the Test Table
+ * - 1 byte containing the number of tests.
+ *
+ * The BASIC test harnesses can locate the table by loading the last two
+ * words from the file.
+ */
+
+static void prv_write_test_table_e(specasm_handle_t f)
+{
+	unsigned int i;
+	char *period;
+	uint8_t name_len;
+	salink_global_t *global;
+	uint16_t jump_table_start;
+	uint8_t tests = 0;
+
+	jump_table_start = buf_count + start_address + bin_size;
+
+	for (i = 0; i < global_count; i++) {
+		global = &globals[i];
+		if (strncmp(global->name, "Test", 4))
+			continue;
+		period = strchr(obj_files[global->obj_index].fname, '.');
+		if (!period || (period[1] != 't' && period[1] != 'T'))
+			continue;
+
+		name_len = strlen(global->name) + 1;
+		if (buf_count + name_len + sizeof(uint16_t) > MAX_BUFFER_SIZE) {
+			prv_flush_write_buf_e(f);
+			if (err_type != SPECASM_ERROR_OK)
+				return;
+		}
+		memcpy(&buf.file_buf[buf_count],
+		       &labels[global->label_index].data.off, sizeof(uint16_t));
+		buf_count += 2;
+		memcpy(&buf.file_buf[buf_count], global->name, name_len);
+		buf_count += name_len;
+		tests++;
+	}
+
+	if (tests == 0) {
+		snprintf(error_buf, sizeof(error_buf), "No tests!");
+		err_type = SALINK_ERROR_NO_TESTS;
+		return;
+	}
+
+	if (buf_count + sizeof(uint16_t) + sizeof(uint8_t) > MAX_BUFFER_SIZE) {
+		prv_flush_write_buf_e(f);
+		if (err_type != SPECASM_ERROR_OK)
+			return;
+	}
+	memcpy(&buf.file_buf[buf_count], &jump_table_start, sizeof(uint16_t));
+	buf_count += 2;
+	buf.file_buf[buf_count++] = tests;
+}
+
 static void prv_link_e(uint8_t main_loaded)
 {
 	char ibuf[16];
@@ -1055,6 +1125,12 @@ static void prv_link_e(uint8_t main_loaded)
 				goto on_error;
 		}
 		offset = prv_link_obj_e(f, obj, offset);
+		if (err_type != SPECASM_ERROR_OK)
+			goto on_error;
+	}
+
+	if (link_mode == SALINK_MODE_TEST) {
+		prv_write_test_table_e(f);
 		if (err_type != SPECASM_ERROR_OK)
 			goto on_error;
 	}
@@ -1122,6 +1198,20 @@ static void prv_salink_e(void)
 
 	if (obj_file_count == 0)
 		return;
+
+	/*
+	 * There has to be a Main label somewhere.  This can be in a .t file
+	 * or a .x file but we need to have one.
+	 */
+
+	if (main_index == 0xFF) {
+		if (((link_mode == SALINK_MODE_LINK) && (!got_test)) ||
+		    (link_mode == SALINK_MODE_TEST)) {
+			strcpy(error_buf, "No Main label defined");
+			err_type = SALINK_ERROR_NO_MAIN;
+		}
+		return;
+	}
 
 	/*
 	 * Default to org 16514 on ZX81 if start address not explcitily
@@ -1207,11 +1297,7 @@ static void prv_setup_screen(void)
 	}
 }
 
-#ifdef SPECASM_NEXT_BANKED
-int salink_link_banked_e(void)
-#else
-int salink_link_e(void)
-#endif
+static int prv_salink_pass_e(void)
 {
 	const char *err_str;
 	int err_buf_len;
@@ -1237,12 +1323,49 @@ int salink_link_e(void)
 			err_buf_len -= SPECASM_LINE_MAX_LEN;
 		} while (1);
 		retval = 1;
+	} else if ((link_mode == SALINK_MODE_LINK) && (main_index == 0xFF)) {
+		(void)specasm_text_print("Skipping main binary", 0,
+					 SALINK_STATUS_ROW,
+					 SPECASM_SUCCESS_COLOUR);
+		++last_line;
 	} else {
 		(void)specasm_text_print("Link succeeded", 0, SALINK_STATUS_ROW,
 					 SPECASM_SUCCESS_COLOUR);
 		++last_line;
 	}
 	specasm_screen_flush(last_line + 2);
+
+	return retval;
+}
+
+#ifdef SPECASM_NEXT_BANKED
+int salink_link_banked_e(void)
+#else
+int salink_link_e(void)
+#endif
+{
+	int retval;
+
+	for (link_mode = SALINK_MODE_LINK; link_mode < SALINK_MODE_MAX;
+	     link_mode++)  {
+		retval = prv_salink_pass_e();
+		if (retval || !got_test)
+			break;
+
+		specasm_sleep_ms(500);
+
+		/*
+		 * Reset state.
+		 */
+
+		queued_files = 0;
+		label_count = 0;
+		start_address = 0x8000;
+		global_count = 0;
+		obj_file_count = 0;
+		bin_size = 0;
+		buf_count = 0;
+	}
 
 	return retval;
 }

@@ -98,4 +98,5 @@ release:
 	cp SAMAKE SAIMPORT SAEXPORT *.X release/specasm
 	cp ../../../bas/48/INSTALL release/specasm
 	cp ../../../bas/48/REMOVE release/specasm
+	../../../buildlib.sh `realpath release` 48 specasm
 	cd release && zip -r specasm48.zip specasm
