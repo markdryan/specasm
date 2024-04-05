@@ -103,6 +103,8 @@ static const char *prv_exp_priority4_e(const char *str, int16_t *e,
 static void prv_equ_eval_local_e(salink_label_t *label, uint8_t depth,
 				 uint16_t line_no);
 
+static const char simple_ops[] = "()/*+-&|^~";
+
 const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 			    uint8_t is_global)
 {
@@ -112,11 +114,7 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 	char c;
 	long lval;
 	int len;
-#ifndef SPECASM_NEXT_BANKED
-	const char simple_ops[] = "()/*+-&|^~";
-#else
-	static const char simple_ops[] = "()/*+-&|^~";
-#endif
+
 	if (!buf) {
 		tok->type = SALINK_TOKEN_EOF;
 		return NULL;

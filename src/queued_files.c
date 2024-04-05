@@ -29,6 +29,7 @@ static uint8_t prv_add_queued_dir_e(const char *fname)
 	specasm_dirent_t dirent;
 	size_t fname_len;
 	char *period;
+	char *ptr;
 	char dir_name[MAX_FNAME + 1];
 
 	/*
@@ -52,8 +53,9 @@ static uint8_t prv_add_queued_dir_e(const char *fname)
 	}
 
 	strcpy(dir_name, fname);
-	dir_name[fname_len] = '/';
-	dir_name[fname_len + 1] = 0;
+	ptr = &dir_name[fname_len];
+	ptr[0] = '/';
+	ptr[1] = 0;
 
 	while (specasm_readdir(dir, &dirent)) {
 
@@ -178,15 +180,15 @@ static void prv_add_queued_filename_e(const char *base, const char *prefix,
 		}
 	}
 	queued_files++;
-	if (start[space_needed - 2] != '.' &&
-	    (start[space_needed - 1] | 32) != 'x') {
+	ptr = &start[space_needed - 2];
+	if (ptr[0] != '.' && (ptr[1] | 32) != 'x') {
 		if (space_needed + 2 > MAX_FNAME) {
 			err_type = SPECASM_ERROR_BAD_FNAME;
 			return;
 		}
-		start[space_needed] = '.';
-		start[space_needed + 1] = 'x';
-		start[space_needed + 2] = 0;
+		ptr[2] = '.';
+		ptr[3] = 'x';
+		ptr[4] = 0;
 	}
 }
 

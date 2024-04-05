@@ -35,6 +35,7 @@ static uint16_t start_address = 0x8000;
 static void prv_init_out_fnames(salink_obj_t *obj)
 {
 	unsigned int i;
+	char *ptr;
 
 	for (i = 0; i < MAX_FNAME; i++) {
 		if (obj->fname[i] == '.')
@@ -44,10 +45,12 @@ static void prv_init_out_fnames(salink_obj_t *obj)
 	if (link_mode == SALINK_MODE_TEST) {
 		if (i + 4 > MAX_FNAME)
 			i = MAX_FNAME - 4;
-		image_name[i++] = '.';
-		image_name[i++] = 't';
-		image_name[i++] = 's';
-		image_name[i++] = 't';
+		ptr = &image_name[i];
+		ptr[0] = '.';
+		ptr[1] = 't';
+		ptr[2] = 's';
+		ptr[3] = 't';
+		i += 4;
 	}
 	image_name[i] = 0;
 
@@ -58,14 +61,15 @@ static void prv_init_out_fnames(salink_obj_t *obj)
 	if (link_mode == SALINK_MODE_LINK) {
 		if (i + 4 > MAX_FNAME)
 			i = MAX_FNAME - 4;
-		map_name[i] = '.';
-		map_name[i + 1] = 'm';
-		map_name[i + 2] = 'a';
-		map_name[i + 3] = 'p';
+		ptr = &map_name[i];
+		ptr[0] = '.';
+		ptr[1] = 'm';
+		ptr[2] = 'a';
+		ptr[3] = 'p';
 	} else {
-		i -= 3;
-		map_name[i] = 't';
-		map_name[i + 1] = 'm';
+		ptr = &map_name[i-3];
+		ptr[0] = 't';
+		ptr[1] = 'm';
 	}
 }
 
