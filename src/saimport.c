@@ -35,13 +35,12 @@ static int prv_check_file(const char *fname, char *ext)
 		goto on_error;
 
 	if ((period[1] == 's' || period[1] == 'S') && period[2] == 0) {
-	        *ext = 'x';
+		*ext = 'x';
 		return 0;
 	}
 
 	if ((period[1] == 't' || period[1] == 'T') &&
-	    (period[2] == 's' || period[2] == 'S') &&
-	    (period[3] == 0)) {
+	    (period[2] == 's' || period[2] == 'S') && (period[3] == 0)) {
 		*ext = 't';
 		return 0;
 	}

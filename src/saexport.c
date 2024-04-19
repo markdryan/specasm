@@ -124,7 +124,7 @@ static int prv_load_file(const char *fname)
 
 int main(int argc, char *argv[])
 {
-	char ext[3] = { 0 };
+	char ext[3] = {0};
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: saexport .x\n");

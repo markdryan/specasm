@@ -527,58 +527,62 @@ static void prv_make_p_header(uint16_t len)
 	ch_add = e_line + 4;
 	stkbot = ch_add + 1;
 
-	basic_buf[1] = 1;                   /* E_PPC */
-	basic_buf[3] = (d_file & 0xFF);     /* D_FILE LO */
-	basic_buf[4] = (d_file >> 8);       /* D_FILE HI */
-	basic_buf[5] = (df_cc & 0xFF);      /* D_FCC LO */
-	basic_buf[6] = (df_cc >> 8);        /* D_FCC HI */
-	basic_buf[7] = (vars & 0xFF);       /* VARS LO */
-	basic_buf[8] = (vars >> 8);         /* VARS HI */
-	/* basic_buf[9] and basic_buf[10] is   DEST */
-	basic_buf[11] = (e_line & 0xFF);    /* E_LINE LO */
-	basic_buf[12] = (e_line >> 8);      /* E_LINE HI */
-	basic_buf[13] = (ch_add & 0xFF);    /* CH_ADD LO */
-	basic_buf[14] = (ch_add >> 8);      /* CH_ADD HI */
-	/* basic_buf[15] and basic_buf[16] is  X_PTR */
-	basic_buf[17] = (stkbot & 0xFF);    /* STKBOT LO */
-	basic_buf[18] = (stkbot >> 8);      /* STKBOT HI */
-	basic_buf[19] = (stkbot & 0xFF);    /* STKEND LO */
-	basic_buf[20] = (stkbot >> 8);      /* STKEND HI */
-	/* basic_buf[21] is                    BERG */
-	basic_buf[22] = (16477u & 0xFF);    /* MEM LO */
-	basic_buf[23] = (16477u >> 8);      /* MEM HI */
+	/* clang-format off */
+
+	basic_buf[1] = 1;                    /* E_PPC */
+	basic_buf[3] = (d_file & 0xFF);      /* D_FILE LO */
+	basic_buf[4] = (d_file >> 8);        /* D_FILE HI */
+	basic_buf[5] = (df_cc & 0xFF);       /* D_FCC LO */
+	basic_buf[6] = (df_cc >> 8);         /* D_FCC HI */
+	basic_buf[7] = (vars & 0xFF);        /* VARS LO */
+	basic_buf[8] = (vars >> 8);          /* VARS HI */
+	/* basic_buf[9] and basic_buf[10] is    DEST */
+	basic_buf[11] = (e_line & 0xFF);     /* E_LINE LO */
+	basic_buf[12] = (e_line >> 8);       /* E_LINE HI */
+	basic_buf[13] = (ch_add & 0xFF);     /* CH_ADD LO */
+	basic_buf[14] = (ch_add >> 8);       /* CH_ADD HI */
+	/* basic_buf[15] and basic_buf[16] is   X_PTR */
+	basic_buf[17] = (stkbot & 0xFF);     /* STKBOT LO */
+	basic_buf[18] = (stkbot >> 8);       /* STKBOT HI */
+	basic_buf[19] = (stkbot & 0xFF);     /* STKEND LO */
+	basic_buf[20] = (stkbot >> 8);       /* STKEND HI */
+	/* basic_buf[21] is                     BERG */
+	basic_buf[22] = (16477u & 0xFF);     /* MEM LO */
+	basic_buf[23] = (16477u >> 8);       /* MEM HI */
 	/* basic_buf[24] is not used */
-	basic_buf[25] = 2;                  /* DF_SZ */
-	/* basic_buf[26] and basic_buf[27] is  S_TOP */
-	basic_buf[28] = (64959u & 0xff);    /* LAST_K */
-	basic_buf[29] = (64959u >> 8);      /* LAST_K */
-	basic_buf[30] = 255;                /* Debouce */
-	basic_buf[31] = 55;                 /* MARGIN */
-	basic_buf[32] = (16509u & 0xff);   /* NXTLIN */
-	basic_buf[33] = (16509u >> 8);      /* NXTLIN */
-	/* basic_buf[34] and basic_buf[35] is  OLDPPC */
-	/* basic_buf[36] is                    FLAGX */
-	/* basic_buf[37] and basic_buf[38] is  STRLEN */
-	basic_buf[39] = 0x8d;               /* T_ADDR */
+	basic_buf[25] = 2;                   /* DF_SZ */
+	/* basic_buf[26] and basic_buf[27] is   S_TOP */
+	basic_buf[28] = (64959u & 0xff);     /* LAST_K */
+	basic_buf[29] = (64959u >> 8);       /* LAST_K */
+	basic_buf[30] = 255            ;     /* Debouce */
+	basic_buf[31] = 55;                  /* MARGIN */
+	basic_buf[32] = (16509u & 0xff);     /* NXTLIN */
+	basic_buf[33] = (16509u >> 8);       /* NXTLIN */
+	/* basic_buf[34] and basic_buf[35] is   OLDPPC */
+	/* basic_buf[36] is                     FLAGX */
+	/* basic_buf[37] and basic_buf[38] is   STRLEN */
+	basic_buf[39] = 0x8d; /* T_ADDR */
 	basic_buf[40] = 0xc;
-	/* basic_buf[41] and basic_buf[42] is  SEED */
-	basic_buf[43] = (63000u & 0xff);   /* FRAMES */
-	basic_buf[44] = (63000u >> 8);      /* FRAMES */
-	/* basic_buf[45] and basic_buf[46] is  COORDS */
-	basic_buf[47] = 188;                /* PR_CC */
-	basic_buf[48] = 33;                 /* S_POSN (X) */
-	basic_buf[49] = 24;                 /* S_POSN (Y) */
-	basic_buf[50] = 64;                 /* CDFLAG */
-	/* basic_buf[51] .. basic_buf[82]      PRBUFF */
+	/* basic_buf[41] and basic_buf[42] is   SEED */
+	basic_buf[43] = (63000u & 0xff);     /* FRAMES */
+	basic_buf[44] = (63000u >> 8);       /* FRAMES */
+	/* basic_buf[45] and basic_buf[46] is   COORDS */
+	basic_buf[47] = 188;                 /* PR_CC */
+	basic_buf[48] = 33;                  /* S_POSN (X) */
+	basic_buf[49] = 24;                  /* S_POSN (Y) */
+	basic_buf[50] = 64;                  /* CDFLAG */
+	/* basic_buf[51] .. basic_buf[82]       PRBUFF */
 	basic_buf[83] = 118;
 	/* basic_buf[84] .. basic_buf[114]      MEMBOT */
 	/* basic_buf[114] and basic_buf[115] is SPARE */
+
+	/* clang-format on */
 
 	/*
 	 * Write the start of the BASIC program.
 	 */
 
-	basic_buf[116] = 0;                /*  Line No */
+	basic_buf[116] = 0; /*  Line No */
 	basic_buf[117] = 1;
 
 	len_plus_2 = len + 2;
@@ -594,11 +598,9 @@ static void prv_make_p_e(void)
 	uint16_t bin_size;
 	uint16_t i;
 
-	const uint8_t loader[] = {
-		118, 0, 2, 11, 0, 249, 212, 197, 11, 29,
-		34, 33, 29, 32, 11, 118
-	};
-	const uint8_t footer[] = { 118, 128 };
+	const uint8_t loader[] = {118, 0,  2,  11, 0,  249, 212, 197,
+				  11,  29, 34, 33, 29, 32,  11,  118};
+	const uint8_t footer[] = {118, 128};
 
 	if (got_org && strcmp(start_address, "16514")) {
 		printf("Bad ORG address %s, want 16514", start_address);
@@ -624,7 +626,7 @@ static void prv_make_p_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
-	(void) prv_write_code_e(in_f, out_f);
+	(void)prv_write_code_e(in_f, out_f);
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
@@ -657,25 +659,30 @@ on_error:
 	specasm_file_close_e(in_f);
 	specasm_file_close_e(out_f);
 	specasm_remove_file(app_name);
-
 }
 
 static const char fsize_path[] = "\"/specasm/fsize\"";
+
+/* clang-format off */
+
 static const uint8_t fsize_basic[] = {
-	0x00, 0x28, 0x0c, 0x00, 0xf1, 0x70, 0x3d, 0xb0, 0x22, 0x36,
-	0x30, 0x30, 0x30, 0x30, 0x22, 0x0d, 0x00, 0x32, 0x14, 0x00,
-	0x20, 0xeb, 0x69, 0x3d, 0x31, 0x0e, 0x00, 0x00, 0x01, 0x00,
-	0x00, 0xcc, 0x38, 0x0e, 0x00, 0x00, 0x08, 0x00, 0x00, 0x0d,
-	0x00, 0x3c, 0x0a, 0x00, 0xf4, 0x70, 0x2c, 0xaf, 0x66, 0x24,
-	0x28, 0x69, 0x29, 0x0d, 0x00, 0x46, 0x0e, 0x00, 0x20, 0xf1,
-	0x70, 0x3d, 0x70, 0x2b, 0x31, 0x0e, 0x00, 0x00, 0x01, 0x00,
-	0x00, 0x0d, 0x00, 0x50, 0x04, 0x00, 0x20, 0xf3, 0x69, 0x0d,
-	0x00, 0x5a, 0x0b, 0x00, 0xf4, 0x70, 0x2c, 0x30, 0x0e, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x64, 0x0f, 0x00, 0x20,
-	0xf1, 0x70, 0x3d, 0xc0, 0xb0, 0x22, 0x36, 0x30, 0x30, 0x33,
-	0x32, 0x22, 0x20, 0x0d, 0x00, 0x6e, 0x0e, 0x00, 0x20, 0xfa,
-	0x70, 0x3d, 0x30, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0xcb,
-	0xe2, 0x0d,
+	0x00, 0x28, 0x0c, 0x00, 0xf1, 0x70, 0x3d, 0xb0,
+	0x22, 0x36, 0x30, 0x30, 0x30, 0x30, 0x22, 0x0d,
+	0x00, 0x32, 0x14, 0x00, 0x20, 0xeb, 0x69, 0x3d,
+	0x31, 0x0e, 0x00, 0x00, 0x01, 0x00, 0x00, 0xcc,
+	0x38, 0x0e, 0x00, 0x00, 0x08, 0x00, 0x00, 0x0d,
+	0x00, 0x3c, 0x0a, 0x00, 0xf4, 0x70, 0x2c, 0xaf,
+	0x66, 0x24, 0x28, 0x69, 0x29, 0x0d, 0x00, 0x46,
+	0x0e, 0x00, 0x20, 0xf1, 0x70, 0x3d, 0x70, 0x2b,
+	0x31, 0x0e, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0d,
+	0x00, 0x50, 0x04, 0x00, 0x20, 0xf3, 0x69, 0x0d,
+	0x00, 0x5a, 0x0b, 0x00, 0xf4, 0x70, 0x2c, 0x30,
+	0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x00,
+	0x64, 0x0f, 0x00, 0x20, 0xf1, 0x70, 0x3d, 0xc0,
+	0xb0, 0x22, 0x36, 0x30, 0x30, 0x33, 0x32, 0x22,
+	0x20, 0x0d, 0x00, 0x6e, 0x0e, 0x00, 0x20, 0xfa,
+	0x70, 0x3d, 0x30, 0x0e, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0xcb, 0xe2, 0x0d,
 };
 
 static const uint8_t tst_basic_mid[] =
@@ -752,6 +759,8 @@ static const uint8_t tst_basic_end[] =
 	0xf3, 0x69, 0x0d
 };
 
+/* clang-format on */
+
 static void prv_make_tst_basic_file(uint8_t star, const char *code_name,
 				    uint8_t code_name_len)
 {
@@ -799,14 +808,13 @@ static void prv_make_tst_basic_file(uint8_t star, const char *code_name,
 		*ptr++ = '*';
 	*ptr++ = ' ';
 	memcpy(ptr, fsize_path, sizeof(fsize_path) - 1);
-	ptr += sizeof(fsize_path) -1;
+	ptr += sizeof(fsize_path) - 1;
 	*ptr++ = ' ';
 	*ptr++ = 0xaf; /* CODE */
 	ptr = prv_write_address(ptr, fsize_file_address);
 	*ptr++ = 13;
 	line_len = ptr - line_start;
 	memcpy(line_start - 2, &line_len, sizeof(uint16_t));
-
 
 	/*
 	 * Copy the fixed block of code that gets the length of the
@@ -914,7 +922,6 @@ static void prv_make_tst_e(void)
 on_error:
 	specasm_file_close_e(f);
 	specasm_remove_file(app_name);
-
 }
 
 static void prv_make_e(const char *dir, uint8_t target_type)
@@ -940,8 +947,8 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 	 */
 
 	if (target_type == SAMAKE_TARGET_TYPE_NONE)
-		target_type = got_zx81 ? SAMAKE_TARGET_TYPE_P :
-			SAMAKE_TARGET_TYPE_BAS;
+		target_type =
+		    got_zx81 ? SAMAKE_TARGET_TYPE_P : SAMAKE_TARGET_TYPE_BAS;
 
 	/*
 	 * TODO, this check isn't really correct.  Ideally we'd add the loading

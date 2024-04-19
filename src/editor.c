@@ -598,8 +598,8 @@ static char *prv_complete_filename_e(char *com, uint8_t len)
 		if (com[i] == '.')
 			count++;
 
-	if ((count == 1) && ((com[len] == 'x') || (com[len] == 't'))
-	    && (com[len - 1] == '.'))
+	if ((count == 1) && ((com[len] == 'x') || (com[len] == 't')) &&
+	    (com[len - 1] == '.'))
 		return com;
 
 	if (count != 0) {

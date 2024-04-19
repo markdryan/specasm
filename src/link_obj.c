@@ -67,7 +67,7 @@ static void prv_init_out_fnames(salink_obj_t *obj)
 		ptr[2] = 'a';
 		ptr[3] = 'p';
 	} else {
-		ptr = &map_name[i-3];
+		ptr = &map_name[i - 3];
 		ptr[0] = 't';
 		ptr[1] = 'm';
 	}
@@ -230,10 +230,9 @@ static uint16_t prv_write_bin_file_e(specasm_handle_t out_f,
 	return file_size;
 }
 
-static const char zx81_conseq_ops[] = {
-	'"', '#', '$', ':', '?', '(', ')','>', '<',
-	'=', '+', '-', '*', '/', ';', ',', '.'
-};
+static const char zx81_conseq_ops[] = {'"', '#', '$', ':', '?', '(',
+				       ')', '>', '<', '=', '+', '-',
+				       '*', '/', ';', ',', '.'};
 
 static char prv_to_zx81_char(char ch)
 {
@@ -265,13 +264,11 @@ static void prv_to_zx81_str(char *str, uint8_t len)
 }
 
 static const uint8_t zx81_two_byte_opcodes[] = {
-	0xce, 0xc6, 0xe6, 0xfe, 0x36, 0xf6, 0xde, 0xd6, 0xee,
-	0x3e, 0x06, 0x0e, 0x16, 0x1e, 0x26, 0x2e
-};
-
+    0xce, 0xc6, 0xe6, 0xfe, 0x36, 0xf6, 0xde, 0xd6,
+    0xee, 0x3e, 0x06, 0x0e, 0x16, 0x1e, 0x26, 0x2e};
 
 static const uint8_t zx81_three_byte_opcodes[] = {
-	0x1, 0x11, 0x31, 0x21,
+    0x1, 0x11, 0x31, 0x21,
 };
 
 static void prv_zx81_patch_opcode(specasm_line_t *line)
@@ -312,16 +309,16 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 			if (specasm_line_get_format2(line) !=
 			    SPECASM_FLAGS_NUM_CHAR)
 				return;
-			ch = (char) line->data.op_code[3];
-			line->data.op_code[3] = (uint8_t) prv_to_zx81_char(ch);
+			ch = (char)line->data.op_code[3];
+			line->data.op_code[3] = (uint8_t)prv_to_zx81_char(ch);
 		} else if (oc == 0x21) {
 			if (specasm_line_get_addr_type(line))
 				return;
 			if (specasm_line_get_format(line) !=
 			    SPECASM_FLAGS_NUM_CHAR)
 				return;
-			ch = (char) line->data.op_code[2];
-			line->data.op_code[2] = (uint8_t) prv_to_zx81_char(ch);
+			ch = (char)line->data.op_code[2];
+			line->data.op_code[2] = (uint8_t)prv_to_zx81_char(ch);
 		}
 		return;
 	}
@@ -363,7 +360,7 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 	if (specasm_line_get_size(line) == 1) {
 		ptr = zx81_two_byte_opcodes;
 		size = sizeof(zx81_two_byte_opcodes);
-	} else  {
+	} else {
 		/*
 		 * Note, I would say that there's a bug here.
 		 * The addr_type should be NUM but it's not set
@@ -378,9 +375,8 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 
 	for (i = 0; i < size; i++)
 		if (line->data.op_code[0] == ptr[i]) {
-			ch = (char) line->data.op_code[1];
-			line->data.op_code[1] = (uint8_t)
-				prv_to_zx81_char(ch);
+			ch = (char)line->data.op_code[1];
+			line->data.op_code[1] = (uint8_t)prv_to_zx81_char(ch);
 			return;
 		}
 }
@@ -409,8 +405,8 @@ static void prv_zx81_patch_db_dw(specasm_line_t *line)
 	}
 
 	for (i = 0; i < specasm_line_get_size(line) + 1; i += step) {
-		ch = (char) line->data.op_code[i];
-		line->data.op_code[i] = (uint8_t) prv_to_zx81_char(ch);
+		ch = (char)line->data.op_code[i];
+		line->data.op_code[i] = (uint8_t)prv_to_zx81_char(ch);
 	}
 }
 
@@ -978,11 +974,11 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 		 */
 
 		if (got_zx81) {
-		    if (line->type < SPECASM_LINE_TYPE_DB)
-			    prv_zx81_patch_opcode(line);
-		    else if ((line->type == SPECASM_LINE_TYPE_DB) ||
-			     (line->type == SPECASM_LINE_TYPE_DW))
-			    prv_zx81_patch_db_dw(line);
+			if (line->type < SPECASM_LINE_TYPE_DB)
+				prv_zx81_patch_opcode(line);
+			else if ((line->type == SPECASM_LINE_TYPE_DB) ||
+				 (line->type == SPECASM_LINE_TYPE_DW))
+				prv_zx81_patch_db_dw(line);
 		}
 
 		if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
@@ -1351,7 +1347,7 @@ int salink_link_e(void)
 	int retval;
 
 	for (link_mode = SALINK_MODE_LINK; link_mode < SALINK_MODE_MAX;
-	     link_mode++)  {
+	     link_mode++) {
 		retval = prv_salink_pass_e();
 		if (retval || !got_test)
 			break;
