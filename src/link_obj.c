@@ -471,56 +471,6 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 	}
 }
 
-static void prv_label_subtraction_e(salink_obj_t *obj, specasm_line_t *line,
-				    unsigned int l, uint8_t id_pos)
-{
-	uint16_t a;
-	uint16_t b;
-	uint8_t id1;
-	uint8_t id2;
-	uint8_t lng;
-	uint8_t *op_code = &line->data.op_code[id_pos];
-
-	id1 = op_code[0];
-	id2 = op_code[1];
-	lng = op_code[2] == SPECASM_FLAGS_ADDR_LONG ? SALINK_LABEL_TYPE_LNG
-						    : SALINK_LABEL_TYPE_SHORT;
-	prv_resolve_address_e(obj, line, l, id1, &a, lng);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-	lng =
-	    specasm_line_get_addr_type(line) == SPECASM_FLAGS_ADDR_LONG ? 1 : 0;
-	prv_resolve_address_e(obj, line, l, id2, &b, lng);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-	if (b > a) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "%s:%d Negative difference", obj->fname, l);
-		err_type = SALINK_ERROR_NEGATIVE_SIZE;
-		return;
-	}
-	*((uint16_t *)&op_code[0]) = a - b;
-}
-
-static void prv_label_subtraction_byte_e(salink_obj_t *obj,
-					 specasm_line_t *line, unsigned int l,
-					 uint8_t id_pos)
-{
-	uint16_t diff;
-
-	prv_label_subtraction_e(obj, line, l, id_pos);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-
-	diff = *((uint16_t *)&line->data.op_code[id_pos]);
-
-	if (diff > 255) {
-		snprintf(error_buf, sizeof(error_buf), "%s:%d Too big:%d",
-			 obj->fname, l, diff);
-		err_type = SALINK_ERROR_SIZE_TOO_BIG;
-	}
-}
-
 static uint16_t prv_align_e(specasm_handle_t f, uint16_t align)
 {
 	unsigned int mask = align - 1;
@@ -1009,14 +959,13 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 			}
 			break;
 		case SPECASM_LINE_TYPE_DW_SUB:
-			id_pos = 0;
 		case SPECASM_LINE_TYPE_LD_IMM_16_SUB:
-			prv_label_subtraction_e(obj, line, i, id_pos);
-			break;
 		case SPECASM_LINE_TYPE_DB_SUB:
-			id_pos = 0;
 		case SPECASM_LINE_TYPE_LD_IMM_8_SUB:
-			prv_label_subtraction_byte_e(obj, line, i, id_pos);
+			snprintf(error_buf, sizeof(error_buf),
+				 "%s too old. Load/save in Specasm",
+				 obj->fname);
+			err_type = SALINK_ERROR_X_FILE_TOO_OLD;
 			break;
 		case SPECASM_LINE_TYPE_JR:
 		case SPECASM_LINE_TYPE_DJNZ:

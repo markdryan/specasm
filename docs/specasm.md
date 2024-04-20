@@ -382,43 +382,7 @@ Here, the expression used in the im statement is invalid as it resolves to a val
 #### Label Subtraction
 
 > **Warning**
-> Label subtraction outside of expressions is no longer supported as of Specasm v7.  This syntax was rendered redundant by the introduction of expressions in Specasm v5 and deprecated in that release.  The linker does still support label substraction so any .x files assembled with an earlier version of Specasm can sill be linked and binary compatibility with older versions of Specasm is maintained.  Any instructions in .x files that use label subtraction will be rewritten to use the new expression syntax when loaded into Specasm's editor.  The remainder of this section exists purely for historical value.
-
-Direct label subtraction is supported in certain instructions and directives without the use of an expression.
-
-Label subtraction permits the size of a given block of code or data delimited by two labels to be encoded into the binary at link time.  Label subtraction can be used in place of an immediate value in four specific mnemonics.
-
-
-| Mnemonic                 | Description                                            |
-|--------------------------|--------------------------------------------------------|
-| ld [a-l], end-start      | 8 bit immediate loads into a, b, c, d, e, h and l      |
-| ld [bc/de/hl], end-start | 16 bit immediate loads to bc, de and hl                |
-| db end-start             | 8 bit data directive                                   |
-| dw end-start             | 16 bit data directive                                  |
-
-An error will be generated at link time if the 8 bit versions of the mnemonics specify two labels
-that are more than 255 bytes apart.
-
-It's possible to specify both local and global labels when computing the difference between two labels in this manner, but it only really makes sense to subtract labels that occur in the same file.
-
-Here's an example of label subtraction
-
-```
-ld bc, end-start
-ret
-.start
-db 10, 10
-"hello"
-ds 12, ' '
-.end
-```
-
-The ld instruction would be encoded as follows in the final binary.
-
-```
-ld bc, 19
-```
-
+> Old versions of Specasm, pre v7 supported something called label subtraction, which allowed the result of subtracting one label from another to be stored in a register, e.g., ld hl, end-start.  This syntax was rendered redundant by the introduction of expressions in Specasm v5 and deprecated in that release. In Specasm v5 and above the statement should be written as ld hl, =end-start.  Support for label subtraction was dropped from the editor in Specasm v7 and from the linker in Specasm v9.  If you try to link an old .x file created with Specasm v5 or older that performs label subtraction, the linker in Specasm v9 and above will report an error that will look something like this;  "code.x too old. Load/save  in Specasm".  To resolve this error simply follow the instructions.  Load the code.x file in Specasm and then  save it.  Any instructions in code.x that use label subtraction will be rewritten to use the new expression syntax when loaded into Specasm's editor, and can be successfully linked.
 
 #### Comments
 
