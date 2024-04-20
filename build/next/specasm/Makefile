@@ -119,6 +119,7 @@ release:
 	- rm -rf release
 	mkdir -p release/specasm
 	cp ../../../COPYING release/specasm
+	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
 	cp SPECASM SALINK SAIMPORT SAEXPORT SAMAKE release/specasm
 	cp ../../../bas/next/INSTALL release/specasm
 	cp ../../../bas/next/REMOVE release/specasm

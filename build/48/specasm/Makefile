@@ -95,6 +95,7 @@ release:
 	mkdir -p release/specasm
 	cp specasm.tap salink.tap release/specasm
 	cp ../../../COPYING release/specasm
+	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
 	cp SAMAKE SAIMPORT SAEXPORT *.X release/specasm
 	cp ../../../bas/48/INSTALL release/specasm
 	cp ../../../bas/48/REMOVE release/specasm
