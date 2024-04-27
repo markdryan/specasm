@@ -9,7 +9,7 @@ rm *.x *.t 2>/dev/null 1>&2 || true
 ../../saimport *.ts *.s
 ../../salink 2>/dev/null 1>&2
 
-expected_test_names="TestGooder TestBad"
+expected_test_names="Gooder Bad"
 test_names=$( dump_test_names main.tst 32768 )
 if [ "$test_names" != "$expected_test_names" ]; then
     echo "Expected \"$expected_test_names\" got \"$test_names"\"

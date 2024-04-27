@@ -10,8 +10,8 @@ rm *.x *.t 2>/dev/null 1>&2 || true
 ../../salink 2>/dev/null 1>&2
 
 test_names=$( dump_test_names test.tst 32768)
-if [ $test_names != "TestGlobal" ]; then
-    echo "Expected TestGlobal got $test_names"
+if [ $test_names != "Global" ]; then
+    echo "Expected Global got $test_names"
     exit 1
 fi
 

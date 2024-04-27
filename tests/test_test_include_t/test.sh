@@ -25,8 +25,8 @@ if [ ! -f main.tst ]; then
 fi
 
 test_names=$( dump_test_names main.tst 32768)
-if [ $test_names != "TestFunction" ]; then
-    echo "Expected TestFunction got $test_names"
+if [ $test_names != "Function" ]; then
+    echo "Expected Function got $test_names"
     exit 1
 fi
 

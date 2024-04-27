@@ -1013,6 +1013,7 @@ static void prv_write_test_table_e(specasm_handle_t f)
 	uint8_t name_len;
 	salink_global_t *global;
 	uint16_t jump_table_start;
+	const char *name_ptr;
 	uint8_t tests = 0;
 
 	jump_table_start = buf_count + start_address + bin_size;
@@ -1025,7 +1026,11 @@ static void prv_write_test_table_e(specasm_handle_t f)
 		if (!period || (period[1] != 't' && period[1] != 'T'))
 			continue;
 
-		name_len = strlen(global->name) + 1;
+		/*
+		 * Let's not bother writing the Test prefix.
+		 */
+		name_ptr = &global->name[4];
+		name_len = strlen(name_ptr) + 1;
 		if (buf_count + name_len + sizeof(uint16_t) > MAX_BUFFER_SIZE) {
 			prv_flush_write_buf_e(f);
 			if (err_type != SPECASM_ERROR_OK)
@@ -1034,7 +1039,7 @@ static void prv_write_test_table_e(specasm_handle_t f)
 		memcpy(&buf.file_buf[buf_count],
 		       &labels[global->label_index].data.off, sizeof(uint16_t));
 		buf_count += 2;
-		memcpy(&buf.file_buf[buf_count], global->name, name_len);
+		memcpy(&buf.file_buf[buf_count], name_ptr, name_len);
 		buf_count += name_len;
 		tests++;
 	}
