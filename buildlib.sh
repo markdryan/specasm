@@ -26,3 +26,14 @@ $script_dir/saimport *.s
 $script_dir/salink
 popd
 cp $release_dir/fsize/fsize $release_dir/specasm
+
+# Build tst and copy into the release.
+
+cp -r $script_dir/asm/tst $release_dir
+pushd $release_dir/tst
+$script_dir/saimport *.s *.ts
+popd
+
+mkdir $release_dir/specasm/lib
+cp $release_dir/tst/*.x $release_dir/specasm/lib
+cp $release_dir/tst/*.t $release_dir/specasm/lib
