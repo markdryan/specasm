@@ -121,7 +121,7 @@ release:
 	cp ../../../COPYING release/specasm
 	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
 	cp SPECASM SALINK SAIMPORT SAEXPORT SAMAKE release/specasm
-	cp ../../../bas/next/INSTALL release/specasm
-	cp ../../../bas/next/REMOVE release/specasm
+	cp ../../../bas/next/INSTALL.BAS release/specasm
+	cp ../../../bas/next/REMOVE.BAS release/specasm
 	../../../buildlib.sh `realpath release` next
 	cd release && zip -r specasmnext.zip specasm

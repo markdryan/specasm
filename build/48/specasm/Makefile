@@ -97,7 +97,7 @@ release:
 	cp ../../../COPYING release/specasm
 	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
 	cp SAMAKE SAIMPORT SAEXPORT *.X release/specasm
-	cp ../../../bas/48/INSTALL release/specasm
-	cp ../../../bas/48/REMOVE release/specasm
+	cp ../../../bas/48/INSTALL.BAS release/specasm
+	cp ../../../bas/48/REMOVE.BAS release/specasm
 	../../../buildlib.sh `realpath release` 48 specasm
 	cd release && zip -r specasm48.zip specasm
