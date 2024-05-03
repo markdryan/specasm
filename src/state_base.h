@@ -19,10 +19,10 @@
 
 #ifdef SPECASM_TARGET_NEXT_OPCODES
 #define SPECASM_VERSION 0x8008
-#define SPECASM_VERSION_STR "v8n"
+#define SPECASM_VERSION_STR "v9n"
 #else
 #define SPECASM_VERSION 8
-#define SPECASM_VERSION_STR "v8"
+#define SPECASM_VERSION_STR "v9"
 #endif
 
 #include <stdint.h>
