@@ -109,7 +109,7 @@ typedef struct salink_obj_t_ salink_obj_t;
 extern char scratch[SPECASM_MAX_SCRATCH];
 extern salink_label_t labels[MAX_LABELS];
 extern salink_global_t globals[MAX_GLOBALS];
-extern char error_buf[(SPECASM_LINE_MAX_LEN * 3) + 1];
+extern char error_buf[(SPECASM_LINE_MAX_LEN * 4) + 1];
 uint8_t salink_check_file(const char *fname);
 unsigned int salink_find_local_label_e(const char *str, int len,
 				       salink_obj_t *obj);

@@ -30,7 +30,7 @@
 #include "state_base.h"
 
 char scratch[SPECASM_MAX_SCRATCH];
-char error_buf[(SPECASM_LINE_MAX_LEN * 3) + 1];
+char error_buf[(SPECASM_LINE_MAX_LEN * 4) + 1];
 salink_buf_t buf;
 unsigned int buf_count;
 unsigned int bin_size;
