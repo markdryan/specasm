@@ -1,5 +1,9 @@
 dump_test_names() {
-    local size=`stat -f "%z" $1`
+    if [[ $OSTYPE == 'darwin'* ]]; then
+	local size=`stat -f "%z" $1`
+    else
+	local size=`stat -c "%s" $1`
+    fi
     local num_tests_off=$(( size - 1 ))
     local num_tests=`od -An -j $num_tests_off -tu -N1 $1 | xargs`
     local table_start_off=$(( size - 3 ))
