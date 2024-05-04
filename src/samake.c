@@ -24,8 +24,11 @@
 #include "salink.h"
 #include "state_base.h"
 
+#define SAMAKE_TARGET_TYPE_NONE 0
 #define SAMAKE_TARGET_TYPE_BAS 1
 #define SAMAKE_TARGET_TYPE_TAP 2
+#define SAMAKE_TARGET_TYPE_P 3
+#define SAMAKE_TARGET_TYPE_TST 4
 
 #define SAMAKE_CODE_BUF_SIZE 1024
 
@@ -34,22 +37,28 @@ static char app_name[MAX_FNAME + 1];
 static uint8_t bin_name_len;
 static char start_address[6] = "32768";
 static char clear_address[6] = "32767";
+static char fsize_file_address[6] = "60000";
 static uint16_t org_address = 0x8000;
 static uint16_t basic_prog_len;
 static uint8_t got_org;
+static uint8_t got_zx81;
 
 #define SAMAKE_ERROR_NO_MAIN SPECASM_MAX_ERRORS
 #define SAMAKE_ERROR_USAGE (SPECASM_MAX_ERRORS + 1)
 #define SAMAKE_ERROR_READDIR (SPECASM_MAX_ERRORS + 2)
 #define SAMAKE_ERROR_BIN_TOO_BIG (SPECASM_MAX_ERRORS + 3)
+#define SAMAKE_ERROR_BAD_ORG (SPECASM_MAX_ERRORS + 4)
+#define SAMAKE_ERROR_BAD_TYPE (SPECASM_MAX_ERRORS + 5)
 
 /*
- * Buffer for the BASIC loader.  This is going to be 42 + MAX_FNAME
- * bytes.  We'll add a few extra bytes just to be on the safe side.
- * If we need to add a screen loader this will need to be increased.
+ * Buffer for the Spectrum, Next, ZX81 BASIC loaders and test
+ * harnesses..  This is going to be 42 + MAX_FNAME bytes for the
+ * Spectrum and the Next. For the ZX81 it's going to be 121 bytes.
+ * The BASIC test harness is pretty big so we'll reserve 896 bytes
+ * for this.
  */
 
-static uint8_t basic_buf[64 + MAX_FNAME];
+static uint8_t basic_buf[896];
 static union {
 	uint8_t three_dos_buf[128];
 	uint8_t tap_block[24];
@@ -89,7 +98,7 @@ static uint8_t prv_parse_obj_e(const char *fname)
 				*dst++ = *fname++;
 			*dst = 0;
 			bin_name_len = dst - &bin_name[0];
-			if (got_org)
+			if (got_org && got_zx81)
 				return 1;
 		} else if (!got_org && (line->type == SPECASM_LINE_TYPE_ORG)) {
 			sa = *((uint16_t *)&line->data.op_code[0]);
@@ -98,7 +107,12 @@ static uint8_t prv_parse_obj_e(const char *fname)
 			(void)utoa(sa, start_address, 10);
 			sa--;
 			(void)utoa(sa, clear_address, 10);
-			if (bin_name[0])
+			if (bin_name[0] && got_zx81)
+				return 1;
+		} else if (!got_zx81 &&
+			   (line->type == SPECASM_LINE_TYPE_ZX81)) {
+			got_zx81 = 1;
+			if (bin_name[0] && got_org)
 				return 1;
 		}
 	}
@@ -106,7 +120,7 @@ static uint8_t prv_parse_obj_e(const char *fname)
 	return 0;
 }
 
-static uint8_t prv_check_file(const char *fname)
+static uint8_t prv_check_file(const char *fname, uint8_t target_type)
 {
 	char *period;
 
@@ -115,10 +129,15 @@ static uint8_t prv_check_file(const char *fname)
 	if (!period)
 		return 0;
 
+	if (target_type == SAMAKE_TARGET_TYPE_TST) {
+		if ((period[1] == 't' || period[1] == 'T') && period[2] == 0)
+			return 1;
+	}
+
 	return ((period[1] == 'x' || period[1] == 'X') && period[2] == 0);
 }
 
-static void prv_find_bin_name_e(const char *dirname)
+static void prv_find_bin_name_e(const char *dirname, uint8_t target_type)
 {
 	uint8_t done = 0;
 	specasm_dir_t dir = specasm_opendir_e(dirname);
@@ -130,7 +149,7 @@ static void prv_find_bin_name_e(const char *dirname)
 	}
 
 	while (!done && specasm_readdir(dir, &dirent)) {
-		if (!prv_check_file(specasm_getdirname(dirent)))
+		if (!prv_check_file(specasm_getdirname(dirent), target_type))
 			continue;
 
 		done = prv_parse_obj_e(specasm_getdirname(dirent));
@@ -143,17 +162,12 @@ static void prv_find_bin_name_e(const char *dirname)
 		printf("Unable to find 'Main' label in %s\n", dirname);
 	}
 
-	/*
-	 * TODO, this check isn't really correct.  Ideally we'd add the loading
-	 * address of BASIC program and the size of the BASIC program and check
-	 * that the resulting value isn't greater than org_address, but I can't
-	 * figure out whether there's a fixed starting address for BASIC
-	 * programs, so for now let's just print a warning.  It's mainly there
-	 * to stop people creating a loader for a dot program.
-	 */
-
-	if (org_address < 24000)
-		printf("Warning: org %" PRIu16 " is very low\n", org_address);
+	if (target_type == SAMAKE_TARGET_TYPE_TST) {
+		if (bin_name_len + 4 > MAX_FNAME)
+			bin_name_len -= 4 - (MAX_FNAME - bin_name_len);
+		strcpy(&bin_name[bin_name_len], ".tst");
+		bin_name_len += 4;
+	}
 
 finish:
 	specasm_closedir(dir);
@@ -496,21 +510,472 @@ on_error:
 	specasm_remove_file(app_name);
 }
 
-static void prv_make_e(const char *dir, uint8_t target_type)
+static void prv_make_p_header(uint16_t len)
 {
-	prv_find_bin_name_e(dir);
+	uint16_t d_file;
+	uint16_t df_cc;
+	uint16_t vars;
+	uint16_t e_line;
+	uint16_t ch_add;
+	uint16_t stkbot;
+	uint16_t len_plus_2;
+
+	d_file = 16530u + len;
+	df_cc = d_file + 1;
+	vars = d_file + 793;
+	e_line = vars + 1;
+	ch_add = e_line + 4;
+	stkbot = ch_add + 1;
+
+	/* clang-format off */
+
+	basic_buf[1] = 1;                    /* E_PPC */
+	basic_buf[3] = (d_file & 0xFF);      /* D_FILE LO */
+	basic_buf[4] = (d_file >> 8);        /* D_FILE HI */
+	basic_buf[5] = (df_cc & 0xFF);       /* D_FCC LO */
+	basic_buf[6] = (df_cc >> 8);         /* D_FCC HI */
+	basic_buf[7] = (vars & 0xFF);        /* VARS LO */
+	basic_buf[8] = (vars >> 8);          /* VARS HI */
+	/* basic_buf[9] and basic_buf[10] is    DEST */
+	basic_buf[11] = (e_line & 0xFF);     /* E_LINE LO */
+	basic_buf[12] = (e_line >> 8);       /* E_LINE HI */
+	basic_buf[13] = (ch_add & 0xFF);     /* CH_ADD LO */
+	basic_buf[14] = (ch_add >> 8);       /* CH_ADD HI */
+	/* basic_buf[15] and basic_buf[16] is   X_PTR */
+	basic_buf[17] = (stkbot & 0xFF);     /* STKBOT LO */
+	basic_buf[18] = (stkbot >> 8);       /* STKBOT HI */
+	basic_buf[19] = (stkbot & 0xFF);     /* STKEND LO */
+	basic_buf[20] = (stkbot >> 8);       /* STKEND HI */
+	/* basic_buf[21] is                     BERG */
+	basic_buf[22] = (16477u & 0xFF);     /* MEM LO */
+	basic_buf[23] = (16477u >> 8);       /* MEM HI */
+	/* basic_buf[24] is not used */
+	basic_buf[25] = 2;                   /* DF_SZ */
+	/* basic_buf[26] and basic_buf[27] is   S_TOP */
+	basic_buf[28] = (64959u & 0xff);     /* LAST_K */
+	basic_buf[29] = (64959u >> 8);       /* LAST_K */
+	basic_buf[30] = 255            ;     /* Debouce */
+	basic_buf[31] = 55;                  /* MARGIN */
+	basic_buf[32] = (16509u & 0xff);     /* NXTLIN */
+	basic_buf[33] = (16509u >> 8);       /* NXTLIN */
+	/* basic_buf[34] and basic_buf[35] is   OLDPPC */
+	/* basic_buf[36] is                     FLAGX */
+	/* basic_buf[37] and basic_buf[38] is   STRLEN */
+	basic_buf[39] = 0x8d; /* T_ADDR */
+	basic_buf[40] = 0xc;
+	/* basic_buf[41] and basic_buf[42] is   SEED */
+	basic_buf[43] = (63000u & 0xff);     /* FRAMES */
+	basic_buf[44] = (63000u >> 8);       /* FRAMES */
+	/* basic_buf[45] and basic_buf[46] is   COORDS */
+	basic_buf[47] = 188;                 /* PR_CC */
+	basic_buf[48] = 33;                  /* S_POSN (X) */
+	basic_buf[49] = 24;                  /* S_POSN (Y) */
+	basic_buf[50] = 64;                  /* CDFLAG */
+	/* basic_buf[51] .. basic_buf[82]       PRBUFF */
+	basic_buf[83] = 118;
+	/* basic_buf[84] .. basic_buf[114]      MEMBOT */
+	/* basic_buf[114] and basic_buf[115] is SPARE */
+
+	/* clang-format on */
+
+	/*
+	 * Write the start of the BASIC program.
+	 */
+
+	basic_buf[116] = 0; /*  Line No */
+	basic_buf[117] = 1;
+
+	len_plus_2 = len + 2;
+	basic_buf[118] = len_plus_2 & 0xff;
+	basic_buf[119] = len_plus_2 >> 8;
+	basic_buf[120] = 234;
+}
+
+static void prv_make_p_e(void)
+{
+	specasm_handle_t out_f;
+	specasm_handle_t in_f;
+	uint16_t bin_size;
+	uint16_t i;
+
+	const uint8_t loader[] = {118, 0,  2,  11, 0,  249, 212, 197,
+				  11,  29, 34, 33, 29, 32,  11,  118};
+	const uint8_t footer[] = {118, 128};
+
+	if (got_org && strcmp(start_address, "16514")) {
+		printf("Bad ORG address %s, want 16514", start_address);
+		err_type = SAMAKE_ERROR_BAD_ORG;
+		return;
+	}
+
+	prv_make_app_name("p");
+
+	in_f = prv_open_bin_e(&bin_size);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
+
+	prv_make_p_header(bin_size);
+
+	out_f = specasm_file_wopen_e(app_name);
+	if (err_type != SPECASM_ERROR_OK) {
+		specasm_file_close_e(in_f);
+		return;
+	}
+
+	specasm_file_write_e(out_f, &basic_buf[0], 121);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	(void)prv_write_code_e(in_f, out_f);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_write_e(out_f, &loader[0], sizeof(loader));
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	/*
+	 * Now write empty display file.
+	 */
+
+	memset(&basic_buf[1], 0, 32);
+	basic_buf[0] = 118;
+
+	for (i = 0; i < 24; i++) {
+		specasm_file_write_e(out_f, &basic_buf[0], 33);
+		if (err_type != SPECASM_ERROR_OK)
+			goto on_error;
+	}
+
+	specasm_file_write_e(out_f, &footer[0], sizeof(footer));
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	return;
+
+on_error:
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	specasm_remove_file(app_name);
+}
+
+static const char fsize_path[] = "\"/specasm/fsize\"";
+
+/* clang-format off */
+
+static const uint8_t fsize_basic[] = {
+	0x00, 0x28, 0x0c, 0x00, 0xf1, 0x70, 0x3d, 0xb0,
+	0x22, 0x36, 0x30, 0x30, 0x30, 0x30, 0x22, 0x0d,
+	0x00, 0x32, 0x16, 0x00, 0x20, 0xeb, 0x69, 0x3d,
+	0x31, 0x0e, 0x00, 0x00, 0x01, 0x00, 0x00, 0xcc,
+	0xb1, 0x66, 0x14, 0x01, 0x14, 0x01, 0x14, 0x00,
+	0x24, 0x0d, 0x00, 0x3c, 0x0a, 0x00, 0xf4, 0x70,
+	0x2c, 0xaf, 0x66, 0x24, 0x28, 0x69, 0x29, 0x0d,
+	0x00, 0x46, 0x0e, 0x00, 0x20, 0xf1, 0x70, 0x3d,
+	0x70, 0x2b, 0x31, 0x0e, 0x00, 0x00, 0x01, 0x00,
+	0x00, 0x0d, 0x00, 0x50, 0x04, 0x00, 0x20, 0xf3,
+	0x69, 0x0d, 0x00, 0x5a, 0x0b, 0x00, 0xf4, 0x70,
+	0x2c, 0x30, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x0d, 0x00, 0x64, 0x0f, 0x00, 0x20, 0xf1, 0x70,
+	0x3d, 0xc0, 0xb0, 0x22, 0x36, 0x30, 0x30, 0x33,
+	0x32, 0x22, 0x20, 0x0d, 0x00, 0x6e, 0x0e, 0x00,
+	0x20, 0xfa, 0x70, 0x3d, 0x30, 0x0e, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0xcb, 0xe2, 0x0d,
+};
+
+static const uint8_t tst_basic_mid[] =
+{
+	0x00, 0x8c, 0x0b, 0x00, 0x20, 0xf1,
+	0x74, 0x65, 0x73, 0x74, 0x73, 0x3d, 0xbe, 0x70,
+	0x0d, 0x00, 0x96, 0x0e, 0x00, 0x20, 0xf1, 0x70,
+	0x3d, 0x70, 0x2d, 0x32, 0x0e, 0x00, 0x00, 0x02,
+	0x00, 0x00, 0x0d, 0x00, 0xa0, 0x24, 0x00, 0x20,
+	0xf1, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x3d, 0xbe,
+	0x70, 0x2b, 0x28, 0xbe, 0x28, 0x70, 0x2b, 0x31,
+	0x0e, 0x00, 0x00, 0x01, 0x00, 0x00, 0x29, 0x2a,
+	0x32, 0x35, 0x36, 0x0e, 0x00, 0x00, 0x00, 0x01,
+	0x00, 0x29, 0x0d, 0x00, 0xaa, 0x13, 0x00, 0x20,
+	0xeb, 0x69, 0x3d, 0x31, 0x20, 0x0e, 0x00, 0x00,
+	0x01, 0x00, 0x00, 0xcc, 0x74, 0x65, 0x73, 0x74,
+	0x73, 0x0d, 0x00, 0xb4, 0x29, 0x00, 0x20, 0xf1,
+	0x66, 0x6e, 0x3d, 0xbe, 0x74, 0x61, 0x62, 0x6c,
+	0x65, 0x2b, 0x28, 0xbe, 0x28, 0x74, 0x61, 0x62,
+	0x6c, 0x65, 0x2b, 0x31, 0x0e, 0x00, 0x00, 0x01,
+	0x00, 0x00, 0x29, 0x2a, 0x32, 0x35, 0x36, 0x0e,
+	0x00, 0x00, 0x00, 0x01, 0x00, 0x29, 0x0d, 0x00,
+	0xbe, 0x15, 0x00, 0xf1, 0x74, 0x61, 0x62, 0x6c,
+	0x65, 0x3d, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x2b,
+	0x32, 0x0e, 0x00, 0x00, 0x02, 0x00, 0x00, 0x0d,
+	0x00, 0xc8, 0x1c, 0x00, 0x20, 0xfa, 0xbe, 0x74,
+	0x61, 0x62, 0x6c, 0x65, 0x3d, 0x30, 0x0e, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0xcb, 0xec, 0x32, 0x34,
+	0x30, 0x0e, 0x00, 0x00, 0xf0, 0x00, 0x00, 0x0d,
+	0x00, 0xd2, 0x0b, 0x00, 0x20, 0xf5, 0xc2, 0xbe,
+	0x74, 0x61, 0x62, 0x6c, 0x65, 0x3b, 0x0d, 0x00,
+	0xdc, 0x16, 0x00, 0x20, 0xf1, 0x74, 0x61, 0x62,
+	0x6c, 0x65, 0x3d, 0x74, 0x61, 0x62, 0x6c, 0x65,
+	0x2b, 0x31, 0x0e, 0x00, 0x00, 0x01, 0x00, 0x00,
+	0x0d, 0x00, 0xe6, 0x0c, 0x00, 0x20, 0xec, 0x32,
+	0x30, 0x30, 0x0e, 0x00, 0x00, 0xc8, 0x00, 0x00,
+	0x0d, 0x00, 0xf0, 0x07, 0x00, 0xf5, 0x22, 0x3a,
+	0x20, 0x22, 0x3b, 0x0d, 0x00, 0xfa, 0x16, 0x00,
+	0x20, 0xf1, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x3d,
+	0x74, 0x61, 0x62, 0x6c, 0x65, 0x2b, 0x31, 0x0e,
+	0x00, 0x00, 0x01, 0x00, 0x00, 0x0d, 0x01, 0x04,
+	0x08, 0x00, 0x20, 0xf1, 0x72, 0x3d, 0xc0, 0x66,
+	0x6e, 0x0d, 0x01, 0x0e, 0x27, 0x00, 0x20, 0xfa,
+	0x72, 0x3d, 0x30, 0x20, 0x0e, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0xcb, 0xd9, 0x34, 0x0e, 0x00, 0x00,
+	0x04, 0x00, 0x00, 0x3a, 0xf5, 0x22, 0x4f, 0x4b,
+	0x22, 0x3a, 0xec, 0x33, 0x35, 0x30, 0x0e, 0x00,
+	0x00, 0x5e, 0x01, 0x00, 0x0d, 0x01, 0x18, 0x33,
+	0x00, 0x20, 0xfa, 0x72, 0x20, 0xc7, 0x20,
+};
+
+static const uint8_t tst_basic_end[] =
+{
+	0xcb, 0xd9, 0x32, 0x0e, 0x00, 0x00, 0x02, 0x00,
+	0x00, 0x3a, 0xf5, 0x22, 0x46, 0x41, 0x49, 0x4c,
+	0x20, 0x28, 0x22, 0x3b, 0x72, 0x3b, 0x22, 0x29,
+	0x22, 0x3a, 0xec, 0x33, 0x35, 0x30, 0x0e, 0x00,
+	0x00, 0x5e, 0x01, 0x00, 0x0d, 0x01, 0x22, 0x12,
+	0x00, 0x20, 0xd9, 0x32, 0x0e, 0x00, 0x00, 0x02,
+	0x00, 0x00, 0x3a, 0xf5, 0x22, 0x46, 0x41, 0x49,
+	0x4c, 0x22, 0x0d, 0x01, 0x2c, 0x18, 0x00, 0x20,
+	0xfa, 0xbe, 0x72, 0x3d, 0x30, 0x0e, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0xcb, 0xec, 0x33, 0x34, 0x30,
+	0x0e, 0x00, 0x00, 0x54, 0x01, 0x00, 0x0d, 0x01,
+	0x36, 0x07, 0x00, 0x20, 0xf5, 0xc2, 0xbe, 0x72,
+	0x3b, 0x0d, 0x01, 0x40, 0x0e, 0x00, 0x20, 0xf1,
+	0x72, 0x3d, 0x72, 0x2b, 0x31, 0x0e, 0x00, 0x00,
+	0x01, 0x00, 0x00, 0x0d, 0x01, 0x4a, 0x0c, 0x00,
+	0x20, 0xec, 0x33, 0x30, 0x30, 0x0e, 0x00, 0x00,
+	0x2c, 0x01, 0x00, 0x0d, 0x01, 0x54, 0x05, 0x00,
+	0x20, 0xf5, 0x22, 0x22, 0x0d, 0x01, 0x5e, 0x0a,
+	0x00, 0x20, 0xd9, 0x30, 0x0e, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x0d, 0x01, 0x68, 0x04, 0x00, 0x20,
+	0xf3, 0x69, 0x0d
+};
+
+/* clang-format on */
+
+static void prv_make_tst_basic_file(uint8_t star, const char *code_name,
+				    uint8_t code_name_len)
+{
+	uint8_t *ptr;
+	uint16_t line_len;
+	uint8_t *line_start;
+
+	basic_buf[1] = 0xa;
+	line_start = &basic_buf[4];
+	basic_buf[4] = 32;
+	basic_buf[5] = 0xfd; /* CLEAR */
+	(void)prv_write_address(&basic_buf[6], clear_address);
+	basic_buf[14] = 13;
+	line_len = &basic_buf[15] - line_start;
+	memcpy(line_start - 2, &line_len, sizeof(uint16_t));
+
+	/* LET f$ = "$code_name" */
+
+	basic_buf[15] = 0;
+	basic_buf[16] = 20;
+	line_start = &basic_buf[19];
+	basic_buf[19] = ' ';
+	basic_buf[20] = 0xf1;
+	basic_buf[21] = 'f';
+	basic_buf[22] = '$';
+	basic_buf[23] = '=';
+	basic_buf[24] = '"';
+	ptr = &basic_buf[25];
+	memcpy(ptr, code_name, code_name_len);
+	ptr += code_name_len;
+	ptr[0] = '"';
+	ptr[1] = 13;
+	line_len = &ptr[2] - line_start;
+	memcpy(line_start - 2, &line_len, sizeof(uint16_t));
+
+	/* LOAD the fsize binary */
+
+	ptr[2] = 0;
+	ptr[3] = 30;
+	line_start = &ptr[6];
+	ptr[6] = ' ';
+	ptr[7] = 0xef; /* LOAD */
+	ptr = &ptr[8];
+	if (star)
+		*ptr++ = '*';
+	*ptr++ = ' ';
+	memcpy(ptr, fsize_path, sizeof(fsize_path) - 1);
+	ptr += sizeof(fsize_path) - 1;
+	*ptr++ = ' ';
+	*ptr++ = 0xaf; /* CODE */
+	ptr = prv_write_address(ptr, fsize_file_address);
+	*ptr++ = 13;
+	line_len = ptr - line_start;
+	memcpy(line_start - 2, &line_len, sizeof(uint16_t));
+
+	/*
+	 * Copy the fixed block of code that gets the length of the
+	 * test executable.
+	 */
+
+	memcpy(ptr, fsize_basic, sizeof(fsize_basic));
+	ptr += sizeof(fsize_basic);
+
+	/* Load the test binary */
+
+	ptr[0] = 0;
+	ptr[1] = 120;
+	line_start = &ptr[4];
+	ptr[4] = ' ';
+	ptr[5] = 0xef; /* LOAD */
+	ptr = &ptr[6];
+	if (star)
+		*ptr++ = '*';
+	ptr[0] = ' ';
+	ptr[1] = '"';
+	memcpy(&ptr[2], code_name, code_name_len);
+	ptr = &ptr[2] + code_name_len;
+	ptr[0] = '"';
+	ptr[1] = ' ';
+	ptr[2] = 0xaf; /* CODE */
+	ptr = prv_write_address(&ptr[3], start_address);
+	ptr[0] = 13;
+	line_len = &ptr[1] - line_start;
+	memcpy(line_start - 2, &line_len, sizeof(uint16_t));
+
+	/* Let p=p+VAL "clear_address" */
+
+	ptr[1] = 0;
+	ptr[2] = 130;
+	line_start = &ptr[5];
+	ptr[5] = ' ';
+	ptr[6] = 0xf1;
+	ptr[7] = 'p';
+	ptr[8] = '=';
+	ptr[9] = 'p';
+	ptr[10] = '+';
+	ptr = prv_write_address(&ptr[11], clear_address);
+	*ptr++ = 13;
+	line_len = ptr - line_start;
+	memcpy(line_start - 2, &line_len, sizeof(uint16_t));
+
+	memcpy(ptr, tst_basic_mid, sizeof(tst_basic_mid));
+	ptr += sizeof(tst_basic_mid);
+
+	/*
+	 * Write the address for
+	 *
+	 * IF r <= val "clear_address".
+	 */
+
+	ptr = prv_write_address(ptr, clear_address);
+
+	memcpy(ptr, tst_basic_end, sizeof(tst_basic_end));
+	ptr += sizeof(tst_basic_end);
+
+	basic_prog_len = (uint16_t)(ptr - basic_buf);
+}
+
+static void prv_make_tst_e(void)
+{
+	specasm_handle_t f;
+	uint16_t bin_size;
+
+	/* Check bin file exists and is not too big. */
+
+	f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	specasm_file_close_e(f);
+	err_type = SPECASM_ERROR_OK;
+
+	if (strcmp(bin_name, "unit.tst"))
+		strcpy(app_name, "unit.bas");
+	else
+		strcpy(app_name, "test.bas");
+
+#ifdef SPECASM_TARGET_NEXT
+	prv_make_tst_basic_file(0, bin_name, bin_name_len);
+#else
+	prv_make_tst_basic_file(1, bin_name, bin_name_len);
+#endif
+	prv_make_3dos_header();
+
+	f = specasm_file_wopen_e(app_name);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	specasm_file_write_e(f, container.three_dos_buf, 128);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_write_e(f, basic_buf, basic_prog_len);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_close_e(f);
+	return;
+
+on_error:
+	specasm_file_close_e(f);
+	specasm_remove_file(app_name);
+}
+
+static void prv_make_e(const char *dir, uint8_t target_type)
+{
+	prv_find_bin_name_e(dir, target_type);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	if (got_zx81 && (target_type != SAMAKE_TARGET_TYPE_P) &&
+	    (target_type != SAMAKE_TARGET_TYPE_NONE)) {
+		printf("p is the only type supported for the zx81\n");
+		err_type = SAMAKE_ERROR_BAD_TYPE;
+		return;
+	}
+
+	/*
+	 * We could perform the opposite check here, that if you select p
+	 * and your program doesn't include the zx81 directive then we report
+	 * an error.  The thing is though that this should still work, providing
+	 * you set the org correctly and do the character conversion yourself.
+	 * This might actually be something you want to do if you have some
+	 * existing code that does the conversion at runtime.
+	 */
+
+	if (target_type == SAMAKE_TARGET_TYPE_NONE)
+		target_type =
+		    got_zx81 ? SAMAKE_TARGET_TYPE_P : SAMAKE_TARGET_TYPE_BAS;
+
+	/*
+	 * TODO, this check isn't really correct.  Ideally we'd add the loading
+	 * address of BASIC program and the size of the BASIC program and check
+	 * that the resulting value isn't greater than org_address, but I can't
+	 * figure out whether there's a fixed starting address for BASIC
+	 * programs, so for now let's just print a warning.  It's mainly there
+	 * to stop people creating a loader for a dot program.
+	 */
+
+	if ((target_type != SAMAKE_TARGET_TYPE_P) && (org_address < 24000))
+		printf("Warning: org %" PRIu16 " is very low\n", org_address);
+
 	if (target_type == SAMAKE_TARGET_TYPE_BAS)
 		prv_make_bas_e();
-	else
+	else if (target_type == SAMAKE_TARGET_TYPE_TAP)
 		prv_make_tap_e();
+	else if (target_type == SAMAKE_TARGET_TYPE_P)
+		prv_make_p_e();
+	else
+		prv_make_tst_e();
 }
 
 int main(int argc, char *argv[])
 {
 	const char *dir = ".";
-	uint8_t target_type = SAMAKE_TARGET_TYPE_BAS;
+	uint8_t target_type = SAMAKE_TARGET_TYPE_NONE;
 	int ret = 0;
 
 #ifdef SPECASM_TARGET_NEXT
@@ -527,13 +992,20 @@ int main(int argc, char *argv[])
 	if (argc >= 2) {
 		if (!strcmp(argv[1], "tap")) {
 			target_type = SAMAKE_TARGET_TYPE_TAP;
-		} else if (strcmp(argv[1], "bas")) {
+		} else if (!strcmp(argv[1], "p")) {
+			target_type = SAMAKE_TARGET_TYPE_P;
+		} else if (!strcmp(argv[1], "bas")) {
+			target_type = SAMAKE_TARGET_TYPE_BAS;
+		} else if (!strcmp(argv[1], "tst")) {
+			target_type = SAMAKE_TARGET_TYPE_TST;
+		} else {
 			err_type = SAMAKE_ERROR_USAGE;
 			goto on_error;
 		}
-		if (argc == 3)
+
+		if (argc == 3) {
 			dir = argv[2];
-		else if (argc > 3) {
+		} else if (argc > 3) {
 			err_type = SAMAKE_ERROR_USAGE;
 			goto on_error;
 		}

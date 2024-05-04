@@ -47,6 +47,7 @@ SAEXPORT =\
 SALINK =\
 	link_obj.c \
 	map.c \
+	queued_files.c \
 	salink.c \
 	expression.c
 

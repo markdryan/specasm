@@ -150,7 +150,8 @@
 #define SPECASM_LINE_TYPE_MAP (SPECASM_LINE_TYPE_SIMPLE_MAX + 3)
 #define SPECASM_LINE_TYPE_ALIGN (SPECASM_LINE_TYPE_SIMPLE_MAX + 4)
 #define SPECASM_LINE_TYPE_EQU (SPECASM_LINE_TYPE_SIMPLE_MAX + 5)
-#define SPECASM_LINE_TYPE_MAX (SPECASM_LINE_TYPE_EQU + 1)
+#define SPECASM_LINE_TYPE_ZX81 (SPECASM_LINE_TYPE_SIMPLE_MAX + 6)
+#define SPECASM_LINE_TYPE_MAX (SPECASM_LINE_TYPE_ZX81 + 1)
 
 #define SPECASM_LINE_TYPE_EMPTY 128
 #define SPECASM_LINE_TYPE_LL 129
@@ -282,6 +283,12 @@
  *
  * In this case the id is stored in op_code[0].  It's not possible to have
  * multiple expressions in a single db or dw statement.
+ *
+ * ld (ix+1), =expression
+ * ld (iy+1), =expression
+ *
+ * In this case the id is stored in op_code[3] and set the addr flag
+ * to indicate whether it's a long or short label.
  */
 
 #define SPECASM_FLAGS_EXP_LONG 0x80

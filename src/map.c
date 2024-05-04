@@ -76,7 +76,7 @@ void specasm_write_map_banked_e(void)
 void specasm_write_map_e(void)
 #endif
 {
-	unsigned int of;
+	uint8_t of;
 	unsigned int i;
 	specasm_handle_t f;
 	salink_global_t *glob;

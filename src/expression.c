@@ -103,6 +103,8 @@ static const char *prv_exp_priority4_e(const char *str, int16_t *e,
 static void prv_equ_eval_local_e(salink_label_t *label, uint8_t depth,
 				 uint16_t line_no);
 
+static const char simple_ops[] = "()/*+-&|^~";
+
 const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 			    uint8_t is_global)
 {
@@ -112,11 +114,7 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 	char c;
 	long lval;
 	int len;
-#ifndef SPECASM_NEXT_BANKED
-	const char simple_ops[] = "()/*+-&|^~";
-#else
-	static const char simple_ops[] = "()/*+-&|^~";
-#endif
+
 	if (!buf) {
 		tok->type = SALINK_TOKEN_EOF;
 		return NULL;
@@ -792,8 +790,12 @@ void salink_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
 			prv_eval_equ_16bit_e(line, obj, line_no, 1);
 			break;
 		case 0xDD:
-		case 0xED:
 		case 0xFD:
+			if (line->data.op_code[1] == 0x36) {
+				prv_eval_equ_8bit_e(line, obj, line_no, 3);
+				break;
+			}
+		case 0xED:
 			prv_eval_equ_16bit_e(line, obj, line_no, 2);
 			break;
 		}

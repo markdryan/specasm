@@ -67,4 +67,6 @@ xor =logical
 db =$80+1
 dw =256
 
+ld (ix+32), =divide
+ld (iy+32), =Size
 

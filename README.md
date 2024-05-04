@@ -13,16 +13,16 @@ You should now have a folder in your root directory called SPECASM.  It should l
 
 ![Installing](/docs/install.png)
 
-Now navigate to the INSTALL file, which is a BASIC program, and press **ENTER** to execute it.  On the 48kb or 128kb Spectrum this will use ESXDOS's **.launcher** command to set up some command line short cuts for the tap files in the SPECASM directory.  It will also copy some executables to the /bin folder.  On the ZX Spectrum Next it will copy the various executable programs that compose Specasm to the /dot folder.
+Now navigate to the INSTALL.BAS file, which is a BASIC program, and press **ENTER** to execute it.  On the 48kb or 128kb Spectrum this will use ESXDOS's **.launcher** command to set up some command line short cuts for the tap files in the SPECASM directory.  It will also copy some executables to the /bin folder.  On the ZX Spectrum Next it will copy the various executable programs that compose Specasm to the /dot folder.
 
 ## Reinstalling Specasm
 
 To upgrade to a new version of Specasm perform the following steps.
 
-1. Execute the REMOVE BASIC program.  This can be done from the ESXDOS file browser or by loading it from the BASIC prompt.  This will remove the old version of Specasm stored under the /bin or the /dot folders, and will also de-register the old **.launcher** shortcuts.
+1. Execute the REMOVE.BAS BASIC program.  This can be done from the ESXDOS file browser or by loading it from the BASIC prompt.  This will remove the old version of Specasm stored under the /bin or the /dot folders, and will also de-register the old **.launcher** shortcuts.
 2. Manually remove the old /Specasm directory on your SD card, e.g., rm -rf /Specasm
 3. Download the latest release and unzip its contents to /Specasm on the SD card
-4. Run the INSTALL BASIC program.  This will install the new version of Specasm.
+4. Run the INSTALL.BAS BASIC program.  This will install the new version of Specasm.
 
 ## Assembling your First Program
 
@@ -47,7 +47,7 @@ Note when entering the program there's no need to worry about formatting.  Speca
 > s hello
 ```
 
-to save your work.  We've now entered, assembled and saved our first program.  Before we can run it however, we need to link it (basically resolve all the jumps and label references).  There's not enough memory on the 48k spectrum to do the linking inside the IDE so we need to exit it and run another program.  The can be achieved by entering command mode once more by pressing **SYMSHIFT w**, following by q and **ENTER**, e.g.,
+to save your work.  We've now entered, assembled and saved our first program.  Before we can run it however, we need to link it (basically resolve all the jumps and label references).  There's not enough memory on the 48k spectrum to do the linking inside the IDE so we need to exit it and run another program.  This can be achieved by entering command mode once more by pressing **SYMSHIFT w**, following by q and **ENTER**, e.g.,
 
 ```
 > q

@@ -364,6 +364,20 @@ if [ "$word" != "00 01" ]; then
     exit 1
 fi
 
+# ld (ix+32), =divide
+byte=`od -An -j139 -tx1 -N1 equ | xargs`
+if [ "$byte" != "03" ]; then
+    echo "ld (ix+32), =divide"
+    exit 1
+fi
+
+# ld (iy+32), =Size
+byte=`od -An -j143 -tx1 -N1 equ | xargs`
+if [ "$byte" != "10" ]; then
+    echo "ld (iy+32), =Size"
+    exit 1
+fi
+
 rm equ
 rm *.x
 

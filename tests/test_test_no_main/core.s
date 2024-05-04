@@ -1,0 +1,3 @@
+.Global
+  scf
+  ret

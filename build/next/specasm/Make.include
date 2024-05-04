@@ -57,6 +57,8 @@ util_print_next.o: util_print_next.c util_print_zx.h
 samake.o: samake.c peer.h error.h peer_zx.h line.h \
   salink.h peer_file.h state_base.h strings.h
 clipboard_banked.o: clipboard.c clipboard.h line.h error.h
+queued_files.o: queued_files.c peer.h error.h peer_zx.h \
+  line.h queued_files.h salink.h peer_file.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

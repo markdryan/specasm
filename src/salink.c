@@ -30,7 +30,7 @@
 #include "state_base.h"
 
 char scratch[SPECASM_MAX_SCRATCH];
-char error_buf[(SPECASM_LINE_MAX_LEN * 3) + 1];
+char error_buf[(SPECASM_LINE_MAX_LEN * 4) + 1];
 salink_buf_t buf;
 unsigned int buf_count;
 unsigned int bin_size;
@@ -39,10 +39,16 @@ char map_name[MAX_FNAME + 1];
 
 salink_label_t labels[MAX_LABELS];
 salink_obj_t obj_files[MAX_FILES];
-unsigned int obj_file_count;
+uint8_t obj_file_count;
 uint8_t obj_files_order[MAX_FILES];
 salink_global_t globals[MAX_GLOBALS];
 unsigned int global_count;
+uint8_t queued_files;
+uint8_t link_mode;
+uint8_t got_test;
+
+const char *empty_str = "";
+const char *specasm_str = "/specasm/";
 
 #ifdef SPECASM_TARGET_NEXT
 void specasm_peer_next_copy_chars(void);
@@ -68,6 +74,29 @@ const char *salink_get_label_str_e(uint8_t id, uint8_t label_type)
 		return specasm_state_get_long_e(id);
 	else
 		return specasm_state_get_short_e(id);
+}
+
+uint8_t salink_check_file(const char *fname)
+{
+	char *period;
+	uint8_t is_test_file;
+	uint8_t is_x_file;
+
+	period = strchr(fname, '.');
+
+	if (!period || !period[1] || period[2])
+		return 0;
+
+	is_test_file = (period[1] == 't') || (period[1] == 'T');
+	is_x_file = (period[1] == 'x') || (period[1] == 'X');
+
+	if (link_mode == SALINK_MODE_LINK) {
+		if (is_test_file)
+			got_test = 1;
+		return is_x_file;
+	}
+
+	return is_test_file || is_x_file;
 }
 
 /*

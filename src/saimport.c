@@ -27,18 +27,26 @@ static char file_buf[MAX_BUFFER_SIZE];
 uint16_t bytes_in_buf;
 uint16_t ptr;
 
-static int prv_check_file(const char *fname)
+static int prv_check_file(const char *fname, char *ext)
 {
 	char *period = strrchr(fname, '.');
 
 	if (!period)
 		goto on_error;
 
-	if ((period[1] == 's' || period[1] == 'S') && period[2] == 0)
+	if ((period[1] == 's' || period[1] == 'S') && period[2] == 0) {
+		*ext = 'x';
 		return 0;
+	}
+
+	if ((period[1] == 't' || period[1] == 'T') &&
+	    (period[2] == 's' || period[2] == 'S') && (period[3] == 0)) {
+		*ext = 't';
+		return 0;
+	}
 
 on_error:
-	fprintf(stderr, ".s extension expected got %s\n", fname);
+	fprintf(stderr, ".s or .ts extension expected got %s\n", fname);
 
 	return 1;
 }
@@ -138,9 +146,10 @@ cleanup:
 	return retval;
 }
 
-static int prv_write_object_file(const char *fname)
+static int prv_write_object_file(const char *fname, char ext)
 {
 	char obj_file[SPECASM_PATH_MAX];
+	char *period;
 
 	if (strlen(fname) + 1 > SPECASM_PATH_MAX) {
 		fprintf(stderr, "Path to long\n");
@@ -148,7 +157,14 @@ static int prv_write_object_file(const char *fname)
 	}
 
 	strcpy(obj_file, fname);
-	obj_file[strlen(fname) - 1] = 'x';
+
+	/*
+	 * If we get here we know obj_file has at least 1 full stop.
+	 */
+
+	period = strrchr(obj_file, '.');
+	period[1] = ext;
+	period[2] = 0;
 
 	specasm_save_e(obj_file);
 	if (err_type != SPECASM_ERROR_OK) {
@@ -162,19 +178,21 @@ static int prv_write_object_file(const char *fname)
 
 int main(int argc, char *argv[])
 {
+	char ext;
+
 	if (argc < 2) {
 		fprintf(stderr, "Usage: saimport .s\n");
 		return 1;
 	}
 
 	for (int i = 1; i < argc; i++) {
-		if (prv_check_file(argv[i]))
+		if (prv_check_file(argv[i], &ext))
 			return 1;
 
 		if (prv_parse_file(argv[i]))
 			return 1;
 
-		if (prv_write_object_file(argv[i]))
+		if (prv_write_object_file(argv[i], ext))
 			return 1;
 	}
 

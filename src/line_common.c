@@ -135,6 +135,7 @@ const specasm_mnemomic_t mnemomics_table[] = {
 	{ "test", SPECASM_LINE_TYPE_TEST, },
 #endif
 	{ "xor", SPECASM_LINE_TYPE_XOR, },
+	{ "zx81", SPECASM_LINE_TYPE_ZX81, },
 };
 
 /* clang-format on */

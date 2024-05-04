@@ -26,7 +26,7 @@
 #define MAX_GLOBALS 128
 #define MAX_LABELS 1280
 #define MAX_BUFFER_SIZE 1024
-#define MAX_FNAME 28
+#define MAX_FNAME 42
 
 /*
  * All long labels must be odd.
@@ -62,6 +62,8 @@
 #define SALINK_ERROR_DIV_ZERO (SPECASM_MAX_ERRORS + 17)
 #define SALINK_ERROR_BAD_EXPRESSION (SPECASM_MAX_ERRORS + 18)
 #define SALINK_ERROR_DUP_OBJ_FILE (SPECASM_MAX_ERRORS + 19)
+#define SALINK_ERROR_NO_TESTS (SPECASM_MAX_ERRORS + 20)
+#define SALINK_ERROR_X_FILE_TOO_OLD (SPECASM_MAX_ERRORS + 21)
 
 /*
  * Label usage for EQU statements
@@ -107,7 +109,8 @@ typedef struct salink_obj_t_ salink_obj_t;
 extern char scratch[SPECASM_MAX_SCRATCH];
 extern salink_label_t labels[MAX_LABELS];
 extern salink_global_t globals[MAX_GLOBALS];
-extern char error_buf[(SPECASM_LINE_MAX_LEN * 3) + 1];
+extern char error_buf[(SPECASM_LINE_MAX_LEN * 4) + 1];
+uint8_t salink_check_file(const char *fname);
 unsigned int salink_find_local_label_e(const char *str, int len,
 				       salink_obj_t *obj);
 unsigned int salink_find_global_label_e(const char *str, salink_obj_t *obj);
@@ -132,12 +135,22 @@ typedef union {
 	char fname[MAX_PENDING_X_FILES][MAX_FNAME + 1];
 } salink_buf_t;
 
+#define SALINK_MODE_LINK 0
+#define SALINK_MODE_TEST 1
+#define SALINK_MODE_MAX 2
+
 extern salink_buf_t buf;
 extern char map_name[MAX_FNAME + 1];
 extern unsigned int global_count;
 extern salink_obj_t obj_files[MAX_FILES];
-extern unsigned int obj_file_count;
+extern uint8_t obj_file_count;
 extern uint8_t obj_files_order[MAX_FILES];
 extern char image_name[MAX_FNAME + 1];
 extern unsigned int bin_size;
+extern uint8_t queued_files;
+extern const char *empty_str;
+extern const char *specasm_str;
+extern uint8_t link_mode;
+extern uint8_t got_test;
+
 #endif

@@ -21,39 +21,36 @@
 #include "expression.h"
 #include "map.h"
 #include "peer.h"
+#include "queued_files.h"
 #include "salink.h"
 #include "state_base.h"
 
-static uint8_t queued_files;
 static uint8_t got_org;
+static uint8_t got_zx81;
 static uint8_t map_file;
 static size_t label_count;
-static size_t main_index = SIZE_MAX;
+static uint8_t main_index = 0xff;
 static uint16_t start_address = 0x8000;
-
-static void prv_add_queued_filename_e(const char *base, const char *prefix,
-				      const char *str);
-
-static int prv_check_file(const char *fname)
-{
-	char *period;
-
-	period = strchr(fname, '.');
-
-	if (!period)
-		return 0;
-
-	return ((period[1] == 'x' || period[1] == 'X') && period[2] == 0);
-}
 
 static void prv_init_out_fnames(salink_obj_t *obj)
 {
 	unsigned int i;
+	char *ptr;
 
 	for (i = 0; i < MAX_FNAME; i++) {
 		if (obj->fname[i] == '.')
 			break;
 		image_name[i] = obj->fname[i];
+	}
+	if (link_mode == SALINK_MODE_TEST) {
+		if (i + 4 > MAX_FNAME)
+			i = MAX_FNAME - 4;
+		ptr = &image_name[i];
+		ptr[0] = '.';
+		ptr[1] = 't';
+		ptr[2] = 's';
+		ptr[3] = 't';
+		i += 4;
 	}
 	image_name[i] = 0;
 
@@ -61,12 +58,19 @@ static void prv_init_out_fnames(salink_obj_t *obj)
 				 SALINK_FIELD_NAME_ROW, SPECASM_CODE_COLOUR);
 
 	strcpy(map_name, image_name);
-	if (i + 4 > MAX_FNAME)
-		i = MAX_FNAME - 4;
-	map_name[i] = '.';
-	map_name[i + 1] = 'm';
-	map_name[i + 2] = 'a';
-	map_name[i + 3] = 'p';
+	if (link_mode == SALINK_MODE_LINK) {
+		if (i + 4 > MAX_FNAME)
+			i = MAX_FNAME - 4;
+		ptr = &map_name[i];
+		ptr[0] = '.';
+		ptr[1] = 'm';
+		ptr[2] = 'a';
+		ptr[3] = 'p';
+	} else {
+		ptr = &map_name[i - 3];
+		ptr[0] = 't';
+		ptr[1] = 'm';
+	}
 }
 
 static salink_label_t *prv_find_local_label(salink_obj_t *obj, uint8_t lng,
@@ -226,12 +230,193 @@ static uint16_t prv_write_bin_file_e(specasm_handle_t out_f,
 	return file_size;
 }
 
+static const char zx81_conseq_ops[] = {'"', '#', '$', ':', '?', '(',
+				       ')', '>', '<', '=', '+', '-',
+				       '*', '/', ';', ',', '.'};
+
+static char prv_to_zx81_char(char ch)
+{
+	uint8_t i;
+
+	if (ch == ' ')
+		return 0;
+
+	for (i = 0; i < sizeof(zx81_conseq_ops); i++)
+		if (ch == zx81_conseq_ops[i])
+			return 11 + i;
+
+	if ((ch >= '0') && (ch <= '9'))
+		return ch - 20;
+
+	ch |= 32;
+	if ((ch >= 'a') && (ch <= 'z'))
+		return ch - 59;
+
+	return 15; // '?'
+}
+
+static void prv_to_zx81_str(char *str, uint8_t len)
+{
+	uint8_t i;
+
+	for (i = 0; i < len; i++)
+		str[i] = prv_to_zx81_char(str[i]);
+}
+
+static const uint8_t zx81_two_byte_opcodes[] = {
+    0xce, 0xc6, 0xe6, 0xfe, 0x36, 0xf6, 0xde, 0xd6,
+    0xee, 0x3e, 0x06, 0x0e, 0x16, 0x1e, 0x26, 0x2e};
+
+static const uint8_t zx81_three_byte_opcodes[] = {
+    0x1, 0x11, 0x31, 0x21,
+};
+
+static void prv_zx81_patch_opcode(specasm_line_t *line)
+{
+	uint8_t i;
+	char ch;
+	uint8_t oc;
+	const uint8_t *ptr;
+	uint8_t size;
+
+	/*
+	 * This is very, very fiddly.  We need to make sure we only update
+	 * instructions with characters, which is easier said than done.
+	 * We don't want to update instructions with numbers, labels or
+	 * expressions.  There's no consistent API to detect this so we
+	 * need to check on an instruction by instruction basis and write
+	 * lots of tests.
+	 */
+
+	if (specasm_line_get_size(line) == 0)
+		return;
+
+	/*
+	 * Check for the following 4 byte instructions.
+	 *
+	 * ld (ix+1), 'A'
+	 * ld (iy+1), 'A'
+	 * ld ix, 'A'
+	 * ld iy, 'A'
+	 */
+
+	if (specasm_line_get_size(line) == 3) {
+		oc = line->data.op_code[0];
+		if ((oc != 0xfd) && (oc != 0xdd))
+			return;
+		oc = line->data.op_code[1];
+		if (oc == 0x36) {
+			if (specasm_line_get_format2(line) !=
+			    SPECASM_FLAGS_NUM_CHAR)
+				return;
+			ch = (char)line->data.op_code[3];
+			line->data.op_code[3] = (uint8_t)prv_to_zx81_char(ch);
+		} else if (oc == 0x21) {
+			if (specasm_line_get_addr_type(line))
+				return;
+			if (specasm_line_get_format(line) !=
+			    SPECASM_FLAGS_NUM_CHAR)
+				return;
+			ch = (char)line->data.op_code[2];
+			line->data.op_code[2] = (uint8_t)prv_to_zx81_char(ch);
+		}
+		return;
+	}
+
+	if (specasm_line_get_format(line) != SPECASM_FLAGS_NUM_CHAR)
+		return;
+
+	/*
+	 * Character substitution is performed on the following
+	 * two byte instructions.
+	 *
+	 * adc a, 'A'
+	 * add a, 'A'
+	 * and 'A'
+	 * cp  'A'
+	 * ld (hl), 'A'
+	 * ld a, 'A'
+	 * ld b, 'A'
+	 * ld  c , 'A'
+	 * ld d, 'A'
+	 * ld e, 'A'
+	 * ld h, 'A'
+	 * ld l, 'A'
+	 * or 'A'
+	 * sbc a, 'A'
+	 * sub 'A'
+	 * xor 'A'
+	 */
+
+	/*
+	 * And on the following 3 byte sequences
+	 *
+	 * ld bc, 'A',
+	 * ld de, 'A'
+	 * ld hl, 'A'
+	 * ld sp, 'A'
+	 */
+
+	if (specasm_line_get_size(line) == 1) {
+		ptr = zx81_two_byte_opcodes;
+		size = sizeof(zx81_two_byte_opcodes);
+	} else {
+		/*
+		 * Note, I would say that there's a bug here.
+		 * The addr_type should be NUM but it's not set
+		 * at all for LD BC,DE,HL, imm16.
+		 */
+
+		if (specasm_line_get_addr_type(line))
+			return;
+		ptr = zx81_three_byte_opcodes;
+		size = sizeof(zx81_three_byte_opcodes);
+	}
+
+	for (i = 0; i < size; i++)
+		if (line->data.op_code[0] == ptr[i]) {
+			ch = (char)line->data.op_code[1];
+			line->data.op_code[1] = (uint8_t)prv_to_zx81_char(ch);
+			return;
+		}
+}
+
+static void prv_zx81_patch_db_dw(specasm_line_t *line)
+{
+	uint8_t i;
+	uint8_t step;
+	char ch;
+
+	if (specasm_line_get_format(line) != SPECASM_FLAGS_NUM_CHAR)
+		return;
+
+	if (line->type == SPECASM_LINE_TYPE_DB) {
+		step = 1;
+	} else {
+
+		/*
+		 * DWs can have labels in them as well as expressions so we
+		 * need to be careful here.
+		 */
+
+		if (specasm_line_get_addr_type(line))
+			return;
+		step = 2;
+	}
+
+	for (i = 0; i < specasm_line_get_size(line) + 1; i += step) {
+		ch = (char)line->data.op_code[i];
+		line->data.op_code[i] = (uint8_t)prv_to_zx81_char(ch);
+	}
+}
+
 static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 			     uint16_t size)
 {
 	unsigned int i;
 	unsigned int to_set;
 	uint8_t id;
+	uint8_t byt;
 	const char *data;
 
 	if ((buf_count + size > MAX_BUFFER_SIZE) ||
@@ -248,8 +433,12 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 	}
 
 	if (line->type == SPECASM_LINE_TYPE_DS) {
+		byt = line->data.op_code[0];
+		if (got_zx81 &&
+		    (specasm_line_get_format(line) == SPECASM_FLAGS_NUM_CHAR))
+			byt = prv_to_zx81_char(byt);
 		to_set = size < MAX_BUFFER_SIZE ? size : MAX_BUFFER_SIZE;
-		memset(&buf.file_buf[0], line->data.op_code[0], to_set);
+		memset(&buf.file_buf[0], byt, to_set);
 		do {
 			size -= to_set;
 			if (size == 0) {
@@ -276,57 +465,9 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 		id = line->data.label;
 		data = salink_get_label_str_e(id, line->type);
 		memcpy(&buf.file_buf[buf_count], data, size);
+		if (got_zx81)
+			prv_to_zx81_str(&buf.file_buf[buf_count], size);
 		buf_count += size;
-	}
-}
-
-static void prv_label_subtraction_e(salink_obj_t *obj, specasm_line_t *line,
-				    unsigned int l, uint8_t id_pos)
-{
-	uint16_t a;
-	uint16_t b;
-	uint8_t id1;
-	uint8_t id2;
-	uint8_t lng;
-	uint8_t *op_code = &line->data.op_code[id_pos];
-
-	id1 = op_code[0];
-	id2 = op_code[1];
-	lng = op_code[2] == SPECASM_FLAGS_ADDR_LONG ? SALINK_LABEL_TYPE_LNG
-						    : SALINK_LABEL_TYPE_SHORT;
-	prv_resolve_address_e(obj, line, l, id1, &a, lng);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-	lng =
-	    specasm_line_get_addr_type(line) == SPECASM_FLAGS_ADDR_LONG ? 1 : 0;
-	prv_resolve_address_e(obj, line, l, id2, &b, lng);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-	if (b > a) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "%s:%d Negative difference", obj->fname, l);
-		err_type = SALINK_ERROR_NEGATIVE_SIZE;
-		return;
-	}
-	*((uint16_t *)&op_code[0]) = a - b;
-}
-
-static void prv_label_subtraction_byte_e(salink_obj_t *obj,
-					 specasm_line_t *line, unsigned int l,
-					 uint8_t id_pos)
-{
-	uint16_t diff;
-
-	prv_label_subtraction_e(obj, line, l, id_pos);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-
-	diff = *((uint16_t *)&line->data.op_code[id_pos]);
-
-	if (diff > 255) {
-		snprintf(error_buf, sizeof(error_buf), "%s:%d Too big:%d",
-			 obj->fname, l, diff);
-		err_type = SALINK_ERROR_SIZE_TOO_BIG;
 	}
 }
 
@@ -467,161 +608,6 @@ static void prv_stat_fname_e(const char *fname, specasm_stat_t *stat_buf)
 	err_type = err;
 }
 
-static uint8_t prv_add_queued_dir_e(const char *fname)
-{
-	specasm_dir_t dir;
-	specasm_dirent_t dirent;
-	size_t fname_len;
-	char dir_name[MAX_FNAME + 1];
-
-	/*
-	 * If we can't stat the filename we'll assume that it's just a .x file
-	 * without the extension.  If it isn't will catch the error later.
-	 */
-
-	if (!specasm_file_isdir(fname))
-		return 0;
-
-	fname_len = strlen(fname);
-	if (fname_len >= MAX_FNAME) {
-		err_type = SPECASM_ERROR_BAD_FNAME;
-		return 0;
-	}
-	dir = specasm_opendir_e(fname);
-	if (err_type != SPECASM_ERROR_OK) {
-		strcpy(error_buf, "Failed to read directory");
-		err_type = SALINK_ERROR_READDIR;
-		return 0;
-	}
-
-	strcpy(dir_name, fname);
-	dir_name[fname_len] = '/';
-	dir_name[fname_len + 1] = 0;
-
-	while (specasm_readdir(dir, &dirent)) {
-
-		/*
-		 * Make sure we only add .x files and not .x directories
-		 * or any directories for that matter.  Subdirectories need
-		 * to be explicitly added with a '-' or a '+' directive.
-		 */
-
-		if (specasm_isdirent_dir(dirent))
-			continue;
-		if (!prv_check_file(specasm_getdirname(dirent)))
-			continue;
-		prv_add_queued_filename_e(dir_name, "",
-					  specasm_getdirname(dirent));
-		if (err_type != SPECASM_ERROR_OK) {
-			specasm_closedir(dir);
-			return 0;
-		}
-	}
-	specasm_closedir(dir);
-
-	err_type = SPECASM_ERROR_OK;
-
-	return 1;
-}
-
-static void prv_add_queued_filename_e(const char *base, const char *prefix,
-				      const char *str)
-{
-	int space_needed;
-	int prefix_len;
-	int base_len;
-	char *ptr;
-	char *start;
-	char *slash;
-
-	if (queued_files == MAX_PENDING_X_FILES) {
-		snprintf(error_buf, sizeof(error_buf),
-			 "Pending file limit %d reached", MAX_PENDING_X_FILES);
-		err_type = SALINK_ERROR_TOO_MANY_FILES;
-		return;
-	}
-
-	/*
-	 * Build up a path relative to the including path, providing
-	 * it's not a complete path.  So if the including file is
-	 * one/two.x and it includes does - three.x, then we get
-	 *
-	 * one/three.x
-	 *
-	 * If the including file is simple two.x then we get
-	 *
-	 * three.x
-	 *
-	 * If the including file is one/two/ we'd get
-	 *
-	 * one/two/three.x
-	 *
-	 * TODO: Need to update this to cope with drive letters.
-	 */
-
-	base_len = 0;
-	if (str[0] != '/') {
-		slash = strrchr(base, '/');
-		if (slash)
-			base_len = (slash - base) + 1;
-	}
-
-	prefix_len = strlen(prefix);
-	space_needed = strlen(str) + prefix_len + base_len;
-	if (space_needed > MAX_FNAME) {
-		err_type = SPECASM_ERROR_BAD_FNAME;
-		return;
-	}
-
-	ptr = &buf.fname[queued_files][0];
-	start = ptr;
-	if (base_len) {
-		strncpy(ptr, base, base_len);
-		ptr += base_len;
-	}
-	if (prefix_len) {
-		strcpy(ptr, prefix);
-		ptr += prefix_len;
-	}
-	strcpy(ptr, str);
-
-	/*
-	 * Check to see whether this is a directory or not.
-	 * If so we add the files in this directory and return.
-	 */
-
-	if (prv_add_queued_dir_e(start))
-		return;
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-
-	queued_files++;
-	if (start[space_needed - 2] != '.' &&
-	    (start[space_needed - 1] | 32) != 'x') {
-		if (space_needed + 2 > MAX_FNAME) {
-			err_type = SPECASM_ERROR_BAD_FNAME;
-			return;
-		}
-		start[space_needed] = '.';
-		start[space_needed + 1] = 'x';
-		start[space_needed + 2] = 0;
-	}
-}
-
-static void prv_add_queued_file_e(const char *base, const char *prefix,
-				  specasm_line_t *line)
-{
-	uint8_t id;
-	const char *str;
-
-	id = line->data.label;
-	str = salink_get_label_str_e(id, line->type);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-
-	prv_add_queued_filename_e(base, prefix, str);
-}
-
 static void prv_add_equ_label_e(specasm_line_t *line, salink_obj_t *obj,
 				uint16_t line_no)
 {
@@ -747,16 +733,18 @@ static void prv_parse_obj_e(const char *fname)
 			}
 			got_org = 1;
 			start_address = *((uint16_t *)&line->data.op_code[0]);
+		} else if (line->type == SPECASM_LINE_TYPE_ZX81) {
+			got_zx81 = 1;
 		} else if (line->type == SPECASM_LINE_TYPE_MAP) {
 			map_file = 1;
 		} else if (line->type == SPECASM_LINE_TYPE_ALIGN) {
 			prv_add_align_e(obj, line, size);
 		} else if ((line->type >= SPECASM_LINE_TYPE_INC_SHORT) &&
 			   (line->type <= SPECASM_LINE_TYPE_INC_LONG)) {
-			prv_add_queued_file_e(obj->fname, "", line);
+			salink_add_queued_file_e(obj->fname, empty_str, line);
 		} else if ((line->type >= SPECASM_LINE_TYPE_INC_SYS_SHORT) &&
 			   (line->type <= SPECASM_LINE_TYPE_INC_SYS_LONG)) {
-			prv_add_queued_file_e(obj->fname, "/specasm/", line);
+			salink_add_queued_file_e(obj->fname, specasm_str, line);
 		} else if ((line->type == SPECASM_LINE_TYPE_INC_BIN_SHORT) ||
 			   (line->type == SPECASM_LINE_TYPE_INC_BIN_LONG)) {
 			size = prv_inc_bin_size_e(line, size);
@@ -809,12 +797,6 @@ static uint8_t prv_order_objects_e(void)
 	 * written out to the final binary.
 	 */
 
-	if (main_index == SIZE_MAX) {
-		strcpy(error_buf, "No Main label defined");
-		err_type = SALINK_ERROR_NO_MAIN;
-		return 0;
-	}
-
 	for (i = 0; i < obj_file_count; i++)
 		obj_files_order[i] = i;
 
@@ -833,7 +815,7 @@ static uint8_t prv_order_objects_e(void)
 
 static void prv_check_duplicate_objs_e(void)
 {
-	unsigned int i;
+	uint8_t i;
 	const char *fname1;
 
 	/*
@@ -861,7 +843,7 @@ static void prv_check_duplicate_objs_e(void)
 
 static void prv_complete_absolutes_e(void)
 {
-	unsigned int i;
+	uint8_t i;
 	uint16_t j;
 	salink_obj_t *obj;
 	salink_label_t *label;
@@ -933,6 +915,22 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 		id_pos = 1;
 		line = &state.lines.lines[i];
 
+		/*
+		 * We want to do this here as we don't want to accidentally
+		 * replace numbers in instructions with expressions that cannot
+		 * be characters.  We can't do it after the expressions have
+		 * been applied as lines that started out as expressions don't
+		 * set the format bit correctly and we can't change it now.
+		 */
+
+		if (got_zx81) {
+			if (line->type < SPECASM_LINE_TYPE_DB)
+				prv_zx81_patch_opcode(line);
+			else if ((line->type == SPECASM_LINE_TYPE_DB) ||
+				 (line->type == SPECASM_LINE_TYPE_DW))
+				prv_zx81_patch_db_dw(line);
+		}
+
 		if (line->type >= SPECASM_LINE_TYPE_EXP_ADJ)
 			salink_apply_expressions_e(line, obj, i);
 
@@ -961,14 +959,13 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 			}
 			break;
 		case SPECASM_LINE_TYPE_DW_SUB:
-			id_pos = 0;
 		case SPECASM_LINE_TYPE_LD_IMM_16_SUB:
-			prv_label_subtraction_e(obj, line, i, id_pos);
-			break;
 		case SPECASM_LINE_TYPE_DB_SUB:
-			id_pos = 0;
 		case SPECASM_LINE_TYPE_LD_IMM_8_SUB:
-			prv_label_subtraction_byte_e(obj, line, i, id_pos);
+			snprintf(error_buf, sizeof(error_buf),
+				 "%s too old. Load/save in Specasm",
+				 obj->fname);
+			err_type = SALINK_ERROR_X_FILE_TOO_OLD;
 			break;
 		case SPECASM_LINE_TYPE_JR:
 		case SPECASM_LINE_TYPE_DJNZ:
@@ -996,10 +993,77 @@ static uint16_t prv_link_obj_e(specasm_handle_t f, salink_obj_t *obj,
 	return offset;
 }
 
+/*
+ * Format of the Test Table
+ *
+ * - 1 or more variable sized entries.  Each entry has a
+ *   - 2 byte address
+ *   - a null terminated string containing the test name
+ * - 2 byte absolute address pointing to the start of the Test Table
+ * - 1 byte containing the number of tests.
+ *
+ * The BASIC test harnesses can locate the table by loading the last two
+ * words from the file.
+ */
+
+static void prv_write_test_table_e(specasm_handle_t f)
+{
+	unsigned int i;
+	char *period;
+	uint8_t name_len;
+	salink_global_t *global;
+	uint16_t jump_table_start;
+	const char *name_ptr;
+	uint8_t tests = 0;
+
+	jump_table_start = buf_count + start_address + bin_size;
+
+	for (i = 0; i < global_count; i++) {
+		global = &globals[i];
+		if (strncmp(global->name, "Test", 4))
+			continue;
+		period = strchr(obj_files[global->obj_index].fname, '.');
+		if (!period || (period[1] != 't' && period[1] != 'T'))
+			continue;
+
+		/*
+		 * Let's not bother writing the Test prefix.
+		 */
+		name_ptr = &global->name[4];
+		name_len = strlen(name_ptr) + 1;
+		if (buf_count + name_len + sizeof(uint16_t) > MAX_BUFFER_SIZE) {
+			prv_flush_write_buf_e(f);
+			if (err_type != SPECASM_ERROR_OK)
+				return;
+		}
+		memcpy(&buf.file_buf[buf_count],
+		       &labels[global->label_index].data.off, sizeof(uint16_t));
+		buf_count += 2;
+		memcpy(&buf.file_buf[buf_count], name_ptr, name_len);
+		buf_count += name_len;
+		tests++;
+	}
+
+	if (tests == 0) {
+		snprintf(error_buf, sizeof(error_buf), "No tests!");
+		err_type = SALINK_ERROR_NO_TESTS;
+		return;
+	}
+
+	if (buf_count + sizeof(uint16_t) + sizeof(uint8_t) > MAX_BUFFER_SIZE) {
+		prv_flush_write_buf_e(f);
+		if (err_type != SPECASM_ERROR_OK)
+			return;
+	}
+	memcpy(&buf.file_buf[buf_count], &jump_table_start, sizeof(uint16_t));
+	buf_count += 2;
+	buf.file_buf[buf_count++] = tests;
+}
+
 static void prv_link_e(uint8_t main_loaded)
 {
 	char ibuf[16];
-	unsigned int i;
+	uint8_t i;
 	specasm_handle_t f;
 	uint16_t offset = start_address;
 	salink_obj_t *obj = &obj_files[main_index];
@@ -1015,6 +1079,12 @@ static void prv_link_e(uint8_t main_loaded)
 				goto on_error;
 		}
 		offset = prv_link_obj_e(f, obj, offset);
+		if (err_type != SPECASM_ERROR_OK)
+			goto on_error;
+	}
+
+	if (link_mode == SALINK_MODE_TEST) {
+		prv_write_test_table_e(f);
 		if (err_type != SPECASM_ERROR_OK)
 			goto on_error;
 	}
@@ -1066,7 +1136,7 @@ static void prv_salink_e(void)
 	while (specasm_readdir(dir, &dirent)) {
 		if (specasm_isdirent_dir(dirent))
 			continue;
-		if (!prv_check_file(specasm_getdirname(dirent)))
+		if (!salink_check_file(specasm_getdirname(dirent)))
 			continue;
 		prv_parse_obj_e(specasm_getdirname(dirent));
 		if (err_type != SPECASM_ERROR_OK) {
@@ -1082,6 +1152,28 @@ static void prv_salink_e(void)
 
 	if (obj_file_count == 0)
 		return;
+
+	/*
+	 * There has to be a Main label somewhere.  This can be in a .t file
+	 * or a .x file but we need to have one.
+	 */
+
+	if (main_index == 0xFF) {
+		if (((link_mode == SALINK_MODE_LINK) && (!got_test)) ||
+		    (link_mode == SALINK_MODE_TEST)) {
+			strcpy(error_buf, "No Main label defined");
+			err_type = SALINK_ERROR_NO_MAIN;
+		}
+		return;
+	}
+
+	/*
+	 * Default to org 16514 on ZX81 if start address not explcitily
+	 * provided.
+	 */
+
+	if (got_zx81 && !got_org)
+		start_address = 16514;
 
 	itoa(start_address, ibuf, 16);
 	(void)specasm_text_print(ibuf, SALINK_VAL_COL + 1,
@@ -1159,11 +1251,7 @@ static void prv_setup_screen(void)
 	}
 }
 
-#ifdef SPECASM_NEXT_BANKED
-int salink_link_banked_e(void)
-#else
-int salink_link_e(void)
-#endif
+static int prv_salink_pass_e(void)
 {
 	const char *err_str;
 	int err_buf_len;
@@ -1189,12 +1277,49 @@ int salink_link_e(void)
 			err_buf_len -= SPECASM_LINE_MAX_LEN;
 		} while (1);
 		retval = 1;
+	} else if ((link_mode == SALINK_MODE_LINK) && (main_index == 0xFF)) {
+		(void)specasm_text_print("Skipping main binary", 0,
+					 SALINK_STATUS_ROW,
+					 SPECASM_SUCCESS_COLOUR);
+		++last_line;
 	} else {
 		(void)specasm_text_print("Link succeeded", 0, SALINK_STATUS_ROW,
 					 SPECASM_SUCCESS_COLOUR);
 		++last_line;
 	}
 	specasm_screen_flush(last_line + 2);
+
+	return retval;
+}
+
+#ifdef SPECASM_NEXT_BANKED
+int salink_link_banked_e(void)
+#else
+int salink_link_e(void)
+#endif
+{
+	int retval;
+
+	for (link_mode = SALINK_MODE_LINK; link_mode < SALINK_MODE_MAX;
+	     link_mode++) {
+		retval = prv_salink_pass_e();
+		if (retval || !got_test)
+			break;
+
+		specasm_sleep_ms(500);
+
+		/*
+		 * Reset state.
+		 */
+
+		queued_files = 0;
+		label_count = 0;
+		start_address = 0x8000;
+		global_count = 0;
+		obj_file_count = 0;
+		bin_size = 0;
+		buf_count = 0;
+	}
 
 	return retval;
 }

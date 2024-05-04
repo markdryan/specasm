@@ -25,23 +25,33 @@
 
 static char file_buf[MAX_BUFFER_SIZE];
 
-static int prv_check_file(const char *fname)
+static int prv_check_file(const char *fname, char *ext)
 {
 	char *period = strrchr(fname, '.');
 
 	if (!period)
 		goto on_error;
 
-	if ((period[1] == 'x' || period[1] == 'X') && period[2] == 0)
+	if ((period[1] == 'x' || period[1] == 'X') && period[2] == 0) {
+		ext[0] = 's';
+		ext[1] = 0;
 		return 0;
+	}
+
+	if ((period[1] == 't' || period[1] == 'T') && period[2] == 0) {
+		ext[0] = 't';
+		ext[1] = 's';
+		ext[2] = 0;
+		return 0;
+	}
 
 on_error:
-	fprintf(stderr, ".x extension expected got %s\n", fname);
+	fprintf(stderr, ".x or .t extension expected got %s\n", fname);
 
 	return 1;
 }
 
-static int prv_write_source_file(const char *fname)
+static int prv_write_source_file(const char *fname, const char *ext)
 {
 	specasm_handle_t f;
 	uint16_t i;
@@ -54,7 +64,7 @@ static int prv_write_source_file(const char *fname)
 	}
 
 	strcpy(obj_file, fname);
-	obj_file[strlen(fname) - 1] = 's';
+	strcpy(&obj_file[strlen(fname) - 1], ext);
 
 	f = specasm_file_wopen_e(obj_file);
 	if (err_type != SPECASM_ERROR_OK) {
@@ -114,6 +124,8 @@ static int prv_load_file(const char *fname)
 
 int main(int argc, char *argv[])
 {
+	char ext[3] = {0};
+
 	if (argc < 2) {
 		fprintf(stderr, "Usage: saexport .x\n");
 		return 1;
@@ -122,13 +134,13 @@ int main(int argc, char *argv[])
 	specasm_init_dump_table();
 
 	for (int i = 1; i < argc; i++) {
-		if (prv_check_file(argv[i]))
+		if (prv_check_file(argv[i], ext))
 			return 1;
 
 		if (prv_load_file(argv[i]))
 			return 1;
 
-		if (prv_write_source_file(argv[i]))
+		if (prv_write_source_file(argv[i], ext))
 			return 1;
 	}
 

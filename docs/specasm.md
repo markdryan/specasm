@@ -280,6 +280,7 @@ The following instructions support expressions.
 | add de, =expression (nx)      |
 | add bc, =expression (nx)      |
 | and =expression               |
+| bit =expression, [a-l]        |
 | call =expression              |
 | cp =expression                |
 | jp =expression                |
@@ -298,6 +299,8 @@ The following instructions support expressions.
 | ld hl, =expression            |
 | ld hl, (=expression)          |
 | ld (hl), =expression          |
+| ld (ix+n), = expression       |
+| ld (iy+n), = expression       |
 | ld (=expression), hl          |
 | ld sp, =expression            |
 | out (=expression), a          |
@@ -379,43 +382,7 @@ Here, the expression used in the im statement is invalid as it resolves to a val
 #### Label Subtraction
 
 > **Warning**
-> Label subtraction outside of expressions is no longer supported as of Specasm v7.  This syntax was rendered redundant by the introduction of expressions in Specasm v5 and deprecated in that release.  The linker does still support label substraction so any .x files assembled with an earlier version of Specasm can sill be linked and binary compatibility with older versions of Specasm is maintained.  Any instructions in .x files that use label subtraction will be rewritten to use the new expression syntax when loaded into Specasm's editor.  The remainder of this section exists purely for historical value.
-
-Direct label subtraction is supported in certain instructions and directives without the use of an expression.
-
-Label subtraction permits the size of a given block of code or data delimited by two labels to be encoded into the binary at link time.  Label subtraction can be used in place of an immediate value in four specific mnemonics.
-
-
-| Mnemonic                 | Description                                            |
-|--------------------------|--------------------------------------------------------|
-| ld [a-l], end-start      | 8 bit immediate loads into a, b, c, d, e, h and l      |
-| ld [bc/de/hl], end-start | 16 bit immediate loads to bc, de and hl                |
-| db end-start             | 8 bit data directive                                   |
-| dw end-start             | 16 bit data directive                                  |
-
-An error will be generated at link time if the 8 bit versions of the mnemonics specify two labels
-that are more than 255 bytes apart.
-
-It's possible to specify both local and global labels when computing the difference between two labels in this manner, but it only really makes sense to subtract labels that occur in the same file.
-
-Here's an example of label subtraction
-
-```
-ld bc, end-start
-ret
-.start
-db 10, 10
-"hello"
-ds 12, ' '
-.end
-```
-
-The ld instruction would be encoded as follows in the final binary.
-
-```
-ld bc, 19
-```
-
+> Old versions of Specasm, pre v7 supported something called label subtraction, which allowed the result of subtracting one label from another to be stored in a register, e.g., ld hl, end-start.  This syntax was rendered redundant by the introduction of expressions in Specasm v5 and deprecated in that release. In Specasm v5 and above the statement should be written as ld hl, =end-start.  Support for label subtraction was dropped from the editor in Specasm v7 and from the linker in Specasm v9.  If you try to link an old .x file created with Specasm v5 or older that performs label subtraction, the linker in Specasm v9 and above will report an error that will look something like this;  "code.x too old. Load/save  in Specasm".  To resolve this error simply follow the instructions.  Load the code.x file in Specasm and then  save it.  Any instructions in code.x that use label subtraction will be rewritten to use the new expression syntax when loaded into Specasm's editor, and can be successfully linked.
 
 #### Comments
 
@@ -754,3 +721,249 @@ Samake takes two optional arguments.  The first argument specifies the type of l
 ## Versions, Binary and Source code Compatibility
 
 There are two separate versions of Specasm, one for the 48kb and 128kb ZX Spectrums and one for the ZX Spectrum Next.  The two versions are incompatible with each other.  The 48kb version will not work on the Next and the Next version will not work on an original Spectrum.  The two versions are also binary incompatible with each other.  .x files created on the ZX Spectrum Next cannot be loaded by Specasm on the 48kb and vice-versa.  Both versions of Specasm are source code compatible however, provided that the sources do not contain any of the Z80N instructions.  The same .s file can be assembled by .saimport on both the Next and the 48kb Spectrum.
+
+## ZX81 Support
+
+Version v9 and above of Specasm add support for generating binaries for the ZX81.  This support comes in two forms; a new linker directive and updates to samake.
+
+A new linker directive, **zx81**, has been added.  This directive can be placed anywhere in your program.  It is an instruction to the linker to transliterate any strings and characters it encounters from ASCII to the character encoding used by the ZX81.  This transliteration is performed on all string and character literals.  For example, consider the following code.
+
+```
+zx81
+db 'A'
+```
+
+This will generate a binary of one byte containing the decimal value 38, which corresponds to an 'A' in the ZX81 character encoding..  If the zx81 directive is removed, and we relink, the binary will contain a single byte, 65, corresponding to an ASCII 'A'.  Lower case letters, not supported by the ZX81, are converted to upper case before transliteration.  Other ASCII codes without ZX81 equivalents are replaced by '?' characters.
+
+The **zx81** directive will also change the default ORG address from 32768 to 16514.  This default can of course be overridden using the **org** directive.
+
+The samake tool has been updated to generate .p files.  For example, to generate a .p file simply type
+
+```
+CLEAR 32767
+.samake p
+```
+
+> [!TIP]
+> Note the CLEAR statement is not needed on the ZX Spectrum Next as .samake is implemented as a dotn file.
+
+The 'p' argument can be omitted if one of the .x files in the current directory contains a z81 directive.  Samake requires ZX81 binaries to have an org address of 16514.
+
+On the Spectrum Next, the generate .p file can be run from the browser which will execute it in the built-in ZX81 emulator.
+
+## Unit Tests
+
+Specasm v9 adds basic support for unit testing.  Test content is placed in a .t file.  .t files are binary files like .x files that can be edited by Specasm but are intended to contain test code only.  .t files can be saexported and saimported to and from .ts source files.  .t files can be included in the same directory as the .x files that constitute the main program.  When salink is run it builds a main binary out of all the .x files in the project.  In Specasm v9, if the project contains any .t files, it will also generate a second binary that contains the contents of all the .t and all the .x files in the project.  The second binary has the same name as the main binary with a '.tst' extension appended.
+
+Tests can be added to .t files simply by adding a function identified with global label that begins with the word 'Test'.  These Test functions are intended to exercise some part of the main programm, returning with bc = 0 if the test passed or any value but 0 if the test failed.   Samake has been updated to generate BASIC test harnesses that will load the test binary, execute all the Test functions in sequence and printing an indication as to whether each test passed or failed.  The test harness interprets the failure codes returned in the bc register pair in two ways.
+
+1. If the value in bc is less than the ORG address of the program, 32768 by default on the Spectrum, the value is interpreted as an integer error code and output as such.
+2. If the value in bc is greater than or equal to the ORG address, it is interpreted as a null terminated string containing an error message.  The test harness will output the string on a new line, before executing the next test.
+
+As an example, consider a directory with two files, main.x and test.x.  main.x contains
+
+```
+; Carry flag set on failure
+.Main
+.Magic
+  or a
+  ret nz
+  scf
+  ret
+```
+
+and test.t contains
+
+```
+.TestMagicNonZero
+  ld a, 1
+  call Magic
+  jr c, fail
+  ld bc, 0
+  ret
+
+.TestMagicZero
+  xor a
+  call Magic
+  jr c, fail
+  ld bc, 0
+  ret
+
+.fail
+  ld bc, 1
+  ret
+```
+
+Two binaries will be created when salink is run in this directory, main which will contain only the Magic function, and main.tst which will contain the Magic function in addition to the two Test functions.
+
+A test harness can then be created and executed by typing
+
+```
+samake tst
+LOAD * "unit.bas"
+```
+
+> [!TIP]
+> Note LOAD * is simply LOAD on the ZX Spectrum Next.
+
+You should see something like
+
+```
+MagicNonZero: OK
+MagicZero: FAIL (1)
+```
+
+printed on the screen.
+
+The BASIC test harnesses locate the Test functions by means of a jump table added to the end of the test binary.  The harnesses should not need to be regenerated unless the ORG address or the name of the program changes.  Existing harnesses should be able to pick up any new Test functions added to the project by inspecting the jump table, which will have been updated by the linker.
+
+### .t Files and the Main Label
+
+Normally, when you try to link a binary with salink, the linker will complain if none of the .x files that comprise the project contain a Main label.  In Specasm v9 the linker will not generate an error if the project happens to contain a .t file with a Main label.  In this case the main binary will not be created, but the test binary will be.  This is useful when splitting your program up accross multiple directories.  An error will still be generated if none of the .t files in the project contain a Main label.
+
+### Including .t Files
+
+.t files are ignored when including directories with the - or + directives.  They can however be individually included by name.  For example,
+
+```
+- module
+```
+
+will add all the .x files in module to the project but will not add any .t files it may contain.
+
+```
+- module/test.t
+```
+
+on the other hand will add module/test.t to the project.
+
+.t files can themselves include .x files from other directories.  As .t files are not processed during the creation of the main binary, those .x files will not form part of the main binary.  They will however be included in the test binary.
+
+### Map Files and Unit Tests
+
+Map directives can be included in .t files just as they can in .x files.  A map file will be generated for the test binary if the map directive is included in any of the .x or .t files that comprise the project.  The map file generated for the test binary will have a .tmt extension and the file will contain the addresses for all the symbols in the test binary including the addresses of the test functions themselves.  If the map directive is included in a .t file and there are no map directives in any of the .x files that make up the project, a map file will only be generated for the test binary.  In this case no map file will be generated for the main binary, assuming that the main binary be generated.
+
+### Regcheck
+
+Specasm v9 ships with some library code in the /specasm/lib/tst folder designed to support the creation of unit tests.  This code only provides one utility in Specasm v9, the ability to determine whether a function or piece of code only modifies the registers it claims to modify.  One of the trickest aspects of Z80 programming, in the opinion of Specasm's author, is debugging issues caused by functions not correctly delcaring the registers they modify.  A function may be preceeded by a comment saying this function modifies the hl register, whereas in fact it modifies, hl and b.  Code that takes the functions comments in good faith, is unlikely to work if it relies on the preservation of the b register.  These sorts of problems can be tricky to debug, particularly if there's a deep call chain.  Specasm v9 adds some support code designed to be integrated into the unit tests of functions.  The code enables the test writer to declare a list of registers that their function is allowed to modify and then to check, after the function has been called, that no other registers have been changed.  This is all a bit more clunky than it sounds.  The original plans for this feature included some sort of decorator that could be attached to global symbols, but there wasn't enough memory for that sort of finery, so it was abandoned in favour of a cumbersome series of function calls.  As an example, let us consider a simple function that increments a without changing the flags register.
+
+```
+.IncA
+  push af
+  pop bc
+  ld a, c
+  inc b
+  ld c, a
+  push bc
+  pop af
+  ret
+```
+
+Our unit test for this function might confirm that a is indeed incremented and that only the a register has changed.
+
+```
++lib/regcheck
+.Main
+.TestIncA
+  ld hl, regmask
+  call TstParseRegs
+  xor a
+  call TstSaveRegs
+  call IncA
+  push af
+  cp 1
+  jr nz, fail
+  pop af
+  call TstCheckRegs
+  ret
+.fail
+  pop af
+  ld bc, 1
+  ret
+
+.regmask
+"a"
+db 0
+```
+
+Some things to note about the above code.  First we use the '+' directive to add /specasm/lib/regcheck.x to our test build.  Next we define a zero terminated string containing a list of the registers we expect to be modified during our test and we parse that string saving the results to some memory in regcheck.x using the TstParseRegs function.  Then, before we call our test function we call TstSaveRegs which stores a copy of the afdebchlixiya'f'b'c'd'e'h'l' registers in some more memory in regcheck.x.  Now we call the function we want to test after which we check to see whether it did what it was expected to do.  Note we make sure that our verification check here restores all registers.  Finally, we call TstCheckRegs, which compares the current state of the registers to those saved in regcheck.x by our earlier call to TstSaveRegs.  It then checks to see whether any of the altered registers are recorded in the register mask generated by TstParseRegs and stored in regcheck.x.  If no registers are altered or all altered registers are present in the register mask, TstCheckRegs returns with bc = 0.  Otherwise, bc points to a zero terminated string containing the names of the registers that were unexpectedly changed.  The BASIC test harness will detect the error, by virtue of bc being non zero, and will print out the string in red.  When we run our test harness we'd then expect to see
+
+```
+IncA: FAIL
+regs: cb
+```
+
+As IncA modifies b and c which are not listed in the regmask string.  Updating regmask to contain "abc" should make the error go away.  Note that if IncA did not preserve the flags register we'd also need to include 'f' in regmask.
+
+## Project Structure Revisited
+
+Large projects should be divided across multiple directories.  Each well defined piece of functionality should be separated out into a module and placed in its own folder.  This folder should contain the .x files that implement the functionality and the .t files that provide the unit tests.  The Main label should be present in one of the .t module files and not in the one of the .x files.  This guarantees that when salink is run in a module's directory, the linker will only generate a test binary.  There's no point in generating a module binary that wil probably not be used.  The top level folder will the contain the main routine in a .x file and a Main label.  It will use the - directive to include all modules.  When salink is run in the top level folder, only one binary, the program executable will be created.  No test binaries will be created as .t files are not added to a project by directory inclusion.  An example directory hierarchy for an interpreter might look like this.
+
+```
+-- Inter
+    +-- inter.x  (contains Main label)
+    +-- inter    (program binary)
+    +-- lexer
+          +-- lexer.x
+          +-- test.t (contains Main label)
+	  +-- test.tst (test binary)
+	  +-- unit.bas (test harness)
+    +-- parser
+          +-- parser.x
+	  +-- tree.x
+          +-- test.t (contains Main label)
+	  +-- test.tst (test binary)
+	  +-- unit.bas (test harness)
+    +-- codegen
+          +-- codgen.x
+          +-- test.t (contains Main label)
+	  +-- test.tst (test binary)
+	  +-- unit.bas (test harness)
+    +-- vm
+          +-- vm.x
+          +-- test.t (contains Main label)
+	  +-- test.tst (test binary)
+	  +-- unit.bas (test harness)
+```
+
+and the start of the inter.x file would look something like this
+
+```
+-lexer
+-parser
+-codegen
+-vm
+.Main
+...
+```
+
+Now suppose we wanted to update our interpreter so that it ran on both the ZX Spectrum and the ZX81.  We might end up with something like this.
+
+```
+-- Inter
+    +-- zx81
+          +-- inter81.x  (contains Main label and zx81 statement)
+	  +-- porting.x  (zx81 specific code))
+          +-- inter81    (program binary)
+    +-- spectrum
+          +-- inter82.x  (contains Main label)
+	  +-- porting.x  (spectrum specific code)
+          +-- inter82    (program binary)
+    +-- lexer
+    +-- parser
+    +-- codegen
+    +-- vm
+```
+
+The inter81.x file might look something like this
+
+```
+-../lexer
+-../parser
+-../codegen
+-../vm
+zx81
+.Main
+...
+```
+
