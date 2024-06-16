@@ -163,6 +163,8 @@ Labels can be up to 31 characters in length but in practice they need to be shor
 
 The assembler will let us define the label 'this_is_a_very_very_long_label' but the following statement cannot be entered as it is longer than 32 characters.
 
+Labels cannot be register names.  For example, 'a' and 'hl' are invalid label names.
+
 Here are some valid label examples.
 
 ```
