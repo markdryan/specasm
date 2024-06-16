@@ -110,7 +110,7 @@ unsigned int salink_find_local_label_e(const char *str, int len,
 	unsigned int i;
 	salink_label_t *label;
 	const char *lab_str;
-	uint8_t lng = len > SPECASM_MAX_SHORT_LEN ? 1 : 0;
+	uint8_t lng = len >= SPECASM_MAX_SHORT_LEN ? 1 : 0;
 	uint8_t lab_lng;
 
 	for (i = obj->label_start; i < obj->label_end; i++) {
