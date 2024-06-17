@@ -537,8 +537,6 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		break;
 	case 'c':
 		prv_selecting_copy_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
 		break;
 	case 'm':
 		prv_selecting_move();
@@ -557,19 +555,18 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 #ifdef SPECASM_TARGET_NEXT_OPCODES
 	case 'x':
 		(void)prv_selecting_clip_cut_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
 		break;
 	case 'v':
 		prv_selecting_clip_paste_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
 		break;
 #endif
 	default:
 		err_type = SPECASM_ERROR_BAD_COMMAND;
 		return 0;
 	}
+
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
 
 	prv_exit_command_mode(SPECASM_MODE_EDITOR);
 
@@ -621,7 +618,6 @@ static char *prv_complete_filename_e(char *com, uint8_t len)
 
 static uint8_t prv_long_command_e(char *com, uint8_t len)
 {
-	specasm_error_t old_err;
 	uint8_t reset = 0;
 
 	if (!strcmp(com, "sel")) {
@@ -642,31 +638,24 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 		    (err_type != SPECASM_ERROR_OPEN)) {
 			reset = 1;
 			current_fname[0] = 0;
+		} else if (err_type != SPECASM_ERROR_OK) {
+			return 0;
 		} else {
-			old_err = err_type;
-			err_type = SPECASM_ERROR_OK;
-			if (old_err == SPECASM_ERROR_OK)
-				strcpy(current_fname, com);
+			strcpy(current_fname, com);
 			line = row = col = select_end = select_start = 0;
 			specasm_cls(SPECASM_CODE_COLOUR |
 				    SPECASM_LABEL_BACKGROUND);
 			prv_draw_screen(0);
-			if (old_err != SPECASM_ERROR_OK) {
-				specasm_text_set_flash(command_col,
-						       SPECASM_MAX_ROWS, 0);
-				err_type = old_err;
-				prv_draw_error();
-				err_type = SPECASM_ERROR_OK;
-				specasm_sleep_ms(1000);
-			}
 		}
 	} else if (com[0] == 's' && com[1] == ' ') {
 		com = prv_complete_filename_e(com, len);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 		specasm_save_e(com);
-		if (err_type == SPECASM_ERROR_OK)
-			strcpy(current_fname, com);
+		com[len + 1] = 0;
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+		strcpy(current_fname, com);
 	} else if (com[0] == 'g' && com[1] == ' ') {
 		prv_goto(&com[2]);
 	} else if (com[0] == 'f' && com[1] == ' ') {
@@ -710,8 +699,15 @@ static void prv_enter_command(void)
 		specasm_text_set_flash(command_col, SPECASM_MAX_ROWS, 0);
 		prv_draw_error();
 		specasm_sleep_ms(1000);
-		if (i < SPECASM_LINE_MAX_LEN)
-			line_buf[i + 1] = ' ';
+
+		/*
+		 * Some commands append data to the line buffer.  It's
+		 * easiest just to wipe the extra characters here rather
+		 * than undoing the damage after each command.
+		 */
+
+		for (i++; i < SPECASM_LINE_MAX_LEN; i++)
+			line_buf[i] = ' ';
 		(void)specasm_text_print(line_buf, 0, SPECASM_MAX_ROWS,
 					 SPECASM_CODE_COLOUR);
 		specasm_text_set_flash(command_col, SPECASM_MAX_ROWS,
