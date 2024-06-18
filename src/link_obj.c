@@ -32,10 +32,14 @@ static size_t label_count;
 static uint8_t main_index = 0xff;
 static uint16_t start_address = 0x8000;
 
+static const char blank_field[] = "            ";
+
 static void prv_init_out_fnames(salink_obj_t *obj)
 {
+	uint8_t name_len;
 	unsigned int i;
 	char *ptr;
+	char back_ch = 0;
 
 	for (i = 0; i < MAX_FNAME; i++) {
 		if (obj->fname[i] == '.')
@@ -54,8 +58,17 @@ static void prv_init_out_fnames(salink_obj_t *obj)
 	}
 	image_name[i] = 0;
 
+	name_len = strlen(image_name);
+	if (name_len > sizeof(blank_field) - 2) {
+		back_ch = image_name[sizeof(blank_field) - 2];
+		image_name[sizeof(blank_field) - 2] = 0;
+	}
+
 	(void)specasm_text_print(image_name, SALINK_VAL_COL + 1,
 				 SALINK_FIELD_NAME_ROW, SPECASM_CODE_COLOUR);
+
+	if (back_ch)
+		image_name[sizeof(blank_field) - 2] = back_ch;
 
 	strcpy(map_name, image_name);
 	if (link_mode == SALINK_MODE_LINK) {
@@ -1126,6 +1139,8 @@ static void prv_salink_e(void)
 	uint8_t main_loaded;
 	char ibuf[16];
 	specasm_dirent_t dirent;
+	uint8_t name_len;
+	char back_ch = 0;
 
 	specasm_dir_t dir = specasm_opendir_e(".");
 	if (err_type != SPECASM_ERROR_OK) {
@@ -1204,12 +1219,21 @@ static void prv_salink_e(void)
 		return;
 
 	if (map_file) {
-		(void)specasm_text_print(map_name, SALINK_VAL_COL,
+		name_len = strlen(map_name);
+		if (name_len > sizeof(blank_field) - 2) {
+			back_ch = map_name[sizeof(blank_field) - 2];
+			map_name[sizeof(blank_field) - 2] = 0;
+		}
+
+		(void)specasm_text_print(map_name, SALINK_VAL_COL + 1,
 					 SALINK_FIELD_MAP_ROW,
 					 SPECASM_CODE_COLOUR);
+		if (back_ch)
+			map_name[sizeof(blank_field) - 2] = back_ch;
+
 		specasm_write_map_e();
 	} else {
-		(void)specasm_text_print("None", SALINK_VAL_COL,
+		(void)specasm_text_print("None", SALINK_VAL_COL + 1,
 					 SALINK_FIELD_MAP_ROW,
 					 SPECASM_CODE_COLOUR);
 	}
@@ -1246,7 +1270,7 @@ static void prv_setup_screen(void)
 				 SALINK_FIELD_MAP_ROW, SPECASM_STATUS_COLOUR);
 
 	for (i = SALINK_FIELD_NAME_ROW; i <= SALINK_FIELD_MAX_ROW; i += 2) {
-		(void)specasm_text_print("            ", SALINK_VAL_COL, i,
+		(void)specasm_text_print(blank_field, SALINK_VAL_COL, i,
 					 SPECASM_CODE_COLOUR);
 	}
 }
