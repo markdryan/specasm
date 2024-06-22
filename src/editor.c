@@ -575,9 +575,7 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 
 static char *prv_complete_filename_e(char *com, uint8_t len)
 {
-	uint8_t i;
 	char *com2;
-	uint8_t count = 0;
 
 	/*
 	 * Skip paste "l" or "s"
@@ -591,18 +589,34 @@ static char *prv_complete_filename_e(char *com, uint8_t len)
 		len--;
 	}
 
-	for (i = 0; i <= len; i++)
-		if (com[i] == '.')
-			count++;
+	/*
+	 * Do we already have a valid extension?
+	 */
 
-	if ((count == 1) && ((com[len] == 'x') || (com[len] == 't')) &&
-	    (com[len - 1] == '.'))
-		return com;
+	com2 = com + len;
+	if ((len > 2) && (*com2 == 't') || (*com2 == 'x')) {
+		com2--;
+		if (*com2 == '.')
+			return com;
+	}
 
-	if (count != 0) {
+	while ((com2 >= com) && (*com2 != '.') && (*com2 != '/'))
+		com2--;
+
+	/*
+	 * We've got another extension where there shouldn't be one.
+	 */
+
+	if (*com2 == '.') {
 		err_type = SPECASM_ERROR_BAD_FNAME;
 		return NULL;
 	}
+
+	/*
+	 * If we get here the last part of the file name does not contain an
+	 * extension.  There must be an extension so we'll add the default
+	 * one before loading, '.x'.
+	 */
 
 	if (len + 2 >= SPECASM_MAX_SCRATCH) {
 		err_type = SPECASM_ERROR_BAD_FNAME;
