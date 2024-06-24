@@ -131,7 +131,9 @@ static uint8_t prv_parse_arith_gen_e(const char *args, specasm_line_t *line,
 		read = args2 - start;
 		goto end;
 	} else if ((err_type == SPECASM_ERROR_NUM_TOO_BIG) ||
-		   (err_type == SPECASM_ERROR_BAD_EXPRESSION)) {
+		   (err_type == SPECASM_ERROR_BAD_EXPRESSION) ||
+		   (err_type == SPECASM_ERROR_TOO_MANY_SHORT_STRINGS) ||
+		   (err_type == SPECASM_ERROR_TOO_MANY_LONG_STRINGS)) {
 		return 0;
 	}
 
