@@ -1339,6 +1339,7 @@ int salink_link_e(void)
 		queued_files = 0;
 		label_count = 0;
 		start_address = 0x8000;
+		got_org = 0;
 		global_count = 0;
 		obj_file_count = 0;
 		bin_size = 0;
