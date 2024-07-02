@@ -16,9 +16,8 @@
 
 #include <string.h>
 
+#include "scratch.h"
 #include "state.h"
-
-char scratch[SPECASM_MAX_SCRATCH];
 
 uint8_t specasm_state_add_short_e(const char *str)
 {
@@ -72,7 +71,11 @@ static uint8_t prv_is_reg(const char *str)
 
 	/* clang-format off */
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+	const char* regs[] = {
+#else
 	static const char* regs[] = {
+#endif
 		"a", "b", "c", "d", "e", "h", "l", "i", "r",
 		"bc", "de", "hl", "af", "sp", "ix", "iy", "af'"
 	};
@@ -329,7 +332,11 @@ void specasm_set_comment(unsigned int l, const char *str)
 	}
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_append_empty_line_banked_e(void)
+#else
 void specasm_append_empty_line_e(void)
+#endif
 {
 	specasm_line_t *line;
 
@@ -342,7 +349,11 @@ void specasm_append_empty_line_e(void)
 	line->type = SPECASM_LINE_TYPE_EMPTY;
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_delete_lines_banked(unsigned int start, unsigned int end)
+#else
 void specasm_delete_lines(unsigned int start, unsigned int end)
+#endif
 {
 	if ((start >= end) || (end > state.lines.num_lines))
 		return;
@@ -352,7 +363,11 @@ void specasm_delete_lines(unsigned int start, unsigned int end)
 	state.lines.num_lines -= (end - start);
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_insert_lines_banked_e(unsigned int l, unsigned int count)
+#else
 void specasm_insert_lines_e(unsigned int l, unsigned int count)
+#endif
 {
 	specasm_line_t *line;
 	unsigned int i;
@@ -384,7 +399,11 @@ void specasm_insert_lines_e(unsigned int l, unsigned int count)
 	state.lines.num_lines += count;
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_parse_line_banked_e(unsigned int l, const char *str)
+#else
 void specasm_parse_line_e(unsigned int l, const char *str)
+#endif
 {
 	uint8_t i;
 	specasm_line_t *line = &state.lines.lines[l];

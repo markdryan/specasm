@@ -53,7 +53,11 @@ static char *prv_format_equ_e(char *buf, const specasm_line_t *line)
 				   op_code[3], ' ');
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_format_line_banked_e(char *buf, unsigned int l)
+#else
 void specasm_format_line_e(char *buf, unsigned int l)
+#endif
 {
 	const char *ptr;
 	const char *end_ptr;

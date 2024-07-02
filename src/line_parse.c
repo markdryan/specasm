@@ -1578,13 +1578,8 @@ static const specasm_opcode_t opcode_table[] = {
 static const uint8_t opcode_table_size =
     sizeof(opcode_table) / sizeof(specasm_opcode_t);
 
-#ifdef SPECASM_NEXT_BANKED
-uint8_t specasm_parse_exp_banked_e(const char *str, uint8_t *label1,
-				   uint8_t *label1_type)
-#else
 uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 			    uint8_t *label1_type)
-#endif
 {
 	uint8_t j;
 	uint8_t len;
@@ -1638,7 +1633,7 @@ uint8_t specasm_parse_exp_e(const char *str, uint8_t *label1,
 	return end + 1;
 }
 
-#ifdef SPECASM_NEXT_BANKED
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 uint8_t specasm_parse_mnemomic_banked_e(const char *str, uint8_t i,
 					specasm_line_t *line)
 #else

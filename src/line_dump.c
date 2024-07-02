@@ -174,11 +174,11 @@ static char *prv_dump_exp_e(const specasm_line_t *line, char *buf, uint8_t id)
 
 static char *prv_dump_cc(const uint8_t cc, char *buf)
 {
-#ifndef SPECASM_NEXT_BANKED
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+	const char *codes[] = {"nz", "z", "nc", "c", "po", "pe", "p", "m"};
+#else
 	static const char *codes[] = {"nz", "z",  "nc", "c",
 				      "po", "pe", "p",  "m"};
-#else
-	const char *codes[] = {"nz", "z", "nc", "c", "po", "pe", "p", "m"};
 #endif
 	const char *code = codes[cc & 7];
 	while (*code)
@@ -392,10 +392,10 @@ static uint8_t prv_dump_djnz_e(const specasm_line_t *line, char *buf)
 
 static uint8_t prv_dump_ex_e(const specasm_line_t *line, char *buf)
 {
-#ifndef SPECASM_NEXT_BANKED
-	static const char *com[] = {
-#else
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 	const char *com[] = {
+#else
+	static const char *com[] = {
 #endif
 		"\x08"
 		"af, af'",
@@ -489,10 +489,10 @@ static uint8_t prv_dump_inc_e(const specasm_line_t *line, char *buf)
 static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 {
 	const char *start = buf;
-#ifndef SPECASM_NEXT_BANKED
-	static const char *com[] = {
-#else
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 	const char *com[] = {
+#else
+	static const char *com[] = {
 #endif
 		"\xe9"
 		"(hl)",
@@ -565,10 +565,10 @@ static char *prv_dump_label_ind_e(const specasm_line_t *line, char *buf,
 static char *prv_dump_label_ind_reg_e(const specasm_line_t *line, char *buf,
 				      uint8_t opcode0)
 {
-#ifndef SPECASM_NEXT_BANKED
-	static const char *com[] = {
-#else
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 	const char *com[] = {
+#else
+	static const char *com[] = {
 #endif
 		"\x3a"
 		"a",
@@ -702,10 +702,10 @@ static char *prv_dump_lda_ind(uint8_t opcode0, char *buf)
 
 static char *prv_dump_ld_hl_ind_e(uint8_t opcode0, char *buf)
 {
-#ifndef SPECASM_NEXT_BANKED
-	static const char *com[] = {
-#else
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 	const char *com[] = {
+#else
+	static const char *com[] = {
 #endif
 		"\x46"
 		"b",
@@ -805,10 +805,10 @@ end:
 
 static uint8_t prv_dump_ld_sp(uint8_t opcode0, char *buf)
 {
-#ifndef SPECASM_NEXT_BANKED
-	static const char *com[] = {
-#else
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 	const char *com[] = {
+#else
+	static const char *com[] = {
 #endif
 		"\xf9"
 		"sp, hl",
@@ -1392,7 +1392,7 @@ static specasm_line_opcode_dump_t dump_opcodes[] = {
 
 /* clang-format on */
 
-#ifdef SPECASM_NEXT_BANKED
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 void specasm_init_dump_table_banked(void)
 #else
 void specasm_init_dump_table(void)
@@ -1414,7 +1414,7 @@ void specasm_init_dump_table(void)
 	}
 }
 
-#ifdef SPECASM_NEXT_BANKED
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 uint8_t specasm_dump_opcode_banked_e(const specasm_line_t *line, char *buf)
 #else
 uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf)

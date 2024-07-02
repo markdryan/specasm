@@ -10,6 +10,7 @@ COMMON =\
 SRCS =\
 	clipboard.c \
 	editor.c \
+	editor_buffers.c \
 	editor_tests.c \
 	editor_test_content.c \
 	ld_parse.c \
@@ -20,6 +21,7 @@ SRCS =\
 	peer_unit.c \
 	peer_posix_screen.c \
 	peer_text_screen.c \
+	scratch.c \
 	state_dump.c \
 	state_parse.c \
 	test_content.c \
@@ -36,6 +38,7 @@ SAIMPORT =\
 	line_parse.c \
 	line_parse_common.c \
 	saimport.c \
+	scratch.c \
 	state_parse.c 
 
 SAEXPORT =\

@@ -15,12 +15,14 @@
 */
 
 #include "editor.h"
+#include "editor_buffers.h"
 #include "line.h"
 #include "line_parse_common.h"
 #include "peer.h"
+#include "scratch.h"
 #include "state.h"
 
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 #include "clipboard.h"
 #endif
 
@@ -33,11 +35,6 @@
 #define EDITOR_STATIC static
 #endif
 
-#define MAX_FNAME 28
-
-unsigned int line;
-uint8_t col;
-uint8_t quitting;
 EDITOR_STATIC uint8_t row;
 EDITOR_STATIC uint8_t command_col;
 EDITOR_STATIC uint8_t ovr;
@@ -45,8 +42,6 @@ EDITOR_STATIC uint8_t editing;
 EDITOR_STATIC uint8_t mode;
 EDITOR_STATIC unsigned int select_start;
 EDITOR_STATIC unsigned int select_end;
-static char current_fname[MAX_FNAME + 1];
-char line_buf[SPECASM_MAX_SCRATCH];
 
 static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 {
@@ -125,7 +120,7 @@ static void prv_selecting_move(void);
 static void prv_goto(const char *num);
 static void prv_find(const char *needle);
 
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 static void prv_selecting_clip_copy_e(void);
 static uint8_t prv_selecting_clip_cut_e(void);
 static void prv_selecting_clip_paste_e(void);
@@ -154,7 +149,11 @@ static void prv_draw_error(void)
 	err_type = SPECASM_ERROR_OK;
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_draw_status_banked(void)
+#else
 void specasm_draw_status(void)
+#endif
 {
 	memset(scratch, ' ', 32);
 	scratch[32] = 0;
@@ -552,7 +551,7 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		}
 		specasm_save_e(current_fname);
 		break;
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 	case 'x':
 		(void)prv_selecting_clip_cut_e();
 		break;
@@ -674,7 +673,7 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 		prv_goto(&com[2]);
 	} else if (com[0] == 'f' && com[1] == ' ') {
 		prv_find(&com[2]);
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 	} else if ((com[0] == 'c') && (com[1] == 'c')) {
 		prv_selecting_clip_copy_e();
 		if (err_type != SPECASM_ERROR_OK)
@@ -1243,7 +1242,7 @@ static uint16_t prv_make_space_e(uint16_t line_count)
 	return size;
 }
 
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 
 static void prv_clip_copy_e(const char *command)
 {
@@ -1462,7 +1461,7 @@ static void prv_selecting_keypress(uint8_t k)
 
 	switch (k) {
 	case SPECASM_KEY_DELETE:
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 	case 'x':
 		if (k == SPECASM_KEY_DELETE) {
 			update = prv_selecting_delete();
@@ -1538,7 +1537,11 @@ static void prv_command_keypress(uint8_t k)
 	}
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_handle_key_press_banked(uint8_t k)
+#else
 void specasm_handle_key_press(uint8_t k)
+#endif
 {
 	if (mode == SPECASM_MODE_SELECT)
 		prv_selecting_keypress(k);
@@ -1549,7 +1552,11 @@ void specasm_handle_key_press(uint8_t k)
 }
 
 #ifdef SPECASM_TARGET_NEXT
+#if defined(SPECASM_NEXT_BANKED)
+void specasm_editor_preload_banked(const char *fname)
+#else
 void specasm_editor_preload(const char *fname)
+#endif
 {
 	char *completed_fname;
 	size_t len = strlen(fname);
@@ -1589,7 +1596,11 @@ on_error:
 }
 #endif
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_editor_reset_banked(void)
+#else
 void specasm_editor_reset(void)
+#endif
 {
 	specasm_line_t *l;
 

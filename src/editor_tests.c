@@ -22,6 +22,7 @@
 #endif
 
 #include "editor.h"
+#include "editor_buffers.h"
 #include "editor_test_content.h"
 #include "state.h"
 

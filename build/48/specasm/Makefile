@@ -18,10 +18,12 @@ SPECASM = \
 	line_parse_common.o \
 	error.o \
 	specasm_mainloop.o \
+	scratch.o \
 	state_base.o \
 	state_dump.o \
 	state_parse.o \
 	editor.o \
+	editor_buffers.o \
 	util_print_zx.o \
 	peer_zx.o
 
@@ -55,6 +57,7 @@ SAIMPORT = \
 	line_common.o \
 	line_parse.o \
 	line_parse_common.o \
+	scratch.o \
 	state_parse.o \
 	peer_file_zx.o \
 	peer_zx.o \

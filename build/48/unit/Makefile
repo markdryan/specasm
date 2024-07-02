@@ -17,6 +17,7 @@ UNITZX = \
 	line_dump_common.o \
 	line_parse.o \
 	line_parse_common.o \
+	scratch.o \
 	state_dump.o \
 	state_parse.o \
 	peer_file_zx.o \
@@ -35,6 +36,6 @@ clean:
 tests:
 	- rm -rf tests
 	mkdir tests
-	cd ../../.. && make -f Makefile test_content_zx
+	cd ../../.. && make -f Makefile clean && make -f Makefile test_content_zx
 	../../../test_content_zx tests
 	cp unitzx.tap tests

@@ -1,0 +1,65 @@
+VPATH=../../../src
+
+.PHONY: all
+all: specasm.tap
+
+CC=zcc
+CFLAGS=+zx -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DSPECASM_TARGET_128
+CZFLAGS=-Cz="--clean --fullsize --main-fence 0xBFFE"
+
+line_parse_banked.o: line_parse.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_0 --constsegBANK_0 --datasegBANK_0 -c $<
+
+ld_parse_banked.o: ld_parse.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_0 --constsegBANK_0 --datasegBANK_0 -c $<
+
+state_parse_banked.o: state_parse.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_0 --constsegBANK_0 --datasegBANK_0 -c $<
+
+line_parse_common_banked.o: line_parse_common.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_0 --constsegBANK_0 --datasegBANK_0 -c $<
+
+line_dump_common_banked.o: line_dump_common.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_4 --constsegBANK_4 --datasegBANK_4 -c $<
+
+line_dump_banked.o: line_dump.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_4 --constsegBANK_4 --datasegBANK_4 -c $<
+
+state_dump_banked.o: state_dump.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_4 --constsegBANK_4 --datasegBANK_4 -c $<
+
+editor_banked.o: editor.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_6 --constsegBANK_6 --datasegBANK_6 -c $<
+
+clipboard_banked.o: clipboard.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_1 --constsegBANK_1 --datasegBANK_1 -c $<
+
+include Make.include
+
+SPECASM = \
+	scratch.o \
+	specasm.o \
+	specasm_trampolines_128.c \
+	line_common.o \
+	error.o \
+	specasm_mainloop.o \
+	state_base.o \
+	editor_buffers.o \
+	util_print_zx.o \
+	peer_zx.o
+
+specasm_bare.tap: $(SPECASM) line_parse_banked.o state_parse_banked.o line_parse_common_banked.o line_dump_common_banked.o line_dump_banked.o state_dump_banked.o ld_parse_banked.o clipboard_banked.o editor_banked.o
+	$(CC) $(CFLAGS) -zorg=32768 -m -startup=31 -o $@ $^ -pragma-include:zpragma.inc $(CZFLAGS)
+	z88dk-appmake +zx -b specasm_bare_CODE.bin -o specasm_bare.tap --org 32768 --noloader
+
+specasm.tap: specasm_bare.tap
+	z88dk-appmake +zx -b specasm_bare_BANK_0.bin -o bank0.tap --org 49152 --noloader
+	z88dk-appmake +zx -b specasm_bare_BANK_1.bin -o bank1.tap --org 49152 --noloader
+	z88dk-appmake +zx -b specasm_bare_BANK_4.bin -o bank4.tap --org 49152 --noloader
+	z88dk-appmake +zx -b specasm_bare_BANK_6.bin -o bank6.tap --org 49152 --noloader
+	z88dk-appmake +zx -b ../../../bas/48/calib -o calib.tap --org 32000 --noloader
+	cat ../../../bas/128/SPECLD.TAP calib.tap bank0.tap bank4.tap bank6.tap bank1.tap specasm_bare.tap > specasm.tap
+
+clean:
+	- rm -rf specasm *.zip -rf unitzx
+	- rm *.X *.o *.bin *.tap

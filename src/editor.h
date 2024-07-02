@@ -40,10 +40,6 @@
 #define SPECASM_MODE_SELECT 1
 #define SPECASM_MODE_COMMAND 2
 
-extern unsigned int line;
-extern uint8_t col;
-extern uint8_t quitting;
-
 #ifdef SPECASM_TARGET_NEXT
 /*
  * Used to preload a .x file to edit on startup.  Assumes that the screen has

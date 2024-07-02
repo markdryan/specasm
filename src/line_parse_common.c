@@ -169,7 +169,11 @@ char *specasm_get_uword_imm_e(const char *str, uint16_t *val, uint8_t *flags)
 	return end_ptr;
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+char *specasm_get_long_imm_banked_e(const char *str, long *val, uint8_t *flags)
+#else
 char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags)
+#endif
 {
 	int base = 10;
 	char *end_ptr;
