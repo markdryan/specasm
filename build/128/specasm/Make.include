@@ -48,7 +48,7 @@ samake.o: samake.c peer.h error.h peer_zx.h line.h \
   salink.h peer_file.h state_base.h strings.h
 queued_files.o: queued_files.c peer.h error.h peer_zx.h \
   line.h queued_files.h salink.h peer_file.h
-clipboard_banked.o: clipboard.c
+clipboard.o: clipboard.c clipboard.h line.h error.h
 specasm_trampolines_128.o: specasm_trampolines_128.c line.h error.h
 editor_buffers.o: editor_buffers.c editor_buffers.h line.h \
   error.h

@@ -28,8 +28,8 @@ line_dump_common_banked.o: line_dump_common.c
 state_dump_banked.o: state_dump.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_44_H --constsegBANK_44_H --datasegBANK_44_H -c $<
 
-clipboard_banked.o: clipboard.c
-	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_46 --constsegBANK_46 --datasegBANK_46 -c $<
+clipboard.o: clipboard.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ -c $<
 
 peer_unit.o: peer_unit.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ -c $<
@@ -46,11 +46,11 @@ UNITNEXT = \
 	unittests_zx.o \
 	util_print_next.o \
 	peer_unit.o \
+	clipboard.o \
 	line_parse_banked.o \
 	ld_parse_banked.o \
 	line_parse_common_banked.o \
 	state_parse_banked.o \
-	clipboard_banked.o \
 	line_dump_banked.o \
 	line_dump_common_banked.o \
 	state_dump_banked.o

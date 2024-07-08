@@ -32,9 +32,6 @@ state_dump_banked.o: state_dump.c
 editor_banked.o: editor.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45 --constsegBANK_45 --datasegBANK_45 -c $<
 
-clipboard_banked.o: clipboard.c
-	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_46 --constsegBANK_46 --datasegBANK_46 -c $<
-
 expression_banked.o: expression.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_43_H --constsegBANK_43_H --datasegBANK_43_H -c $<
 
@@ -46,6 +43,9 @@ queued_files_banked.o: queued_files.c
 
 link_obj_banked.o: link_obj.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45_H --constsegBANK_45_H --datasegBANK_45_H -c $<
+
+clipboard.o: clipboard.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ -c $<
 
 include Make.include
 
@@ -60,11 +60,11 @@ SPECASM = \
 	util_print_next.o \
 	peer_next.o \
 	line_common.o \
+	clipboard.o \
 	line_parse_banked.o \
 	ld_parse_banked.o \
 	line_parse_common_banked.o \
 	state_parse_banked.o \
-	clipboard_banked.o \
 	line_dump_banked.o \
 	line_dump_common_banked.o \
 	state_dump_banked.o \

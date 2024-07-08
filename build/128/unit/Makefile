@@ -28,8 +28,8 @@ line_dump_banked.o: line_dump.c
 state_dump_banked.o: state_dump.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_4 --constsegBANK_4 --datasegBANK_4 -c $<
 
-clipboard_banked.o: clipboard.c
-	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_1 --constsegBANK_1 --datasegBANK_1 -c $<
+clipboard.o: clipboard.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ -c $<
 
 peer_unit.o: peer_unit.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ -c $<
@@ -46,11 +46,11 @@ UNIT128 = \
 	unittests_zx.o \
 	util_print_zx.o \
 	peer_unit.o \
+	clipboard.o \
 	line_parse_banked.o \
 	ld_parse_banked.o \
 	line_parse_common_banked.o \
 	state_parse_banked.o \
-	clipboard_banked.o \
 	line_dump_banked.o \
 	line_dump_common_banked.o \
 	state_dump_banked.o
@@ -61,9 +61,8 @@ unit128_bare.tap: $(UNIT128)
 
 unit128.tap: unit128_bare.tap
 	z88dk-appmake +zx -b unit128_bare_BANK_0.bin -o bank0.tap --org 49152 --noloader
-	z88dk-appmake +zx -b unit128_bare_BANK_1.bin -o bank1.tap --org 49152 --noloader
 	z88dk-appmake +zx -b unit128_bare_BANK_4.bin -o bank4.tap --org 49152 --noloader
-	cat ../../../bas/128/u128ld.tap bank0.tap bank1.tap bank4.tap unit128_bare.tap > unit128.tap
+	cat ../../../bas/128/u128ld.tap bank0.tap bank4.tap unit128_bare.tap > unit128.tap
 
 
 clean:

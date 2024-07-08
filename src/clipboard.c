@@ -14,7 +14,7 @@
  * limitations under the License.
 */
 
-#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+#if defined(SPECASM_TARGET_NEXT) || defined(SPECASM_TARGET_128)
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,13 +22,13 @@
 #include "clipboard.h"
 #include "line.h"
 
-#ifdef SPECASM_TARGET_NEXT_OPCODES
-#define SPECASM_CLIP_MAX_SIZE (15 * 512)
-#else
-#define SPECASM_CLIP_MAX_SIZE (17 * 512)
-#endif
+#define SPECASM_CLIP_MAX_SIZE (16 * 1024)
 
+#if defined(SPECASM_TARGET_NEXT) || defined(SPECASM_TARGET_128)
+static uint8_t *clip_buffer = (uint8_t*) 0xc000;
+#else
 static uint8_t clip_buffer[SPECASM_CLIP_MAX_SIZE];
+#endif
 
 static uint16_t clip_end_ptr;
 static uint16_t clip_lines;
