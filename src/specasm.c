@@ -29,16 +29,27 @@
 
 #define SPECASM_KEY_CALIBRATION 13
 
+#ifdef SPECASM_TARGET_128
+void specasm_trampolines_init(void);
+#endif
+
 int main()
 {
 	uint8_t k;
 	uint8_t new_key;
 	uint16_t i;
+#ifdef SPECASM_TARGET_128
 	uint8_t *ptr = (uint8_t *)23328;
+#else
+	uint8_t *ptr = (uint8_t *)0xbffe;
+#endif
 	const uint16_t delay = ((200 / 11) * 11) / 10;
 
-	specasm_init_dump_table();
+#ifdef SPECASM_TARGET_128
+	specasm_trampolines_init();
+#endif
 
+	specasm_init_dump_table();
 	zx_border(SPECASM_LABEL_BORDER);
 	zx_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
 	err_type = SPECASM_ERROR_OK;

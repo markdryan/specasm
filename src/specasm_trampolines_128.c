@@ -19,13 +19,20 @@
 
 #include "line.h"
 
+static uint8_t banks[] = {
+	0 + 16,
+	1 + 16,
+	4 + 16,
+	6 + 16
+};
+
 #define SPECASM_128_PARSE_BANK 0
 #define SPECASM_128_CLIP_BANK 1
-#define SPECASM_128_DUMP_BANK 4
-#define SPECASM_128_EDITOR_BANK 6
+#define SPECASM_128_DUMP_BANK 2
+#define SPECASM_128_EDITOR_BANK 3
 
 #ifdef UNITTESTS
-#define SPECASM_128_UNIT_BANK 6
+#define SPECASM_128_UNIT_BANK 3
 #endif
 
 
@@ -55,6 +62,18 @@ void specasm_peer_write_state_banked_e(const char *fname, uint16_t checksum);
 uint16_t specasm_peer_read_state_banked_e(const char *fname);
 #endif
 
+void specasm_trampolines_init(void)
+{
+	uint8_t* spectrum_type = (uint8_t*) 2899;
+
+	if (*spectrum_type != 126)
+		return;
+
+	banks[SPECASM_128_PARSE_BANK] = 0 + 16;
+	banks[SPECASM_128_CLIP_BANK] = 4 + 16;
+	banks[SPECASM_128_DUMP_BANK] = 1 + 16;
+	banks[SPECASM_128_EDITOR_BANK] = 3 + 16;
+}
 
 /* clang-format off */
 
@@ -70,13 +89,13 @@ __asm
 	push bc
 	ld a, (0x5b5c)
 	push af
-	and 0xf8
+	and 0xe0
 	or l
 	ld bc, 0x7ffd
 	ld (0x5b5c), a
 	out (c), a
 	pop af
-	and 7
+	and 0x1f
 	ld l, a
 	pop bc
 	pop af
@@ -92,7 +111,7 @@ char *specasm_get_long_imm_e(const char *str, long *val, uint8_t *flags)
 	uint8_t bank;
 	char *e;
 
-	bank = prv_map_bank(SPECASM_128_PARSE_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_PARSE_BANK]);
 	e = specasm_get_long_imm_banked_e(str, val, flags);
 	(void) prv_map_bank(bank);
 
@@ -103,7 +122,7 @@ void specasm_append_empty_line_e(void)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_PARSE_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_PARSE_BANK]);
 	specasm_append_empty_line_banked_e();
 	(void) prv_map_bank(bank);
 }
@@ -112,7 +131,7 @@ void specasm_delete_lines(unsigned int start, unsigned int end)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_PARSE_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_PARSE_BANK]);
 	specasm_delete_lines_banked(start, end);
 	(void) prv_map_bank(bank);
 }
@@ -121,7 +140,7 @@ void specasm_insert_lines_e(unsigned int l, unsigned int count)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_PARSE_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_PARSE_BANK]);
 	specasm_insert_lines_banked_e(l, count);
 	(void) prv_map_bank(bank);
 }
@@ -130,7 +149,7 @@ void specasm_parse_line_e(unsigned int l, const char *str)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_PARSE_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_PARSE_BANK]);
 	specasm_parse_line_banked_e(l, str);
 	(void) prv_map_bank(bank);
 }
@@ -142,7 +161,7 @@ uint8_t specasm_parse_mnemomic_e(const char *str, uint8_t i,
 	uint8_t e;
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_PARSE_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_PARSE_BANK]);
 	e = specasm_parse_mnemomic_banked_e(str, i, line);
 	(void) prv_map_bank(bank);
 
@@ -154,7 +173,7 @@ void specasm_init_dump_table(void)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_DUMP_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_DUMP_BANK]);
 	specasm_init_dump_table_banked();
 	(void) prv_map_bank(bank);
 }
@@ -165,7 +184,7 @@ uint8_t specasm_dump_opcode_e(const specasm_line_t *line, char *buf)
 	uint8_t e;
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_DUMP_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_DUMP_BANK]);
 	e = specasm_dump_opcode_banked_e(line, buf);
 	(void) prv_map_bank(bank);
 
@@ -177,7 +196,7 @@ void specasm_format_line_e(char *buf, unsigned int l)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_DUMP_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_DUMP_BANK]);
 	specasm_format_line_banked_e(buf, l);
 	(void) prv_map_bank(bank);
 }
@@ -186,7 +205,7 @@ void specasm_clip_reset(void)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_CLIP_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_CLIP_BANK]);
 	specasm_clip_reset_banked();
 	(void) prv_map_bank(bank);
 }
@@ -195,7 +214,7 @@ void specasm_clip_add_line_e(const char *line)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_CLIP_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_CLIP_BANK]);
 	specasm_clip_add_line_banked_e(line);
 	(void) prv_map_bank(bank);
 }
@@ -205,7 +224,7 @@ uint16_t specasm_clip_get_line(uint16_t ptr, char *buffer)
 	uint16_t e;
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_CLIP_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_CLIP_BANK]);
 	e = specasm_clip_get_line_banked(ptr, buffer);
 	(void) prv_map_bank(bank);
 
@@ -217,7 +236,7 @@ uint16_t specasm_clip_get_line_count(void)
 	uint16_t e;
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_CLIP_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_CLIP_BANK]);
 	e = specasm_clip_get_line_count_banked();
 	(void) prv_map_bank(bank);
 
@@ -229,7 +248,7 @@ void specasm_draw_status(void)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_EDITOR_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_EDITOR_BANK]);
 	specasm_draw_status_banked();
 	(void) prv_map_bank(bank);
 }
@@ -238,7 +257,7 @@ void specasm_handle_key_press(uint8_t k)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_EDITOR_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_EDITOR_BANK]);
 	specasm_handle_key_press_banked(k);
 	(void) prv_map_bank(bank);
 }
@@ -247,7 +266,7 @@ void specasm_editor_reset(void)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_EDITOR_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_EDITOR_BANK]);
 	specasm_editor_reset_banked();
 	(void) prv_map_bank(bank);
 }
@@ -256,7 +275,7 @@ void specasm_peer_write_state_e(const char *fname, uint16_t checksum)
 {
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_UNIT_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_UNIT_BANK]);
 	specasm_peer_write_state_banked_e(fname, checksum);
 	(void) prv_map_bank(bank);
 }
@@ -266,7 +285,7 @@ uint16_t specasm_peer_read_state_e(const char *fname)
 	uint16_t e;
 	uint8_t bank;
 
-	bank = prv_map_bank(SPECASM_128_UNIT_BANK);
+	bank = prv_map_bank(banks[SPECASM_128_UNIT_BANK]);
 	e = specasm_peer_read_state_banked_e(fname);
 	(void) prv_map_bank(bank);
 

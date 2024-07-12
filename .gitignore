@@ -35,6 +35,7 @@ build/48/specasm/release/
 build/next/specasm/release/
 build/48/unit/tests/
 build/128/unit/tests/
+build/128/specasm/sald128
 build/next/unit/tests/
 examples/hello/hello
 examples/hello/hello.x
