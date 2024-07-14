@@ -591,7 +591,7 @@ static char *prv_complete_filename_e(char *com, uint8_t len)
 	 */
 
 	com2 = com + len;
-	if ((len > 2) && (*com2 == 't') || (*com2 == 'x')) {
+	if ((len > 2) && ((*com2 == 't') || (*com2 == 'x'))) {
 		com2--;
 		if (*com2 == '.')
 			return com;
