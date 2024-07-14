@@ -63,6 +63,24 @@ void specasm_selecting_clip_copy_e(void)
 	prv_clip_copy_e("cc");
 }
 
+void specasm_garbage_collect_e(void)
+{
+	uint8_t old_ovr = ovr;
+
+	select_start = 0;
+	select_end = state.lines.num_lines;
+	prv_clip_copy_e("gc");
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	specasm_editor_reset_no_cls();
+	ovr = 1;
+
+	specasm_selecting_clip_paste_e();
+	specasm_clip_reset();
+	ovr = old_ovr;
+}
+
 uint8_t specasm_selecting_clip_cut_e(void)
 {
 	if (select_start >= select_end)

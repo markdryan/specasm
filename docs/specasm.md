@@ -78,6 +78,13 @@ The Next and the Spectrum 128 versions of Specasm provide two additional command
 | t       | Displays the number of M cycles and T states the selected code will take to execute.  Specasm prints two numbers for each value, a minimum and a maximum.  The value is likely to be inaccurate for instructions whose running times depend on runtime state, e.g., LDIR.  |
 | fl       | Displays the flags modified by a selected block of code. |
 
+Finally, the Next and the Spectrum 128 versions of Specasm have a garbage collection command to reclaim unused strings.  See the *Limitations* section below for more details.
+
+| Command | Description |
+|---------|-------------|
+| gc      | Reclaim unused strings.  This command uses the clipboard and resets the contents of the clipboard.  |
+
+
 #### Selecting Mode
 
 The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  On the Next, the selected lines may be cut to the clipboard by typing 'x'.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c','b', 'x' and 'cc' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.
@@ -534,7 +541,7 @@ Each .x file is limited to a total of 32 long strings and 128 short strings.  Lo
 call hello ;hello
 ```
 
-There's a known issue with the way in which Specasm treats strings.  Strings are never garbage collected.  This means that if you create a new label called say '.lbel', press ENTER, and then subsequently update the label's name to say '.label', the original label '.lbel' is not garbage collected.  It will continue to occupy a slot in the string table of the .x file you're editing.  If this file is small or doesn't change much this is unlikely to ever cause any issues.  If however, you're working on a large file with lots of strings and which, over time, receives lots of edits, Specasm may eventually report an error, e.g., "Too many long strings", even though your .x file uses less than the maximum 32 number of long strings.  I've decided not to fix this for now as doing so would use up some valuable bytes, that I'd prefer to use for something else, and would also slow down the editor.  If you do encounter this problem it can be solved, by using .saexport to export your .x file to a text file, a .s file, and then .saimport to re-assemble it, e.g.,
+There's a known issue with the way in which Specasm treats strings.  Strings are never garbage collected.  This means that if you create a new label called say '.lbel', press ENTER, and then subsequently update the label's name to say '.label', the original label '.lbel' is not garbage collected.  It will continue to occupy a slot in the string table of the .x file you're editing.  If this file is small or doesn't change much this is unlikely to ever cause any issues.  If however, you're working on a large file with lots of strings and which, over time, receives lots of edits, Specasm may eventually report an error, e.g., "Too many long strings", even though your .x file uses less than the maximum 32 number of long strings.  The 128 and Next versions of Specasm have a command, **gc**, which can be used to reclaim unused strings.  This command relies on the clipboard which isn't supported on the 48kb version, so a more cumbersome method must be used to solve this problem on the 48kb Spectrum, namely by using .saexport to export your .x file to a text file, a .s file, and then .saimport to re-assemble it, e.g.,
 
 ```
 CLEAR 32767
@@ -544,8 +551,6 @@ CLEAR 32767
 
 > [!TIP]
 > Note the CLEAR statement is not needed on the ZX Spectrum Next as .saexport and .saimport are implemented as dotn files.
-
-A future 128kb version of Specasm will incorporate the import and export commands directly in the editor and will also contain a 'gc' command to allow the garbage collection to be performed in one simple step.
 
 ### Source files
 

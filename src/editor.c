@@ -36,9 +36,9 @@
 #endif
 
 EDITOR_STATIC uint8_t command_col;
-EDITOR_STATIC uint8_t ovr;
 EDITOR_STATIC uint8_t editing;
 EDITOR_STATIC uint8_t mode;
+uint8_t ovr;
 uint8_t row;
 unsigned int select_start;
 unsigned int select_end;
@@ -669,14 +669,18 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 		strcpy(current_fname, com);
 	} else if (com[0] == 'g' && com[1] == ' ') {
 		prv_goto(&com[2]);
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+	} else if ((com[0] == 'g') && (com[1] == 'c') && !com[2]) {
+		specasm_garbage_collect_e();
+#endif
 	} else if (com[0] == 'f' && com[1] == ' ') {
 		prv_find(&com[2]);
 #if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
-	} else if ((com[0] == 'c') && (com[1] == 'c')) {
+	} else if ((com[0] == 'c') && (com[1] == 'c') && !com[2]) {
 		specasm_selecting_clip_copy_e();
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
-	} else if ((com[0] == 'f') && (com[1] == 'l')) {
+	} else if ((com[0] == 'f') && (com[1] == 'l') && !com[2]) {
 		specasm_selecting_flags();
 #endif
 	} else {
@@ -1500,20 +1504,25 @@ on_error:
 }
 #endif
 
-#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
-void specasm_editor_reset_banked(void)
-#else
-void specasm_editor_reset(void)
-#endif
+void specasm_editor_reset_no_cls(void)
 {
 	specasm_line_t *l;
 
 	ovr = line = row = col = select_end = select_start = editing = 0;
 	mode = quitting = command_col = 0;
 	specasm_state_reset();
-	specasm_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
 	l = &state.lines.lines[0];
 	state.lines.num_lines = 1;
 	l->type = SPECASM_LINE_TYPE_EMPTY;
 	err_type = SPECASM_ERROR_OK;
+}
+
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_editor_reset_banked(void)
+#else
+void specasm_editor_reset(void)
+#endif
+{
+	specasm_editor_reset_no_cls();
+	specasm_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
 }

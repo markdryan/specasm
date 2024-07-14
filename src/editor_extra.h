@@ -22,5 +22,6 @@ uint8_t specasm_selecting_clip_cut_e(void);
 void specasm_selecting_clip_paste_e(void);
 void specasm_selecting_cycles(void);
 void specasm_selecting_flags(void);
+void specasm_garbage_collect_e(void);
 
 #endif
