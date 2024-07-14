@@ -31,6 +31,12 @@ state_dump_banked.o: state_dump.c
 editor_banked.o: editor.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_6 --constsegBANK_6 --datasegBANK_6 -c $<
 
+editor_extra_banked.o: editor_extra.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_6 --constsegBANK_6 --datasegBANK_6 -c $<
+
+analysis_banked.o: analysis.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_6 --constsegBANK_6 --datasegBANK_6 -c $<
+
 clipboard.o: clipboard.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ -c $<
 
@@ -47,9 +53,19 @@ SPECASM = \
 	state_base.o \
 	editor_buffers.o \
 	util_print_zx.o \
-	peer_zx.o
+	peer_zx.o \
+	line_parse_banked.o \
+	state_parse_banked.o \
+	line_parse_common_banked.o \
+	line_dump_common_banked.o \
+	line_dump_banked.o \
+	state_dump_banked.o \
+	ld_parse_banked.o \
+	editor_banked.o \
+	editor_extra_banked.o \
+	analysis_banked.o
 
-specasm_bare.tap: $(SPECASM) line_parse_banked.o state_parse_banked.o line_parse_common_banked.o line_dump_common_banked.o line_dump_banked.o state_dump_banked.o ld_parse_banked.o editor_banked.o
+specasm_bare.tap: $(SPECASM)
 	$(CC) $(CFLAGS) -zorg=32768 -m -startup=31 -o $@ $^ -pragma-include:zpragma.inc $(CZFLAGS)
 	z88dk-appmake +zx -b specasm_bare_CODE.bin -o specasm_bare.tap --org 32768 --noloader
 

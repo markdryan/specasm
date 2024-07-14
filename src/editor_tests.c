@@ -26,13 +26,10 @@
 #include "editor_test_content.h"
 #include "state.h"
 
-extern uint8_t row;
 extern uint8_t command_col;
 extern uint8_t ovr;
 extern uint8_t editing;
 extern uint8_t mode;
-extern unsigned int select_start;
-extern unsigned int select_end;
 
 static int prv_check_state(const editor_test_t *t)
 {

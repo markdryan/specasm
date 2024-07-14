@@ -8,9 +8,11 @@ COMMON =\
 	line_common.c
 
 SRCS =\
+	analysis.c \
 	clipboard.c \
 	editor.c \
 	editor_buffers.c \
+	editor_extra.c \
 	editor_tests.c \
 	editor_test_content.c \
 	ld_parse.c \

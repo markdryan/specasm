@@ -14,7 +14,7 @@
  * limitations under the License.
 */
 
-#if defined(SPECASM_TARGET_NEXT) || defined(SPECASM_TARGET_128)
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 
 #include <stdlib.h>
 #include <string.h>

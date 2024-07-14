@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "analysis.h"
 #include "editor_tests.h"
 #include "error.h"
 #include "line.h"
@@ -215,6 +216,63 @@ static int prv_test_format()
 	return 0;
 }
 
+static int prv_test_anal()
+{
+	size_t i;
+	specasm_cycles_t cycles;
+	uint8_t flags;;
+
+	err_type = SPECASM_ERROR_OK;
+
+	for (i = 0; i < anal_tests_count; i++) {
+		char buf[SPECASM_LINE_MAX_LEN + 1];
+		const anal_test_t *t = &anal_tests[i];
+		const specasm_line_t *line = &state.lines.lines[0];
+
+		printf("anal test: %s : ", t->source);
+		memset(buf, ' ', sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = 0;
+		if (strlen(t->source) > SPECASM_LINE_MAX_LEN) {
+			printf("[ASSERT] test string too long\n");
+			return 1;
+		}
+		memcpy(buf, t->source, strlen(t->source));
+
+		specasm_parse_line_e(0, buf);
+		if (err_type != SPECASM_ERROR_OK) {
+			printf("[FAIL]\n\t>%s\n", error_msgs[err_type]);
+			return 1;
+		}
+
+		specasm_get_cycles(line, &cycles);
+		flags = specasm_get_flags(line);
+
+		if ((t->m[0] != cycles.m[0]) || (t->m[1] != cycles.m[1])) {
+			printf("[FAIL]\n\t>machine cycles do not"
+			       "match (%d %d) (%d %d)\n", t->m[0], t->m[1],
+			       cycles.m[0], cycles.m[1]);
+			return 1;
+		}
+
+		if ((t->t[0] != cycles.t[0]) || (t->t[1] != cycles.t[1])) {
+			printf("[FAIL]\n\t>t states do not"
+			       "match (%d %d) (%d %d)\n", t->t[0], t->t[1],
+			       cycles.t[0], cycles.t[1]);
+			return 1;
+		}
+
+		if (t->flags != flags) {
+			printf("[FAIL]\n\t>t flags do not match (%x) (%x)\n",
+			       t->flags, flags);
+			return 1;
+		}
+
+		printf("[OK]\n");
+	}
+
+	return 0;
+}
+
 static int prv_test_bad_opcodes()
 {
 	size_t i;
@@ -279,6 +337,10 @@ int main(int argc, char *argv[])
 
 	printf("\n");
 	if (prv_test_format())
+		return 1;
+
+	printf("\n");
+	if (prv_test_anal())
 		return 1;
 
 	printf("\n");

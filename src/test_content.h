@@ -43,6 +43,14 @@ struct bad_test_t_ {
 };
 typedef struct bad_test_t_ bad_test_t;
 
+struct anal_test_t_ {
+	const char *source;
+	uint8_t m[2];
+	uint8_t t[2];
+	uint8_t flags;
+};
+typedef struct anal_test_t_ anal_test_t;
+
 extern const test_t opcode_tests[];
 extern const size_t opcode_tests_count;
 
@@ -51,5 +59,8 @@ extern const size_t format_tests_count;
 
 extern const bad_test_t bad_tests[];
 extern const size_t bad_tests_count;
+
+extern const anal_test_t anal_tests[];
+extern const size_t anal_tests_count;
 
 #endif

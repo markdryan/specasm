@@ -29,6 +29,10 @@ map.o: map.c map.h peer.h error.h peer_zx.h \
 editor_banked.o: editor.c editor.h peer.h error.h \
   peer_zx.h line.h state.h state_base.h strings.h \
   util_print_zx.h
+editor_extra_banked.o: editor_extra.c analysis.h clipboard.h \
+  editor.h peer.h error.h \
+  peer_zx.h line.h state.h state_base.h strings.h \
+  util_print_zx.h
 saimport.o: saimport.c peer.h error.h peer_zx.h \
   line.h peer_file.h state.h state_base.h strings.h \
   util_print_zx.h
@@ -53,6 +57,7 @@ specasm_trampolines_128.o: specasm_trampolines_128.c line.h error.h
 editor_buffers.o: editor_buffers.c editor_buffers.h line.h \
   error.h
 scratch.o: scratch.c scratch.h line.h error.h
+analysis_banked.o: analysis.c state.h state_base.h line_common.h line.h error.h strings.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

@@ -71,6 +71,13 @@ The Next version of Specasm uses one of the Next's 8Kb memory banks to implement
 | cc       | Replaces the contents of the clipboard with the selected code |
 | v        | Pastes the contents of the clipboard into the selected code at the cursor position |
 
+The Next and the Spectrum 128 versions of Specasm provide two additional commands that can be used to help with code analysis.  Both commands operate on a previously selected block of code.
+
+| Command | Description |
+|---------|-------------|
+| t       | Displays the number of M cycles and T states the selected code will take to execute.  Specasm prints two numbers for each value, a minimum and a maximum.  The value is likely to be inaccurate for instructions whose running times depend on runtime state, e.g., LDIR.  |
+| fl       | Displays the flags modified by a selected block of code. |
+
 #### Selecting Mode
 
 The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  On the Next, the selected lines may be cut to the clipboard by typing 'x'.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c','b', 'x' and 'cc' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.

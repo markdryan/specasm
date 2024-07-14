@@ -30,7 +30,13 @@ state_dump_banked.o: state_dump.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_44_H --constsegBANK_44_H --datasegBANK_44_H -c $<
 
 editor_banked.o: editor.c
-	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45 --constsegBANK_45 --datasegBANK_45 -c $<
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45_L --constsegBANK_45_L --datasegBANK_45_L -c $<
+
+editor_extra_banked.o: editor_extra.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45_H --constsegBANK_45_H --datasegBANK_45_H -c $<
+
+analysis_banked.o: analysis.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45_H --constsegBANK_45_H --datasegBANK_45_H -c $<
 
 expression_banked.o: expression.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_43_H --constsegBANK_43_H --datasegBANK_43_H -c $<
@@ -68,7 +74,9 @@ SPECASM = \
 	line_dump_banked.o \
 	line_dump_common_banked.o \
 	state_dump_banked.o \
-	editor_banked.o
+	editor_banked.o \
+	editor_extra_banked.o \
+	analysis_banked.o
 
 SALINK = \
 	salink.o \
