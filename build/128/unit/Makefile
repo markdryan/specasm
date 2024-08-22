@@ -34,6 +34,9 @@ clipboard.o: clipboard.c
 peer_unit.o: peer_unit.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ -c $<
 
+util_print_acc_zx.o: util_print_acc_zx.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 include Make.include
 
 UNIT128 = \
@@ -45,6 +48,7 @@ UNIT128 = \
 	peer_file_zx.o \
 	unittests_zx.o \
 	util_print_zx.o \
+	util_print_acc_zx.o \
 	peer_unit.o \
 	clipboard.o \
 	line_parse_banked.o \

@@ -6,6 +6,9 @@ all: specasm.tap salink.tap SAEXPORT SAIMPORT SAMAKE
 CC=zcc
 CFLAGS=+zx -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy
 
+util_print_acc_zx.o: util_print_acc_zx.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 include Make.include
 
 SPECASM = \
@@ -25,6 +28,7 @@ SPECASM = \
 	editor.o \
 	editor_buffers.o \
 	util_print_zx.o \
+	util_print_acc_zx.o \
 	peer_zx.o
 
 SALINK = \
@@ -37,6 +41,7 @@ SALINK = \
 	peer_file_zx.o \
 	queued_files.o \
 	util_print_zx.o \
+	util_print_acc_zx.o \
 	peer_zx.o
 
 SAEXPORT = \

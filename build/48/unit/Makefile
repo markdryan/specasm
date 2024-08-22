@@ -6,6 +6,9 @@ all: unitzx.tap
 CC=zcc
 CFLAGS=+zx -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DUNITTESTS
 
+util_print_acc_zx.o: util_print_acc_zx.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 include Make.include
 
 UNITZX = \
@@ -22,6 +25,7 @@ UNITZX = \
 	state_parse.o \
 	peer_file_zx.o \
 	util_print_zx.o \
+	util_print_acc_zx.o \
 	peer_unit.o \
 	unittests_zx.o
 

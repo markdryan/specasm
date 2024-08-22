@@ -40,6 +40,9 @@ analysis_banked.o: analysis.c
 clipboard.o: clipboard.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ -c $<
 
+util_print_acc_zx.o: util_print_acc_zx.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 include Make.include
 
 SPECASM = \
@@ -53,6 +56,7 @@ SPECASM = \
 	state_base.o \
 	editor_buffers.o \
 	util_print_zx.o \
+	util_print_acc_zx.o \
 	peer_zx.o \
 	line_parse_banked.o \
 	state_parse_banked.o \
