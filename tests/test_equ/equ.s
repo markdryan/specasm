@@ -1,8 +1,8 @@
 org $8000
 .Main
 .Size equ 16
-.Element_count equ 11
-.Test equ (Size * Element_count)
+.Element_cnt equ 11
+.Test equ (Size * Element_cnt)
 .unary equ -10
 .complement equ ~16
 .divide equ 10 /3
@@ -17,7 +17,7 @@ add a, =divide
 and =unary+9
 .later
 ld hl, =later-Main+1
-ld hl, =later-Main+Element_count
+ld hl, =later-Main+Element_cnt
 bit =7, l
 res =6, l
 set =5, l
@@ -27,8 +27,8 @@ cp =Size-1
 im =0
 im =1
 im =Size>>3
-in a, (=$1+Element_count)
-out (=$1+Element_count), a
+in a, (=$1+Element_cnt)
+out (=$1+Element_cnt), a
 or =complement
 rst =Size
 ld a, =Size

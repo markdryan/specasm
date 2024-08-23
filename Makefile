@@ -39,6 +39,9 @@ SAIMPORT =\
 	ld_parse.c \
 	line_parse.c \
 	line_parse_common.c \
+	line_dump.c \
+	line_dump_common.c \
+	state_dump.c \
 	saimport.c \
 	scratch.c \
 	state_parse.c 

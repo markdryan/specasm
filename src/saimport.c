@@ -99,7 +99,7 @@ static int prv_parse_file(const char *fname)
 	uint8_t eof;
 	uint16_t linelen;
 	specasm_handle_t f;
-	char buf[SPECASM_LINE_MAX_LEN + 1];
+	char buf[SPECASM_MAX_SCRATCH];
 	unsigned int cur_line = 0;
 	int retval = 1;
 
@@ -134,6 +134,14 @@ static int prv_parse_file(const char *fname)
 					cur_line, specasm_error_msg(err_type));
 				goto cleanup;
 			}
+#if !defined(SPECTRUM) && !defined(__ZXNEXT)
+			specasm_format_line_e(buf, cur_line);
+			if (err_type != SPECASM_ERROR_OK) {
+				fprintf(stderr, "format error at line %u: %s\n",
+					cur_line, specasm_error_msg(err_type));
+				goto cleanup;
+			}
+#endif
 		}
 		cur_line = state.lines.num_lines;
 	} while (!eof);
@@ -184,6 +192,10 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: saimport .s\n");
 		return 1;
 	}
+
+#if !defined(SPECTRUM) && !defined(__ZXNEXT)
+	specasm_init_dump_table();
+#endif
 
 	for (int i = 1; i < argc; i++) {
 		if (prv_check_file(argv[i], &ext))

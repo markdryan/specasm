@@ -2428,7 +2428,9 @@ const format_test_t format_tests[] = {
 	{".longlabel1234 equ longlabel1234", ".longlabel1234 equ longlabel1234",
 	 SPECASM_LINE_TYPE_EQU},
 	{".longlabel1234 equ shortlal + 1 ", ".longlabel1234 equ shortlal + 1",
-	 SPECASM_LINE_TYPE_EQU}
+	 SPECASM_LINE_TYPE_EQU},
+	{"ld a,=aaaaaaaaaaaaaaaaaaa;foo", "  ld a, =aaaaaaaaaaaaaaaaaaa;foo",
+	 SPECASM_LINE_TYPE_LD + SPECASM_LINE_TYPE_EXP_ADJ}
 };
 
 const size_t format_tests_count = sizeof(format_tests) / sizeof(format_test_t);
@@ -3059,6 +3061,11 @@ const bad_test_t bad_tests[] = {
 	{".label equ", SPECASM_ERROR_BAD_EXPRESSION},
 	{"equ 10", SPECASM_ERROR_BAD_MNENOMIC},
 	{".label equd", SPECASM_ERROR_LONG_LABEL_EX},
+
+	/*
+	 * Test the case where the formatted line is > 32 chars
+	 */
+	{"ld a,=aaaaaaaaaaaaaaaaaaaaaaaaaa", SPECASM_ERROR_NO_ROOM_IN_LINE}
 };
 
 const size_t bad_tests_count = sizeof(bad_tests) / sizeof(bad_test_t);

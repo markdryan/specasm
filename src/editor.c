@@ -52,6 +52,7 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 	uint8_t data_col;
 	uint8_t equ_col;
 	uint8_t type;
+	uint8_t i;
 	const specasm_line_t *line;
 
 	if (inv) {
@@ -98,19 +99,20 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 		col = data_col;
 	} else {
 		col = code_col;
-		if (line->comment != SPECASM_NULL)
-			scratch[SPECASM_LINE_MAX_OPCODE + 1] = 0;
 	}
 	if ((line->comment == SPECASM_NULL) || (type == SPECASM_LINE_TYPE_LC) ||
 	    (type == SPECASM_LINE_TYPE_SC)) {
 		(void)specasm_text_print(scratch, 0, r, col);
 		return;
 	}
-	scratch[SPECASM_LINE_MAX_OPCODE + 1] = 0;
+	for (i = SPECASM_LINE_MAX_OPCODE + 1; (i < SPECASM_LINE_MAX_LEN) &&
+		     (scratch[i] != ';'); i++);
+	scratch[i] = 0;
 	(void)specasm_text_print(scratch, 0, r, col);
-	scratch[SPECASM_LINE_MAX_OPCODE + 1] = ';';
-	(void)specasm_text_print(&scratch[SPECASM_LINE_MAX_OPCODE + 1],
-				 SPECASM_LINE_MAX_OPCODE + 1, r, com_col);
+	if (i < SPECASM_LINE_MAX_LEN - 2) {
+		scratch[i] = ';';
+		(void)specasm_text_print(&scratch[i], i, r, com_col);
+	}
 }
 
 static void prv_selecting_count(void);
@@ -231,7 +233,10 @@ static uint8_t prv_update_line()
 		return 0;
 	}
 	specasm_dump_line_e(line, row, 0);
-	err_type = SPECASM_ERROR_OK;
+	if (err_type != SPECASM_ERROR_OK) {
+		prv_draw_error();
+		return 0;
+	}
 
 	editing = 0;
 	return 1;
@@ -1013,6 +1018,8 @@ static uint8_t prv_insert_space(void)
 
 static uint8_t prv_process_char(uint8_t k)
 {
+	uint8_t retval;
+
 	if (!ovr) {
 		if (!prv_insert_space())
 			return 0;
@@ -1027,10 +1034,15 @@ static uint8_t prv_process_char(uint8_t k)
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		return 1;
 	} else if (!ovr) {
-		return prv_enter_insert();
+		retval = prv_enter_insert();
 	} else {
-		return prv_enter();
+		retval = prv_enter();
 	}
+
+	if (retval == 0)
+		specasm_text_set_flash(col, row, SPECASM_FLASH);
+
+	return retval;
 }
 
 static void prv_keypress(uint8_t k)
