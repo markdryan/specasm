@@ -33,6 +33,10 @@ typedef const char *(*specasm_parse_label_fn_t)(const char *args,
 						specasm_line_t *line,
 						uint8_t *label);
 
+static uint8_t prv_parse_absolute_jmp_e(const char *args, specasm_line_t *line,
+					const specasm_opcode_t *op_entry,
+					uint8_t max_cc);
+
 struct specasm_opcode_t_ {
 	specasm_parse_fn_t fn;
 	uint8_t op_code[2];
@@ -818,18 +822,14 @@ static uint8_t prv_parse_in_e(const char *args, specasm_line_t *line,
 static uint8_t prv_parse_jp_e(const char *args, specasm_line_t *line,
 			      const specasm_opcode_t *op_entry)
 {
-	uint8_t cc;
-	const char *args2;
 	uint8_t read;
 	uint8_t off;
 	uint8_t reg;
-	uint8_t condition;
 	uint8_t sz;
 	uint8_t flags;
 	uint8_t op1;
 	uint8_t op2 = 0;
 	uint8_t *op_code;
-	const char *start = args;
 
 	read = specasm_parse_reg_e(args, &reg, &off, &flags);
 	if ((err_type == SPECASM_ERROR_OK) && (reg != SPECASM_BYTE_REG_C)) {
@@ -865,47 +865,8 @@ static uint8_t prv_parse_jp_e(const char *args, specasm_line_t *line,
 	}
 
 	err_type = SPECASM_ERROR_OK;
-	args2 = prv_parse_cc_e(args, &cc);
-	condition = err_type == SPECASM_ERROR_OK && cc != SPECASM_CC_NONE;
-	if (condition) {
-		if (*args2 != ' ' && *args2 != ',') {
-			err_type = SPECASM_ERROR_CONDITION_CODE;
-			return 0;
-		}
-		while (*args2 == ' ')
-			++args2;
-		if (*args2 != ',') {
-			err_type = SPECASM_ERROR_COMMA_EXPECTED;
-			return 0;
-		}
-		args = args2 + 1;
-	} else {
-		err_type = SPECASM_ERROR_OK;
-	}
-
-	while (*args == ' ')
-		++args;
-
-	args = specasm_parse_label_or_exp_e(args, line, &line->data.op_code[1]);
-	if (err_type != SPECASM_ERROR_OK)
-		return 0;
-
-	if (condition) {
-		line->data.op_code[0] = 0xC2 | (cc << 3);
-	} else {
-		args2 = args;
-		while (*args2 == ' ')
-			++args2;
-		if (*args2 == ',') {
-			err_type = SPECASM_ERROR_CONDITION_CODE;
-			return 0;
-		}
-		line->data.op_code[0] = 0xC3;
-	}
-
 	specasm_line_set_size(line, 2);
-
-	return args - start;
+	return prv_parse_absolute_jmp_e(args, line, op_entry, SPECASM_CC_M);
 }
 
 static uint8_t prv_parse_relative_jmp_e(const char *args, specasm_line_t *line,
@@ -1498,7 +1459,7 @@ static const specasm_opcode_t opcode_table[] = {
 	{ NULL, {0xED, 0xBA} },                       // SPECASM_LINE_TYPE_INDR
 	{ NULL, {0xED, 0xA2} },                       // SPECASM_LINE_TYPE_INI
 	{ NULL, {0xED, 0xB2} },                       // SPECASM_LINE_TYPE_INIR
-	{ prv_parse_jp_e, },                          // SPECASM_LINE_TYPE_JP
+	{ prv_parse_jp_e, {0xC2, 0xC3} },             // SPECASM_LINE_TYPE_JP
 	{ prv_parse_jr_e, {0x20, 0x18} },             // SPECASM_LINE_TYPE_JR
 	{ prv_parse_ld_e, },                          // SPECASM_LINE_TYPE_LD
 	{ NULL, {0xED, 0xA8} },                       // SPECASM_LINE_TYPE_LDD

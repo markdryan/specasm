@@ -648,6 +648,14 @@ const test_t opcode_tests[] = {
 	{"jp  nc,=label", "jp nc, =label", 3, {0xd2, 0x00, 0x00}},
 	{"jp  nc, =  label", "jp nc, =label", 3, {0xd2, 0x00, 0x00}},
 
+	{"jp 100", "jp 100", 3, {0xC3, 0x64, 0x00}},
+	{"jp    100", "jp 100", 3, {0xC3, 0x64, 0x00}},
+	{"jp $dead", "jp $DEAD", 3, {0xC3, 0xAD, 0xDE}},
+	{"jp    $dead", "jp $DEAD", 3, {0xC3, 0xAD, 0xDE}},
+	{"jp c, 4096", "jp c, 4096", 3, {0xDA, 0x00, 0x10} },
+	{"jp   c  , 4096", "jp c, 4096", 3, {0xDA, 0x00, 0x10} },
+	{"jp 60000", "jp 60000", 3, {0xC3, 0x60, 0xEA} },
+
 	{"jr c, label", "jr c, label", 2, {0x38, 0x00}},
 	{"jr   c,  label", "jr c, label", 2, {0x38, 0x00}},
 	{"jr label", "jr label", 2, {0x18, 0x00}},
@@ -2644,8 +2652,6 @@ const bad_test_t bad_tests[] = {
 	{"jp nz", SPECASM_ERROR_COMMA_EXPECTED },
 	{"jp nz ", SPECASM_ERROR_COMMA_EXPECTED },
 	{"jp nz,", SPECASM_ERROR_BAD_LABEL },
-	{"jp 100", SPECASM_ERROR_BAD_LABEL },
-	{"jp c, 100", SPECASM_ERROR_BAD_LABEL },
 	{"jp c, bc", SPECASM_ERROR_BAD_LABEL },
 	{"jp bc", SPECASM_ERROR_BAD_REG },
 	{"jp (bc)", SPECASM_ERROR_BAD_REG },

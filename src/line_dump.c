@@ -488,7 +488,6 @@ static uint8_t prv_dump_inc_e(const specasm_line_t *line, char *buf)
 
 static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 {
-	const char *start = buf;
 #if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 	const char *com[] = {
 #else
@@ -517,22 +516,10 @@ static uint8_t prv_dump_jp_e(const specasm_line_t *line, char *buf)
 		return prv_dump_fixed_e(op_code[0], buf, com,
 					sizeof(com) / sizeof(uint8_t *));
 	default:
-		if (op_code[0] != 0xC3) {
-			buf = prv_dump_cc(op_code[0] >> 3, buf);
-			buf[0] = ',';
-			buf[1] = ' ';
-			buf += 2;
-		} else if ((op_code[0] & 0xC2) != 0xC2) {
-			err_type = SPECASM_ERROR_BAD_REG;
-			return 0;
-		}
-
-		buf = prv_dump_jump_label_e(line, buf, op_code[1]);
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
+		break;
 	}
 
-	return buf - start;
+	return prv_dump_jr_call_e(line, buf, 0xc3, 7);
 }
 
 static uint8_t prv_dump_jr_e(const specasm_line_t *line, char *buf)
