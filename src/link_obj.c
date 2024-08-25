@@ -26,7 +26,6 @@
 #include "state_base.h"
 
 static uint8_t got_org;
-static uint8_t got_zx81;
 static uint8_t map_file;
 static size_t label_count;
 static uint8_t main_index = 0xff;
@@ -243,37 +242,12 @@ static uint16_t prv_write_bin_file_e(specasm_handle_t out_f,
 	return file_size;
 }
 
-static const char zx81_conseq_ops[] = {'"', '#', '$', ':', '?', '(',
-				       ')', '>', '<', '=', '+', '-',
-				       '*', '/', ';', ',', '.'};
-
-static char prv_to_zx81_char(char ch)
-{
-	uint8_t i;
-
-	if (ch == ' ')
-		return 0;
-
-	for (i = 0; i < sizeof(zx81_conseq_ops); i++)
-		if (ch == zx81_conseq_ops[i])
-			return 11 + i;
-
-	if ((ch >= '0') && (ch <= '9'))
-		return ch - 20;
-
-	ch |= 32;
-	if ((ch >= 'a') && (ch <= 'z'))
-		return ch - 59;
-
-	return 15; // '?'
-}
-
 static void prv_to_zx81_str(char *str, uint8_t len)
 {
 	uint8_t i;
 
 	for (i = 0; i < len; i++)
-		str[i] = prv_to_zx81_char(str[i]);
+		str[i] = salink_to_zx81_char(str[i]);
 }
 
 static const uint8_t zx81_two_byte_opcodes[] = {
@@ -323,7 +297,7 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 			    SPECASM_FLAGS_NUM_CHAR)
 				return;
 			ch = (char)line->data.op_code[3];
-			line->data.op_code[3] = (uint8_t)prv_to_zx81_char(ch);
+			line->data.op_code[3] = (uint8_t)salink_to_zx81_char(ch);
 		} else if (oc == 0x21) {
 			if (specasm_line_get_addr_type(line))
 				return;
@@ -331,7 +305,7 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 			    SPECASM_FLAGS_NUM_CHAR)
 				return;
 			ch = (char)line->data.op_code[2];
-			line->data.op_code[2] = (uint8_t)prv_to_zx81_char(ch);
+			line->data.op_code[2] = (uint8_t)salink_to_zx81_char(ch);
 		}
 		return;
 	}
@@ -389,7 +363,7 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 	for (i = 0; i < size; i++)
 		if (line->data.op_code[0] == ptr[i]) {
 			ch = (char)line->data.op_code[1];
-			line->data.op_code[1] = (uint8_t)prv_to_zx81_char(ch);
+			line->data.op_code[1] = (uint8_t)salink_to_zx81_char(ch);
 			return;
 		}
 }
@@ -419,7 +393,7 @@ static void prv_zx81_patch_db_dw(specasm_line_t *line)
 
 	for (i = 0; i < specasm_line_get_size(line) + 1; i += step) {
 		ch = (char)line->data.op_code[i];
-		line->data.op_code[i] = (uint8_t)prv_to_zx81_char(ch);
+		line->data.op_code[i] = (uint8_t)salink_to_zx81_char(ch);
 	}
 }
 
@@ -449,7 +423,7 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 		byt = line->data.op_code[0];
 		if (got_zx81 &&
 		    (specasm_line_get_format(line) == SPECASM_FLAGS_NUM_CHAR))
-			byt = prv_to_zx81_char(byt);
+			byt = salink_to_zx81_char(byt);
 		to_set = size < MAX_BUFFER_SIZE ? size : MAX_BUFFER_SIZE;
 		memset(&buf.file_buf[0], byt, to_set);
 		do {

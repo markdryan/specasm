@@ -112,6 +112,7 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 	char *end_ptr;
 	uint8_t i;
 	char c;
+	char ch;
 	long lval;
 	int len;
 
@@ -127,6 +128,20 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 	if (c == 0) {
 		tok->type = SALINK_TOKEN_EOF;
 		return NULL;
+	}
+
+	if (c == '\'') {
+		buf++;
+		ch = *buf;
+		if (!ch || ch == '\'' || buf[1] != '\'') {
+			err_type = SALINK_ERROR_BAD_EXPRESSION;
+			return NULL;
+		}
+		tok->type = SALINK_TOKEN_NUM;
+		if (got_zx81)
+			ch = salink_to_zx81_char(ch);
+		tok->data.num = (int16_t)ch;
+		return buf + 2;
 	}
 
 	if ((c == '$') || ((c >= '0') && (c <= '9'))) {

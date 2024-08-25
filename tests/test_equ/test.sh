@@ -378,6 +378,14 @@ if [ "$byte" != "10" ]; then
     exit 1
 fi
 
+# db ='A'+1
+byte=`od -An -j144 -tx1 -N1 equ | xargs`
+if [ "$byte" != "42" ]; then
+    echo "db ='A'+1"
+    exit 1
+fi
+
+
 rm equ
 rm *.x
 

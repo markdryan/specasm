@@ -41,7 +41,7 @@ static char fsize_file_address[6] = "60000";
 static uint16_t org_address = 0x8000;
 static uint16_t basic_prog_len;
 static uint8_t got_org;
-static uint8_t got_zx81;
+uint8_t got_zx81;
 
 #define SAMAKE_ERROR_NO_MAIN SPECASM_MAX_ERRORS
 #define SAMAKE_ERROR_USAGE (SPECASM_MAX_ERRORS + 1)

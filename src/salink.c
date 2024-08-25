@@ -46,6 +46,7 @@ unsigned int global_count;
 uint8_t queued_files;
 uint8_t link_mode;
 uint8_t got_test;
+uint8_t got_zx81;
 
 const char *empty_str = "";
 const char *specasm_str = "/specasm/";
@@ -154,6 +155,31 @@ unsigned int salink_find_global_label_e(const char *str, salink_obj_t *obj)
 	prv_unknown_error_label_e(obj, str);
 
 	return 0;
+}
+
+static const char zx81_conseq_ops[] = {'"', '#', '$', ':', '?', '(',
+				       ')', '>', '<', '=', '+', '-',
+				       '*', '/', ';', ',', '.'};
+
+char salink_to_zx81_char(char ch)
+{
+	uint8_t i;
+
+	if (ch == ' ')
+		return 0;
+
+	for (i = 0; i < sizeof(zx81_conseq_ops); i++)
+		if (ch == zx81_conseq_ops[i])
+			return 11 + i;
+
+	if ((ch >= '0') && (ch <= '9'))
+		return ch - 20;
+
+	ch |= 32;
+	if ((ch >= 'a') && (ch <= 'z'))
+		return ch - 59;
+
+	return 15; // '?'
 }
 
 int main(int argc, char *argv[])

@@ -70,3 +70,5 @@ dw =256
 ld (ix+32), =divide
 ld (iy+32), =Size
 
+db ='A'+1
+

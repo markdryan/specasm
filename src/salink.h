@@ -115,6 +115,7 @@ unsigned int salink_find_local_label_e(const char *str, int len,
 				       salink_obj_t *obj);
 unsigned int salink_find_global_label_e(const char *str, salink_obj_t *obj);
 const char *salink_get_label_str_e(uint8_t id, uint8_t label_type);
+char salink_to_zx81_char(char ch);
 
 extern unsigned int buf_count;
 
@@ -152,5 +153,6 @@ extern const char *empty_str;
 extern const char *specasm_str;
 extern uint8_t link_mode;
 extern uint8_t got_test;
+extern uint8_t got_zx81;
 
 #endif
