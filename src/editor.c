@@ -1146,6 +1146,90 @@ static uint8_t prv_select_key_down(void)
 	return 1;
 }
 
+static uint8_t prv_select_block_down(uint8_t adj)
+{
+	unsigned int last_line;
+	unsigned int new_line;
+	unsigned int page_start;
+
+	last_line = state.lines.num_lines - 1;
+	if (line == last_line)
+		return prv_select_key_down();
+
+	new_line = line + adj;
+	if (new_line > last_line)
+		new_line = last_line;
+
+	if (line == select_start) {
+		select_start = new_line;
+		if (select_start > select_end) {
+			select_start = select_end;
+			select_end = new_line;
+		}
+	} else {
+		select_end = new_line;
+	}
+
+	page_start = (line - row);
+	if (page_start + SPECASM_MAX_ROWS > new_line) {
+
+		/*
+		 * The end of the selection is already on the screen, so just
+		 * adjust the row
+		 */
+
+		row = new_line - page_start;
+	} else {
+		row = (SPECASM_MAX_ROWS - 1);
+		page_start = (new_line - SPECASM_MAX_ROWS) + 1;
+		new_line = page_start + row;
+	}
+
+	col = 0;
+	line = new_line;
+	specasm_draw_screen(page_start);
+	specasm_text_set_flash(col, row, SPECASM_FLASH);
+
+	return 1;
+}
+
+
+static uint8_t prv_select_block_up(uint8_t adj)
+{
+	unsigned int new_line;
+	unsigned int page_start;
+
+	if (line == 0)
+		return 0;
+
+	if (adj > line)
+		new_line = 0;
+	else
+		new_line = line - adj;
+
+	if (line == select_end) {
+		if ((select_end - select_start) < adj)
+			select_end = select_start;
+		select_start = new_line;
+	} else {
+		select_start = new_line;
+	}
+
+	if (line < SPECASM_MAX_ROWS) {
+		page_start = 0;
+		row = new_line;
+	} else {
+		page_start = new_line;
+		row = 0;
+	}
+	col = 0;
+	line = new_line;
+	specasm_draw_screen(page_start);
+	specasm_text_set_flash(col, row, SPECASM_FLASH);
+
+	return 1;
+}
+
 static uint8_t prv_select_key_up(void)
 {
 	uint8_t update;
@@ -1422,6 +1506,18 @@ static void prv_selecting_keypress(uint8_t k)
 		break;
 	case SPECASM_KEY_UP:
 		update = prv_select_key_up();
+		break;
+	case SPECASM_KEY_PAGE_DOWN:
+		update = prv_select_block_down(SPECASM_MAX_ROWS);
+		break;
+	case SPECASM_KEY_BUF_END:
+		update = prv_select_block_down(state.lines.num_lines - line);
+		break;
+	case SPECASM_KEY_PAGE_UP:
+		update = prv_select_block_up(SPECASM_MAX_ROWS);
+		break;
+	case SPECASM_KEY_BUF_START:
+		update = prv_select_block_up(line);
 		break;
 	default:
 		break;
