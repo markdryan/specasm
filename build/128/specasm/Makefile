@@ -86,3 +86,17 @@ specasm.tap: specasm_bare.tap sald128/sald128
 clean:
 	- rm -rf specasm *.zip -rf unitzx sald128
 	- rm *.X *.o *.bin *.tap
+
+.PHONY: release
+release:
+	- rm -rf release
+	mkdir -p release/specasm
+	cp specasm.tap release/specasm
+	cp ../../48/specasm/salink.tap release/specasm
+	cp ../../../COPYING release/specasm
+	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
+	cp ../../48/specasm/SAMAKE ../../48/specasm/SAIMPORT ../../48/specasm/SAEXPORT ../../48/specasm/*.X release/specasm
+	cp ../../../bas/48/INSTALL.BAS release/specasm
+	cp ../../../bas/48/REMOVE.BAS release/specasm
+	../../../buildlib.sh `realpath release` 128 specasm
+	cd release && zip -r specasm128.zip specasm
