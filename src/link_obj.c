@@ -1271,9 +1271,9 @@ static void prv_setup_screen(void)
 	specasm_border(SPECASM_SALINK_BORDER);
 
 #ifdef SPECASM_TARGET_NEXT_OPCODES
-	(void)specasm_text_print("           SALINK " SPECASM_VERSION_STR
+	(void)specasm_text_print("          SALINK " SPECASM_VERSION_STR
 #else
-	(void)specasm_text_print("            SALINK " SPECASM_VERSION_STR
+	(void)specasm_text_print("           SALINK " SPECASM_VERSION_STR
 #endif
 				 "           ",
 				 0, 0, SPECASM_HEADER_COLOUR);
