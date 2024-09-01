@@ -7,7 +7,7 @@ Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrum and t
 [Download](https://github.com/markdryan/specasm/releases) the latest release of Specasm appropriate for your Spectrum and unzip the contents of the file into the root directory of your SD card.
 
 > [!TIP]
-> There are two different Zip files available, specasm48.zip for the 48kb and 128kb Spectrum, and specasmnext.zip for the ZX Spectrum Next.  You must download the appropriate version for your machine.
+> There are three different Zip files available, specasm48.zip for the 48kb, specasm128.zip for the 128kb Spectrum, and specasmnext.zip for the ZX Spectrum Next.  You must download the appropriate version for your machine.
 
 You should now have a folder in your root directory called SPECASM.  It should look something like this if you downloaded specasm48.zip
 
@@ -63,7 +63,7 @@ You should see something like this appear on your screen
 
 ![Hello Specasm](/docs/salink.png)
 
-Once the linker has finished a binary file will be created.  The name of the file will be reported by the linker.  In the example above its 'hello'.  We need to create a BASIC loader before we can execute the program.  To do this type
+Once the linker has finished a binary file will be created.  The name of the file will be reported by the linker.  In the example above it's 'hello'.  We need to create a BASIC loader before we can execute the program.  To do this type
 
 ```
 CLEAR 32767
@@ -91,7 +91,7 @@ You should see.
 
 ## Building Specasm
 
-### For the 48kb and 128kb Spectrums
+### For the 48kb Spectrum
 
 Specasm is built with [z88dk](https://github.com/z88dk/z88dk) and GNU Make.  To build Specasm for the 48k Spectrum clone the repoistory and type
 
@@ -109,6 +109,16 @@ make release
 ```
 
 from the same directory.  The specasm48.zip file can be found in the build/release folder.
+
+### For the 128kb Spectrum
+
+```
+cd build/128/specasm
+make -j
+make release
+```
+
+This will create a zip file called specasm128.zip.
 
 ### For the Spectrum Next
 
@@ -156,7 +166,7 @@ To run the linker tests with the Next Opcodes enabled, type
 cd tests && SPECASM_TARGET_NEXT_OPCODES=1 ./tests.sh
 ```
 
-A large proportion (but not all) of the unit tests can be run on the Spectrums themselves.  To build these tests for the 48kb and 128kb Spectrums type
+A large proportion (but not all) of the unit tests can be run on the Spectrums themselves.  To build these tests for the 48kb Spectrum type
 
 ```
 build/48/unit
@@ -165,6 +175,14 @@ make tests
 ```
 
 This will create a folder called tests in the unit folder.  Inside this folder are 3 files that need to be copied to the same directory on your spectrum.  Run the unitzx.tap file to run the tests.
+
+To build for the 128kb Spectrum, type
+
+```
+build/128/unit
+make
+make tests
+```
 
 To build for the ZX Spectrum Next, type
 

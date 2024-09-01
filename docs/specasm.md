@@ -1,6 +1,6 @@
 # Specasm
 
-Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums with an ESXDOS SD card solution, and the ZX Spectrum Next.  It includes an editor, an assembler and a linker.
+Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums with an ESXDOS SD card solution, and the ZX Spectrum Next.  It includes an editor, an assembler, a linker and a tap file generator.
 
 ## Editor/Assembler
 
@@ -89,7 +89,7 @@ Finally, the Next and the Spectrum 128 versions of Specasm have a garbage collec
 
 The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys in addition to CAPS + 3 (Page Up), CAPS + 4 (Page Down), CAPS + 1 (Start of Buffer) and CAPS + 2 (End of Buffer) to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  On the Next and 128kb Spectrums, the selected lines may be cut to the clipboard by typing 'x'.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c','b', 'x' and 'cc' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.
 
-Some of the that manipulate selections, cancel the selection once they have finished executing.  So if you select a block of text, and then issue the 'c' command to copy it, you'll need to reselect the text once more to copy it again.  In addition, the current selection is cancelled if you make any changes to the contents of the editor, e.g., edit an existing line or insert a new one.
+Some of the commands that manipulate selections, cancel the selection once they have finished executing.  So if you select a block of text, and then issue the 'c' command to copy it, you'll need to reselect the text once more to copy it again.  In addition, the current selection is cancelled if you make any changes to the contents of the editor, e.g., edit an existing line or insert a new one.
 
 #### The Status Row
 
@@ -534,7 +534,7 @@ On the ZX Spectrum Next a pseudo instruction called NBRK is supported.  This gen
 
 ### Strings
 
-Each .x file is limited to a total of 32 long strings and 128 short strings.  Long strings are strings which are greater than 11 characters.  Strings in this context refer to strings used in the string data directives, strings used for label names and strings used for comments.  If you exceed the limit of short or long strings in a file you'll get an error.  This means your limited to a maximum of 160 labels per file, and only if your file doesn't contain any comments or string data directives.  Using the exact same string multiple times only counts as one string.  For example, the following code consumes only 1 of the available 128 short strings, even though it uses 3 strings.
+Each .x file is limited to a total of 32 long strings and 128 short strings.  Long strings are strings which are greater than 11 characters.  Strings in this context refer to strings used in the string data directives, strings used for label names and strings used for comments.  If you exceed the limit of short or long strings in a file you'll get an error.  This means you're limited to a maximum of 160 labels per file, and only if your file doesn't contain any comments or string data directives.  Using the exact same string multiple times only counts as one string.  For example, the following code consumes only 1 of the available 128 short strings, even though it uses 3 strings.
 
 ```
 .hello
@@ -548,9 +548,6 @@ CLEAR 32767
 .saexport big.x
 .saimport big.s
 ```
-
-> [!TIP]
-> Note the CLEAR statement is not needed on the ZX Spectrum Next as .saexport and .saimport are implemented as dotn files.
 
 ### Source files
 
@@ -736,7 +733,7 @@ Samake takes two optional arguments.  The first argument specifies the type of l
 
 ## Versions, Binary and Source code Compatibility
 
-There are two separate versions of Specasm, one for the 48kb and 128kb ZX Spectrums and one for the ZX Spectrum Next.  The two versions are incompatible with each other.  The 48kb version will not work on the Next and the Next version will not work on an original Spectrum.  The two versions are also binary incompatible with each other.  .x files created on the ZX Spectrum Next cannot be loaded by Specasm on the 48kb and vice-versa.  Both versions of Specasm are source code compatible however, provided that the sources do not contain any of the Z80N instructions.  The same .s file can be assembled by .saimport on both the Next and the 48kb Spectrum.
+There are three separate versions of Specasm, one for the 48kb ZX Spectrum, one for the 128kb ZX Spectrums and one for the ZX Spectrum Next.  The Spectrum and the Next versions are incompatible with each other.  The 48kb version will not work on the Next and the Next version will not work on an original Spectrum.  The 48kb and 128kb versions are compatible with each other, but they are binary incompatible with each other.  .x files created on the ZX Spectrum Next cannot be loaded by Specasm on the 48kb and vice-versa.  Both versions of Specasm are source code compatible however, provided that the sources do not contain any of the Z80N instructions.  The same .s file can be assembled by .saimport on both the Next and the 48kb Spectrum.
 
 ## ZX81 Support
 
