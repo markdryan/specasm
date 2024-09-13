@@ -42,51 +42,39 @@ int salink_link_e(void)
 
 void specasm_write_map_e(void)
 {
-	/*
-	 * Only called from the link_obj page, so we map it back
-	 * in once our call has finished.
-	 */
+	unsigned char bank_h = ZXN_READ_MMU7();
 
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_MAP_BANK]);
 	specasm_write_map_banked_e();
-	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_LINK_OBJ_BANK]);
+	ZXN_WRITE_MMU7(bank_h);
 }
 
 void salink_apply_expressions_e(specasm_line_t *line, salink_obj_t *obj,
 				unsigned int line_no)
 {
-	/*
-	 * Only called from the link_obj page, so we map it back
-	 * in once our call has finished.
-	 */
+	unsigned char bank_h = ZXN_READ_MMU7();
 
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_EXPRESSION_BANK]);
 	salink_apply_expressions_banked_e(line, obj, line_no);
-	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_LINK_OBJ_BANK]);
+	ZXN_WRITE_MMU7(bank_h);
 }
 
 void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
 			      salink_label_t *label, uint8_t depth)
 {
-	/*
-	 * Only called from the link_obj page, so we map it back
-	 * in once our call has finished.
-	 */
+	unsigned char bank_h = ZXN_READ_MMU7();
 
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_EXPRESSION_BANK]);
 	salink_equ_eval_global_banked_e(obj, global, label, depth);
-	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_LINK_OBJ_BANK]);
+	ZXN_WRITE_MMU7(bank_h);
 }
 
 void salink_add_queued_file_e(const char *base, const char *prefix,
 			      specasm_line_t *line)
 {
-	/*
-	 * Only called from the link_obj page, so we map it back
-	 * in once our call has finished.
-	 */
+	unsigned char bank_h = ZXN_READ_MMU7();
 
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_MAP_BANK]);
 	salink_add_queued_file_banked_e(base, prefix, line);
-	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_LINK_OBJ_BANK]);
+	ZXN_WRITE_MMU7(bank_h);
 }
