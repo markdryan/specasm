@@ -5,7 +5,7 @@ all: SPECASM SALINK SAEXPORT SAIMPORT SAMAKE
 
 CC=zcc
 CFLAGS=+zxn -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DSPECASM_TARGET_NEXT -DSPECASM_TARGET_NEXT_OPCODES
-CZFLAGS=-Cz="--clean --fullsize --main-fence 0xDFE0"
+CZFLAGS=-Cz="--clean --fullsize --main-fence 0xDE00"
 SACZFLAGS=-Cz="--clean --fullsize --main-fence 0xBFFE"
 
 line_parse_banked.o: line_parse.c

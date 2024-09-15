@@ -33,6 +33,29 @@ static uint16_t start_address = 0x8000;
 
 static const char blank_field[] = "            ";
 
+static uint8_t prv_check_file(const char *fname)
+{
+	char *period;
+	uint8_t is_test_file;
+	uint8_t is_x_file;
+
+	period = strchr(fname, '.');
+
+	if (!period || !period[1] || period[2])
+		return 0;
+
+	is_test_file = (period[1] == 't') || (period[1] == 'T');
+	is_x_file = (period[1] == 'x') || (period[1] == 'X');
+
+	if (link_mode == SALINK_MODE_LINK) {
+		if (is_test_file)
+			got_test = 1;
+		return is_x_file;
+	}
+
+	return is_test_file || is_x_file;
+}
+
 static void prv_init_out_fnames(salink_obj_t *obj)
 {
 	uint8_t name_len;
@@ -1125,7 +1148,7 @@ static void prv_salink_e(void)
 	while (specasm_readdir(dir, &dirent)) {
 		if (specasm_isdirent_dir(dirent))
 			continue;
-		if (!salink_check_file(specasm_getdirname(dirent)))
+		if (!prv_check_file(specasm_getdirname(dirent)))
 			continue;
 		prv_parse_obj_e(specasm_getdirname(dirent));
 		if (err_type != SPECASM_ERROR_OK) {

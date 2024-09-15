@@ -33,6 +33,7 @@ void specasm_write_map_banked_e(void);
 int salink_link_banked_e(void);
 void salink_add_queued_file_banked_e(const char *base, const char *prefix,
 				     specasm_line_t *line);
+char salink_to_zx81_char_banked(char ch);
 
 int salink_link_e(void)
 {
@@ -67,6 +68,18 @@ void salink_equ_eval_global_e(salink_obj_t *obj, salink_global_t *global,
 	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_EXPRESSION_BANK]);
 	salink_equ_eval_global_banked_e(obj, global, label, depth);
 	ZXN_WRITE_MMU7(bank_h);
+}
+
+char salink_to_zx81_char(char ch)
+{
+	char retval;
+	unsigned char bank_h = ZXN_READ_MMU7();
+
+	ZXN_WRITE_MMU7(_z_page_table[SALINK_NEXT_EXPRESSION_BANK]);
+	retval = salink_to_zx81_char_banked(ch);
+	ZXN_WRITE_MMU7(bank_h);
+
+	return retval;
 }
 
 void salink_add_queued_file_e(const char *base, const char *prefix,

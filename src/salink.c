@@ -55,13 +55,6 @@ const char *specasm_str = "/specasm/";
 void specasm_peer_next_copy_chars(void);
 #endif
 
-static void prv_unknown_error_label_e(salink_obj_t *obj, const char *str)
-{
-	snprintf(error_buf, sizeof(error_buf), "%s:Unknown label in equ:%s",
-		 obj->fname, str);
-	err_type = SALINK_ERROR_UNRESOLVED_LABEL;
-}
-
 /*
  * Returns the string from the state of the currently loaded object
  * file identified by the given id and type.
@@ -75,111 +68,6 @@ const char *salink_get_label_str_e(uint8_t id, uint8_t label_type)
 		return specasm_state_get_long_e(id);
 	else
 		return specasm_state_get_short_e(id);
-}
-
-uint8_t salink_check_file(const char *fname)
-{
-	char *period;
-	uint8_t is_test_file;
-	uint8_t is_x_file;
-
-	period = strchr(fname, '.');
-
-	if (!period || !period[1] || period[2])
-		return 0;
-
-	is_test_file = (period[1] == 't') || (period[1] == 'T');
-	is_x_file = (period[1] == 'x') || (period[1] == 'X');
-
-	if (link_mode == SALINK_MODE_LINK) {
-		if (is_test_file)
-			got_test = 1;
-		return is_x_file;
-	}
-
-	return is_test_file || is_x_file;
-}
-
-/*
- * Find a label id given a string.  We need this when evaluating expressions.
- * Labels within expressions are encoded as strings rather than as ids.
- */
-
-unsigned int salink_find_local_label_e(const char *str, int len,
-				       salink_obj_t *obj)
-{
-	unsigned int i;
-	salink_label_t *label;
-	const char *lab_str;
-	uint8_t lng = len >= SPECASM_MAX_SHORT_LEN ? 1 : 0;
-	uint8_t lab_lng;
-
-	for (i = obj->label_start; i < obj->label_end; i++) {
-		label = &labels[i];
-		if ((label->type == SALINK_LABEL_TYPE_ALIGN) ||
-		    (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL) ||
-		    (label->type == SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL))
-			continue;
-		lab_lng = label->type & 1;
-		if (lng != lab_lng)
-			continue;
-
-		lab_str = salink_get_label_str_e(label->id, lng);
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
-
-		if (!strcmp(str, lab_str))
-			return i;
-	}
-
-	prv_unknown_error_label_e(obj, str);
-
-	return 0;
-}
-
-/*
- * Returns the index of the global that matches str
- */
-
-unsigned int salink_find_global_label_e(const char *str, salink_obj_t *obj)
-{
-	unsigned int i;
-	salink_global_t *global;
-
-	for (i = 0; i < global_count; i++) {
-		global = &globals[i];
-		if (!strcmp(str, global->name))
-			return i;
-	}
-
-	prv_unknown_error_label_e(obj, str);
-
-	return 0;
-}
-
-static const char zx81_conseq_ops[] = {'"', '#', '$', ':', '?', '(',
-				       ')', '>', '<', '=', '+', '-',
-				       '*', '/', ';', ',', '.'};
-
-char salink_to_zx81_char(char ch)
-{
-	uint8_t i;
-
-	if (ch == ' ')
-		return 0;
-
-	for (i = 0; i < sizeof(zx81_conseq_ops); i++)
-		if (ch == zx81_conseq_ops[i])
-			return 11 + i;
-
-	if ((ch >= '0') && (ch <= '9'))
-		return ch - 20;
-
-	ch |= 32;
-	if ((ch >= 'a') && (ch <= 'z'))
-		return ch - 59;
-
-	return 15; // '?'
 }
 
 int main(int argc, char *argv[])

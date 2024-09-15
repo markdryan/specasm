@@ -102,8 +102,102 @@ static const char *prv_exp_priority4_e(const char *str, int16_t *e,
 
 static void prv_equ_eval_local_e(salink_label_t *label, uint8_t depth,
 				 uint16_t line_no);
-
+void salink_equ_eval_global_banked_e(salink_obj_t *obj, salink_global_t *global,
+				     salink_label_t *label, uint8_t depth);
 static const char simple_ops[] = "()/*+-&|^~";
+
+static const char zx81_conseq_ops[] = {'"', '#', '$', ':', '?', '(',
+				       ')', '>', '<', '=', '+', '-',
+				       '*', '/', ';', ',', '.'};
+
+#ifdef SPECASM_NEXT_BANKED
+char salink_to_zx81_char_banked(char ch)
+#else
+char salink_to_zx81_char(char ch)
+#endif
+{
+	uint8_t i;
+
+	if (ch == ' ')
+		return 0;
+
+	for (i = 0; i < sizeof(zx81_conseq_ops); i++)
+		if (ch == zx81_conseq_ops[i])
+			return 11 + i;
+
+	if ((ch >= '0') && (ch <= '9'))
+		return ch - 20;
+
+	ch |= 32;
+	if ((ch >= 'a') && (ch <= 'z'))
+		return ch - 59;
+
+	return 15; // '?'
+}
+
+static void prv_unknown_error_label_e(salink_obj_t *obj, const char *str)
+{
+	snprintf(error_buf, sizeof(error_buf), "%s:Unknown label in equ:%s",
+		 obj->fname, str);
+	err_type = SALINK_ERROR_UNRESOLVED_LABEL;
+}
+
+/*
+ * Find a label id given a string.  We need this when evaluating expressions.
+ * Labels within expressions are encoded as strings rather than as ids.
+ */
+
+static unsigned int prv_find_local_label_e(const char *str, int len,
+					   salink_obj_t *obj)
+{
+	unsigned int i;
+	salink_label_t *label;
+	const char *lab_str;
+	uint8_t lng = len >= SPECASM_MAX_SHORT_LEN ? 1 : 0;
+	uint8_t lab_lng;
+
+	for (i = obj->label_start; i < obj->label_end; i++) {
+		label = &labels[i];
+		if ((label->type == SALINK_LABEL_TYPE_ALIGN) ||
+		    (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL) ||
+		    (label->type == SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL))
+			continue;
+		lab_lng = label->type & 1;
+		if (lng != lab_lng)
+			continue;
+
+		lab_str = salink_get_label_str_e(label->id, lng);
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+
+		if (!strcmp(str, lab_str))
+			return i;
+	}
+
+	prv_unknown_error_label_e(obj, str);
+
+	return 0;
+}
+
+/*
+ * Returns the index of the global that matches str
+ */
+
+static unsigned int prv_find_global_label_e(const char *str, salink_obj_t *obj)
+{
+	unsigned int i;
+	salink_global_t *global;
+
+	for (i = 0; i < global_count; i++) {
+		global = &globals[i];
+		if (!strcmp(str, global->name))
+			return i;
+	}
+
+	prv_unknown_error_label_e(obj, str);
+
+	return 0;
+}
 
 const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 			    uint8_t is_global)
@@ -139,7 +233,11 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 		}
 		tok->type = SALINK_TOKEN_NUM;
 		if (got_zx81)
+#ifdef SPECASM_NEXT_BANKED
+			ch = salink_to_zx81_char_banked(ch);
+#else
 			ch = salink_to_zx81_char(ch);
+#endif
 		tok->data.num = (int16_t)ch;
 		return buf + 2;
 	}
@@ -199,11 +297,11 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 		c = *start;
 		if ((c >= 'A') && (c <= 'Z')) {
 			tok->data.id =
-			    salink_find_global_label_e(scratch, g_obj);
+			    prv_find_global_label_e(scratch, g_obj);
 			tok->type = SALINK_TOKEN_GLOBAL_LABEL;
 		} else {
-			tok->data.id =
-			    salink_find_local_label_e(scratch, len, g_obj);
+			tok->data.id = prv_find_local_label_e(scratch, len,
+							      g_obj);
 			if ((err_type == SPECASM_ERROR_ASSERT_BAD_STRING_ID) &&
 			    (is_global)) {
 				err_type = SALINK_ERROR_LOCAL_IN_GLOBAL_EQU;
@@ -307,8 +405,13 @@ static const char *prv_exp_priority0_e(const char *str, int16_t *e,
 				err_type = SALINK_ERROR_RECURISVE_EQU;
 				return NULL;
 			}
+#ifdef SPECASM_NEXT_BANKED
+			salink_equ_eval_global_banked_e(g_obj, global, label,
+							depth + 1);
+#else
 			salink_equ_eval_global_e(g_obj, global, label,
 						 depth + 1);
+#endif
 			if (err_type != SPECASM_ERROR_OK)
 				return NULL;
 			*e = label->data.off;

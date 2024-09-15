@@ -110,10 +110,6 @@ extern char scratch[SPECASM_MAX_SCRATCH];
 extern salink_label_t labels[MAX_LABELS];
 extern salink_global_t globals[MAX_GLOBALS];
 extern char error_buf[(SPECASM_LINE_MAX_LEN * 4) + 1];
-uint8_t salink_check_file(const char *fname);
-unsigned int salink_find_local_label_e(const char *str, int len,
-				       salink_obj_t *obj);
-unsigned int salink_find_global_label_e(const char *str, salink_obj_t *obj);
 const char *salink_get_label_str_e(uint8_t id, uint8_t label_type);
 char salink_to_zx81_char(char ch);
 
