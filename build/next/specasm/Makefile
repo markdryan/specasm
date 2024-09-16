@@ -8,6 +8,9 @@ CFLAGS=+zxn -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warn
 CZFLAGS=-Cz="--clean --fullsize --main-fence 0xDE00"
 SACZFLAGS=-Cz="--clean --fullsize --main-fence 0xBFFE"
 
+util_print_acc_next.o: util_print_acc_next.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 line_parse_banked.o: line_parse.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_43_L --constsegBANK_43_L --datasegBANK_43_L -c $<
 
@@ -64,6 +67,7 @@ SPECASM = \
 	state_base.o \
 	editor_buffers.o \
 	util_print_next.o \
+	util_print_acc_next.o \
 	peer_next.o \
 	line_common.o \
 	clipboard.o \
@@ -89,6 +93,7 @@ SALINK = \
 	state_base.o \
 	peer_file_next.o \
 	util_print_next.o \
+	util_print_acc_next.o \
 	peer_next.o
 
 SAEXPORT = \

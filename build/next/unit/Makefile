@@ -3,6 +3,9 @@ VPATH=../../../src
 .PHONY: all
 all: UNITNEXT
 
+util_print_acc_next.o: util_print_acc_next.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 CC=zcc
 CFLAGS=+zxn -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DSPECASM_TARGET_NEXT -DSPECASM_TARGET_NEXT_OPCODES -DUNITTESTS
 CZFLAGS=-Cz="--clean --fullsize --main-fence 0xBFFE"
@@ -45,6 +48,7 @@ UNITNEXT = \
 	peer_file_next.o \
 	unittests_zx.o \
 	util_print_next.o \
+	util_print_acc_next.o \
 	peer_unit.o \
 	clipboard.o \
 	line_parse_banked.o \
