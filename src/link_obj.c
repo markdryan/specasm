@@ -30,6 +30,7 @@ static uint8_t map_file;
 static size_t label_count;
 static uint8_t main_index = 0xff;
 static uint16_t start_address = 0x8000;
+static uint8_t obj_files_order[MAX_FILES];
 
 static const char blank_field[] = "            ";
 

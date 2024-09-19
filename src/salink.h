@@ -141,7 +141,6 @@ extern char map_name[MAX_FNAME + 1];
 extern unsigned int global_count;
 extern salink_obj_t obj_files[MAX_FILES];
 extern uint8_t obj_file_count;
-extern uint8_t obj_files_order[MAX_FILES];
 extern char image_name[MAX_FNAME + 1];
 extern unsigned int bin_size;
 extern uint8_t queued_files;
