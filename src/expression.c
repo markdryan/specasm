@@ -84,7 +84,7 @@
 #define SALINK_TOKEN_LSL_VAL 1
 #define SALINK_TOKEN_ASR_VAL 2
 
-#define SALINK_MAX_DEPTH 8
+#define SALINK_MAX_DEPTH 3
 
 struct salink_token_t_ {
 	uint8_t type;
@@ -344,9 +344,20 @@ static const char *prv_exp_priority0_e(const char *str, int16_t *e)
 
 	switch (tok.type) {
 	case SALINK_TOKEN_OP:
+		if (depth == SALINK_MAX_DEPTH) {
+			err_type = SALINK_ERROR_RECURISVE_EQU;
+			return NULL;
+		}
+		g_stack[g_stack_top].is_global = is_global;
+		g_stack[g_stack_top].depth = depth + 1;
+		g_stack[g_stack_top].line_no = line_no;
+		g_stack_top++;
+
 		str = prv_exp_priority4_e(str, e);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
+
+		g_stack_top--;
 		switch (tok.data.id) {
 		case '-':
 			*e = -*e;
@@ -689,7 +700,7 @@ static void prv_check_exp_err(const char *name, uint16_t line_no,
 		err_msg = "Divide by zero";
 		break;
 	case SALINK_ERROR_RECURISVE_EQU:
-		err_msg = "Recursive definition";
+		err_msg = "Max expression depth reached";
 		break;
 	case SALINK_ERROR_LOCAL_IN_GLOBAL_EQU:
 		err_msg = "Global EQU references local EQU";
