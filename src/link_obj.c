@@ -1071,6 +1071,29 @@ static void prv_write_test_table_e(specasm_handle_t f)
 	buf.file_buf[buf_count++] = tests;
 }
 
+#ifndef SPECASM_TARGET_NEXT
+static void prv_just_write_something(specasm_handle_t f)
+{
+	specasm_error_t err_type_old;
+
+	/*
+	 * Closing and then deleting an empty file seems to cause some
+	 * sort of SD card corruption on ESXDOS.  The SD card will no longer
+	 * mount when inserted into a macbook and needs to be repaired.
+	 * So let's make sure we write at least one byte.
+	 */
+
+	if (bin_size > 0)
+		return;
+
+	err_type_old = err_type;
+	err_type = SPECASM_ERROR_OK;
+	buf.file_buf[0] = 0xff;
+	specasm_file_write_e(f, buf.file_buf, 1);
+	err_type = err_type_old;
+}
+#endif
+
 static void prv_link_e(uint8_t main_loaded)
 {
 	char ibuf[16];
@@ -1126,6 +1149,9 @@ static void prv_link_e(uint8_t main_loaded)
 
 on_error:
 
+#ifndef SPECASM_TARGET_NEXT
+	prv_just_write_something(f);
+#endif
 	specasm_file_close_e(f);
 	specasm_remove_file(image_name);
 
