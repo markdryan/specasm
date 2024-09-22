@@ -392,7 +392,7 @@ uint8_t prv_anal_ex(const specasm_line_t *line,specasm_cycles_t *cycles)
 	} else if (op_code[0] == 0xeb) {
 		/* ex de, hl */
 		t1 = 4;
-		t2 = 4; 
+		t2 = 4;
 		m1 = 1;
 		m2 = 1;
 	} else if (op_code[0] == 0xe3) {
@@ -1078,8 +1078,9 @@ static specasm_meta_entry_t anal_opcodes[] = {
 void specasm_get_cycles(const specasm_line_t *line, specasm_cycles_t* cycles)
 {
 	const specasm_meta_entry_t *meta;
+	uint8_t type = specasm_line_get_adj_type(line);
 
-	if (line->type > SPECASM_LINE_TYPE_SIMPLE_MAX) {
+	if (type > SPECASM_LINE_TYPE_SIMPLE_MAX) {
 		cycles->m[0] = 0;
 		cycles->m[1] = 0;
 		cycles->t[0] = 0;
@@ -1087,7 +1088,7 @@ void specasm_get_cycles(const specasm_line_t *line, specasm_cycles_t* cycles)
 		return;
 	}
 
-	meta =  &anal_opcodes[line->type];
+	meta = &anal_opcodes[type];
 
 	if (meta->fn) {
 		(void) meta->fn(line, cycles);
@@ -1104,11 +1105,12 @@ uint8_t specasm_get_flags(const specasm_line_t *line)
 {
 	specasm_cycles_t cycles;
 	const specasm_meta_entry_t *meta;
+	uint8_t type = specasm_line_get_adj_type(line);
 
-	if (line->type > SPECASM_LINE_TYPE_SIMPLE_MAX)
+	if (type > SPECASM_LINE_TYPE_SIMPLE_MAX)
 		return 0;
 
-	meta =  &anal_opcodes[line->type];
+	meta = &anal_opcodes[type];
 
 	if (meta->fn)
 		return meta->fn(line, &cycles);
