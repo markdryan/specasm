@@ -1146,7 +1146,7 @@ static uint8_t prv_select_key_down(void)
 	return 1;
 }
 
-static uint8_t prv_select_block_down(uint8_t adj)
+static uint8_t prv_select_block_down(uint16_t adj)
 {
 	unsigned int last_line;
 	unsigned int new_line;
