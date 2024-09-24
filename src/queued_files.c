@@ -115,11 +115,11 @@ static void prv_add_queued_filename_e(const char *base, const char *prefix,
 	/*
 	 * Build up a path relative to the including path, providing
 	 * it's not a complete path.  So if the including file is
-	 * one/two.x and it includes does - three.x, then we get
+	 * one/two.x and it contains "- three.x", then we get
 	 *
 	 * one/three.x
 	 *
-	 * If the including file is simple two.x then we get
+	 * If the including file is simply two.x then we get
 	 *
 	 * three.x
 	 *
@@ -127,17 +127,19 @@ static void prv_add_queued_filename_e(const char *base, const char *prefix,
 	 *
 	 * one/two/three.x
 	 *
+	 * If prefix_len > 0 then the path is not relative.
+	 *
 	 * TODO: Need to update this to cope with drive letters.
 	 */
 
 	base_len = 0;
-	if (str[0] != '/') {
+	prefix_len = strlen(prefix);
+	if ((str[0] != '/') && (prefix_len == 0)) {
 		slash = strrchr(base, '/');
 		if (slash)
 			base_len = (slash - base) + 1;
 	}
 
-	prefix_len = strlen(prefix);
 	space_needed = strlen(str) + prefix_len + base_len;
 	if (space_needed > MAX_FNAME) {
 		err_type = SPECASM_ERROR_BAD_FNAME;

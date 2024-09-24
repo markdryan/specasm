@@ -40,10 +40,6 @@
 #define SPECASM_MODE_SELECT 1
 #define SPECASM_MODE_COMMAND 2
 
-extern unsigned int line;
-extern uint8_t col;
-extern uint8_t quitting;
-
 #ifdef SPECASM_TARGET_NEXT
 /*
  * Used to preload a .x file to edit on startup.  Assumes that the screen has
@@ -54,5 +50,14 @@ void specasm_editor_preload(const char *fname);
 void specasm_draw_status(void);
 void specasm_handle_key_press(uint8_t k);
 void specasm_editor_reset(void);
+void specasm_editor_reset_no_cls(void);
+void specasm_draw_screen(unsigned int i);
+uint16_t specasm_make_space_e(uint16_t line_count);
+uint8_t specasm_selecting_delete(void);
+
+extern uint8_t ovr;
+extern uint8_t row;
+extern unsigned int select_start;
+extern unsigned int select_end;
 
 #endif

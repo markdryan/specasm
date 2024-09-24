@@ -3,7 +3,11 @@ state_base.o: state_base.c peer.h error.h peer_zx.h \
 	      line.h state_base.h strings.h
 state_dump.o: state_dump.c state.h state_base.h line.h \
   error.h strings.h
+state_dump_banked.o: state_dump.c state.h state_base.h line.h \
+  error.h strings.h
 state_parse.o: state_parse.c state.h state_base.h line.h \
+  error.h strings.h
+state_parse_banked.o: state_parse.c state.h state_base.h line.h \
   error.h strings.h
 specasm_next.o: specasm_next.c editor.h peer.h error.h \
   line.h peer_file.h state.h state_base.h strings.h
@@ -21,6 +25,9 @@ line_dump_common.o: line_dump_common.c line_common.h line.h \
   strings.h
 line_dump_banked.o: line_dump.c line_common.h line.h error.h \
   peer.h peer_zx.h state.h state_base.h strings.h
+line_dump_common_banked.o: line_dump_common.c line_common.h line.h \
+  error.h peer.h peer_zx.h state.h state_base.h \
+  strings.h
 link_obj_banked.o: link_obj.c expression.h salink.h line.h \
   error.h peer_file.h map.h peer.h peer_unit.h \
   state_base.h strings.h
@@ -31,17 +38,22 @@ line_parse_common.o: line_parse_common.c line.h error.h \
   strings.h
 line_parse_banked.o: line_parse.c line_common.h line.h error.h \
   peer.h peer_zx.h state.h state_base.h strings.h
+line_parse_common_banked.o: line_parse_common.c line.h error.h \
+  line_common.h line_parse_common.h state.h state_base.h \
+  strings.h
 editor.o: editor.c editor.h peer.h error.h \
   peer_zx.h line.h state.h state_base.h strings.h \
   util_print_zx.h
-specasm_trampolines.o: specasm_trampolines.c line.h error.h
+specasm_trampolines_next.o: specasm_trampolines_next.c line.h error.h
 peer_next.o: peer_next.c peer.h state.h state_base.h line.h \
 	   strings.h error.h util_print_zx.h
 peer_file_next.o: peer_file_next.c error.h peer_file.h
 util_print_next.o: util_print_next.c util_print_zx.h
 samake.o: samake.c peer.h error.h peer_zx.h line.h \
   salink.h peer_file.h state_base.h strings.h
-clipboard_banked.o: clipboard.c clipboard.h line.h error.h
+clipboard.o: clipboard.c clipboard.h line.h error.h
+peer_unit.o: peer_unit.c peer.h error.h peer_unit.h \
+  line.h state.h state_base.h strings.h
 
 unittests_zx.o: ../src/unittests_zx.c ../src/error.h ../src/line.h \
   ../src/state.h ../src/state_base.h ../src/strings.h ../src/test_content.h ../src/test_content_zx.h \

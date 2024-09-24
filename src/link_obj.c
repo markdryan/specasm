@@ -26,16 +26,43 @@
 #include "state_base.h"
 
 static uint8_t got_org;
-static uint8_t got_zx81;
 static uint8_t map_file;
 static size_t label_count;
 static uint8_t main_index = 0xff;
 static uint16_t start_address = 0x8000;
+static uint8_t obj_files_order[MAX_FILES];
+
+static const char blank_field[] = "            ";
+
+static uint8_t prv_check_file(const char *fname)
+{
+	char *period;
+	uint8_t is_test_file;
+	uint8_t is_x_file;
+
+	period = strchr(fname, '.');
+
+	if (!period || !period[1] || period[2])
+		return 0;
+
+	is_test_file = (period[1] == 't') || (period[1] == 'T');
+	is_x_file = (period[1] == 'x') || (period[1] == 'X');
+
+	if (link_mode == SALINK_MODE_LINK) {
+		if (is_test_file)
+			got_test = 1;
+		return is_x_file;
+	}
+
+	return is_test_file || is_x_file;
+}
 
 static void prv_init_out_fnames(salink_obj_t *obj)
 {
+	uint8_t name_len;
 	unsigned int i;
 	char *ptr;
+	char back_ch = 0;
 
 	for (i = 0; i < MAX_FNAME; i++) {
 		if (obj->fname[i] == '.')
@@ -54,8 +81,17 @@ static void prv_init_out_fnames(salink_obj_t *obj)
 	}
 	image_name[i] = 0;
 
+	name_len = strlen(image_name);
+	if (name_len > sizeof(blank_field) - 2) {
+		back_ch = image_name[sizeof(blank_field) - 2];
+		image_name[sizeof(blank_field) - 2] = 0;
+	}
+
 	(void)specasm_text_print(image_name, SALINK_VAL_COL + 1,
 				 SALINK_FIELD_NAME_ROW, SPECASM_CODE_COLOUR);
+
+	if (back_ch)
+		image_name[sizeof(blank_field) - 2] = back_ch;
 
 	strcpy(map_name, image_name);
 	if (link_mode == SALINK_MODE_LINK) {
@@ -230,37 +266,12 @@ static uint16_t prv_write_bin_file_e(specasm_handle_t out_f,
 	return file_size;
 }
 
-static const char zx81_conseq_ops[] = {'"', '#', '$', ':', '?', '(',
-				       ')', '>', '<', '=', '+', '-',
-				       '*', '/', ';', ',', '.'};
-
-static char prv_to_zx81_char(char ch)
-{
-	uint8_t i;
-
-	if (ch == ' ')
-		return 0;
-
-	for (i = 0; i < sizeof(zx81_conseq_ops); i++)
-		if (ch == zx81_conseq_ops[i])
-			return 11 + i;
-
-	if ((ch >= '0') && (ch <= '9'))
-		return ch - 20;
-
-	ch |= 32;
-	if ((ch >= 'a') && (ch <= 'z'))
-		return ch - 59;
-
-	return 15; // '?'
-}
-
 static void prv_to_zx81_str(char *str, uint8_t len)
 {
 	uint8_t i;
 
 	for (i = 0; i < len; i++)
-		str[i] = prv_to_zx81_char(str[i]);
+		str[i] = salink_to_zx81_char(str[i]);
 }
 
 static const uint8_t zx81_two_byte_opcodes[] = {
@@ -310,7 +321,7 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 			    SPECASM_FLAGS_NUM_CHAR)
 				return;
 			ch = (char)line->data.op_code[3];
-			line->data.op_code[3] = (uint8_t)prv_to_zx81_char(ch);
+			line->data.op_code[3] = (uint8_t)salink_to_zx81_char(ch);
 		} else if (oc == 0x21) {
 			if (specasm_line_get_addr_type(line))
 				return;
@@ -318,7 +329,7 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 			    SPECASM_FLAGS_NUM_CHAR)
 				return;
 			ch = (char)line->data.op_code[2];
-			line->data.op_code[2] = (uint8_t)prv_to_zx81_char(ch);
+			line->data.op_code[2] = (uint8_t)salink_to_zx81_char(ch);
 		}
 		return;
 	}
@@ -376,7 +387,7 @@ static void prv_zx81_patch_opcode(specasm_line_t *line)
 	for (i = 0; i < size; i++)
 		if (line->data.op_code[0] == ptr[i]) {
 			ch = (char)line->data.op_code[1];
-			line->data.op_code[1] = (uint8_t)prv_to_zx81_char(ch);
+			line->data.op_code[1] = (uint8_t)salink_to_zx81_char(ch);
 			return;
 		}
 }
@@ -406,7 +417,7 @@ static void prv_zx81_patch_db_dw(specasm_line_t *line)
 
 	for (i = 0; i < specasm_line_get_size(line) + 1; i += step) {
 		ch = (char)line->data.op_code[i];
-		line->data.op_code[i] = (uint8_t)prv_to_zx81_char(ch);
+		line->data.op_code[i] = (uint8_t)salink_to_zx81_char(ch);
 	}
 }
 
@@ -436,7 +447,7 @@ static void prv_write_line_e(specasm_handle_t f, specasm_line_t *line,
 		byt = line->data.op_code[0];
 		if (got_zx81 &&
 		    (specasm_line_get_format(line) == SPECASM_FLAGS_NUM_CHAR))
-			byt = prv_to_zx81_char(byt);
+			byt = salink_to_zx81_char(byt);
 		to_set = size < MAX_BUFFER_SIZE ? size : MAX_BUFFER_SIZE;
 		memset(&buf.file_buf[0], byt, to_set);
 		do {
@@ -1060,6 +1071,29 @@ static void prv_write_test_table_e(specasm_handle_t f)
 	buf.file_buf[buf_count++] = tests;
 }
 
+#ifndef SPECASM_TARGET_NEXT
+static void prv_just_write_something(specasm_handle_t f)
+{
+	specasm_error_t err_type_old;
+
+	/*
+	 * Closing and then deleting an empty file seems to cause some
+	 * sort of SD card corruption on ESXDOS.  The SD card will no longer
+	 * mount when inserted into a macbook and needs to be repaired.
+	 * So let's make sure we write at least one byte.
+	 */
+
+	if (bin_size > 0)
+		return;
+
+	err_type_old = err_type;
+	err_type = SPECASM_ERROR_OK;
+	buf.file_buf[0] = 0xff;
+	specasm_file_write_e(f, buf.file_buf, 1);
+	err_type = err_type_old;
+}
+#endif
+
 static void prv_link_e(uint8_t main_loaded)
 {
 	char ibuf[16];
@@ -1115,6 +1149,9 @@ static void prv_link_e(uint8_t main_loaded)
 
 on_error:
 
+#ifndef SPECASM_TARGET_NEXT
+	prv_just_write_something(f);
+#endif
 	specasm_file_close_e(f);
 	specasm_remove_file(image_name);
 
@@ -1126,6 +1163,8 @@ static void prv_salink_e(void)
 	uint8_t main_loaded;
 	char ibuf[16];
 	specasm_dirent_t dirent;
+	uint8_t name_len;
+	char back_ch = 0;
 
 	specasm_dir_t dir = specasm_opendir_e(".");
 	if (err_type != SPECASM_ERROR_OK) {
@@ -1136,7 +1175,7 @@ static void prv_salink_e(void)
 	while (specasm_readdir(dir, &dirent)) {
 		if (specasm_isdirent_dir(dirent))
 			continue;
-		if (!salink_check_file(specasm_getdirname(dirent)))
+		if (!prv_check_file(specasm_getdirname(dirent)))
 			continue;
 		prv_parse_obj_e(specasm_getdirname(dirent));
 		if (err_type != SPECASM_ERROR_OK) {
@@ -1204,12 +1243,21 @@ static void prv_salink_e(void)
 		return;
 
 	if (map_file) {
-		(void)specasm_text_print(map_name, SALINK_VAL_COL,
+		name_len = strlen(map_name);
+		if (name_len > sizeof(blank_field) - 2) {
+			back_ch = map_name[sizeof(blank_field) - 2];
+			map_name[sizeof(blank_field) - 2] = 0;
+		}
+
+		(void)specasm_text_print(map_name, SALINK_VAL_COL + 1,
 					 SALINK_FIELD_MAP_ROW,
 					 SPECASM_CODE_COLOUR);
+		if (back_ch)
+			map_name[sizeof(blank_field) - 2] = back_ch;
+
 		specasm_write_map_e();
 	} else {
-		(void)specasm_text_print("None", SALINK_VAL_COL,
+		(void)specasm_text_print("None", SALINK_VAL_COL + 1,
 					 SALINK_FIELD_MAP_ROW,
 					 SPECASM_CODE_COLOUR);
 	}
@@ -1223,9 +1271,9 @@ static void prv_setup_screen(void)
 	specasm_border(SPECASM_SALINK_BORDER);
 
 #ifdef SPECASM_TARGET_NEXT_OPCODES
-	(void)specasm_text_print("           SALINK " SPECASM_VERSION_STR
+	(void)specasm_text_print("          SALINK " SPECASM_VERSION_STR
 #else
-	(void)specasm_text_print("            SALINK " SPECASM_VERSION_STR
+	(void)specasm_text_print("           SALINK " SPECASM_VERSION_STR
 #endif
 				 "           ",
 				 0, 0, SPECASM_HEADER_COLOUR);
@@ -1246,7 +1294,7 @@ static void prv_setup_screen(void)
 				 SALINK_FIELD_MAP_ROW, SPECASM_STATUS_COLOUR);
 
 	for (i = SALINK_FIELD_NAME_ROW; i <= SALINK_FIELD_MAX_ROW; i += 2) {
-		(void)specasm_text_print("            ", SALINK_VAL_COL, i,
+		(void)specasm_text_print(blank_field, SALINK_VAL_COL, i,
 					 SPECASM_CODE_COLOUR);
 	}
 }
@@ -1315,6 +1363,7 @@ int salink_link_e(void)
 		queued_files = 0;
 		label_count = 0;
 		start_address = 0x8000;
+		got_org = 0;
 		global_count = 0;
 		obj_file_count = 0;
 		bin_size = 0;

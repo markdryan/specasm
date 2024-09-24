@@ -5,10 +5,17 @@ state_base.o: state_base.c peer.h error.h peer_zx.h \
 	      line.h state_base.h strings.h
 state_dump.o: state_dump.c state.h state_base.h line.h \
   error.h strings.h
+state_dump_banked.o: state_dump.c state.h state_base.h line.h \
+  error.h strings.h
 state_parse.o: state_parse.c state.h state_base.h line.h \
+  error.h strings.h  
+state_parse_banked.o: state_parse.c state.h state_base.h line.h \
   error.h strings.h
 specasm_next.o: specasm_next.c editor.h peer.h error.h \
   line.h peer_file.h state.h state_base.h strings.h
+ld_parse.o: ld_parse.c line_common.h line.h error.h \
+  line_parse_common.h peer.h peer_unit.h state.h \
+  state_base.h strings.h
 ld_parse.o: ld_parse.c line_common.h line.h error.h \
   line_parse_common.h peer.h peer_unit.h state.h \
   state_base.h strings.h
@@ -21,6 +28,11 @@ line_dump.o: line_dump.c line_common.h line.h error.h \
 line_dump_common.o: line_dump_common.c line_common.h line.h \
   error.h peer.h peer_zx.h state.h state_base.h \
   strings.h
+line_dump_common_banked.o: line_dump_common.c line_common.h line.h \
+  error.h peer.h peer_zx.h state.h state_base.h \
+  strings.h
+line_dump.o: line_dump.c line_common.h line.h error.h \
+  peer.h peer_zx.h state.h state_base.h strings.h
 line_dump_banked.o: line_dump.c line_common.h line.h error.h \
   peer.h peer_zx.h state.h state_base.h strings.h
 link_obj_banked.o: link_obj.c expression.h salink.h line.h \
@@ -28,14 +40,21 @@ link_obj_banked.o: link_obj.c expression.h salink.h line.h \
   state_base.h strings.h
 line_parse.o: line_parse.c line_common.h line.h error.h \
   peer.h peer_zx.h state.h state_base.h strings.h
-line_parse_common.o: line_parse_common.c line.h error.h \
+line_parse_banked.o: line_parse_common.c line.h error.h \
+  line_common.h line_parse_common.h state.h state_base.h \
+  strings.h
+line_parse_common_banked.o: line_parse_common.c line.h error.h \
   line_common.h line_parse_common.h state.h state_base.h \
   strings.h
 line_parse_banked.o: line_parse.c line_common.h line.h error.h \
   peer.h peer_zx.h state.h state_base.h strings.h
 map_banked.o: map.c map.h peer.h error.h peer_zx.h \
   line.h salink.h peer_file.h state_base.h strings.h
-editor.o: editor.c editor.h peer.h error.h \
+editor_banked.o: editor.c editor.h peer.h error.h \
+  peer_zx.h line.h state.h state_base.h strings.h \
+  util_print_zx.h
+editor_extra_banked.o: editor_extra.c analysis.h clipboard.h \
+  editor.h peer.h error.h \
   peer_zx.h line.h state.h state_base.h strings.h \
   util_print_zx.h
 saimport.o: saimport.c peer.h error.h peer_zx.h \
@@ -49,16 +68,20 @@ salink.o: salink.c peer.h error.h peer_zx.h line.h \
 	  util_print_zx.h
 salink_trampolines.o: salink_trampolines.c salink.h line.h \
 		      peer_file.h error.h
-specasm_trampolines.o: specasm_trampolines.c line.h error.h
+specasm_trampolines_next.o: specasm_trampolines_next.c line.h error.h
 peer_next.o: peer_next.c peer.h state.h state_base.h line.h \
 	   strings.h error.h util_print_zx.h
 peer_file_next.o: peer_file_next.c error.h peer_file.h
 util_print_next.o: util_print_next.c util_print_zx.h
 samake.o: samake.c peer.h error.h peer_zx.h line.h \
   salink.h peer_file.h state_base.h strings.h
-clipboard_banked.o: clipboard.c clipboard.h line.h error.h
+clipboard.o: clipboard.c clipboard.h line.h error.h
 queued_files.o: queued_files.c peer.h error.h peer_zx.h \
   line.h queued_files.h salink.h peer_file.h
+editor_buffers.o: editor_buffers.c editor_buffers.h line.h \
+  error.h
+scratch.o: scratch.c scratch.h line.h error.h
+analysis_banked.o: analysis.c state.h state_base.h line_common.h line.h error.h strings.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

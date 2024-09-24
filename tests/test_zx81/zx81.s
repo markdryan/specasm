@@ -106,3 +106,4 @@ dw Main
 
 ld (ix+1), =notletter
 ld (iy+1), =notletter
+db ='A'

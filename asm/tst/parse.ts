@@ -241,6 +241,10 @@ db 0
   ret
 
 .TestCmpRegsAP
+  di
+  ex af, af'
+  push af
+  ex af, af'
   call TstSaveRegs
   ex af, af'
   push bc
@@ -253,9 +257,17 @@ db 0
   ex af, af'
   call TstCmpRegs
   ld bc, =cmpResAP+2
+  ex af, af'
+  pop af
+  ex af, af'
+  ei
   jp testCmpR
 
 .TestCmpRegsFP
+  di
+  ex af, af'
+  push af
+  ex af, af'
   xor a
   call TstSaveRegs
   ex af, af'
@@ -263,9 +275,17 @@ db 0
   ex af, af'
   call TstCmpRegs
   ld bc, =cmpResFP+2
+  ex af, af'
+  pop af
+  ex af, af'
+  ei
   jp testCmpR
 
 .TestCmpRegsCP
+  di
+  exx
+  push bc
+  exx
   call TstSaveRegs
   push af
   exx
@@ -276,9 +296,17 @@ db 0
   pop af
   call TstCmpRegs
   ld bc, =cmpResCP+2
+  exx
+  pop bc
+  exx
+  ei
   jp testCmpR
 
 .TestCmpRegsBP
+  di
+  exx
+  push bc
+  exx
   call TstSaveRegs
   push af
   exx
@@ -289,9 +317,17 @@ db 0
   pop af
   call TstCmpRegs
   ld bc, =cmpResBP+2
+  exx
+  pop bc
+  exx
+  ei
   jp testCmpR
 
 .TestCmpRegsEP
+  di
+  exx
+  push de
+  exx
   call TstSaveRegs
   push af
   exx
@@ -302,9 +338,17 @@ db 0
   pop af
   call TstCmpRegs
   ld bc, =cmpResEP+2
+  exx
+  pop de
+  exx
+  ei
   jp testCmpR
 
 .TestCmpRegsDP
+  di
+  exx
+  push de
+  exx
   call TstSaveRegs
   push af
   exx
@@ -315,9 +359,17 @@ db 0
   exx
   call TstCmpRegs
   ld bc, =cmpResDP+2
+  exx
+  pop de
+  exx
+  ei
   jp testCmpR
 
 .TestCmpRegsLP
+  di
+  exx
+  push hl
+  exx
   call TstSaveRegs
   push af
   exx
@@ -328,9 +380,17 @@ db 0
   pop af
   call TstCmpRegs
   ld bc, =cmpResLP+2
+  exx
+  pop hl
+  exx
+  ei
   jp testCmpR
 
 .TestCmpRegsHP
+  di
+  exx
+  push hl
+  exx
   call TstSaveRegs
   push af
   exx
@@ -341,9 +401,17 @@ db 0
   pop af
   call TstCmpRegs
   ld bc, =cmpResHP+2
+  exx
+  pop hl
+  exx
+  ei
   jp testCmpR
 
 .TestCmpRegsMulti
+  di
+  exx
+  push hl
+  exx
   xor a
   call TstSaveRegs
   push af
@@ -372,6 +440,10 @@ db 0
   scf
   call TstCmpRegs
   ld bc, =cmpResMulti+2
+  exx
+  pop hl
+  exx
+  ei
   jp testCmpR
 
 .cmpResA

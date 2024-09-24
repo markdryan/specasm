@@ -51,6 +51,9 @@ samake.o: samake.c peer.h error.h peer_zx.h line.h \
   salink.h peer_file.h state_base.h strings.h
 queued_files.o: queued_files.c peer.h error.h peer_zx.h \
   line.h queued_files.h salink.h peer_file.h
+editor_buffers.o: editor_buffers.c editor_buffers.h line.h \
+  error.h
+scratch.o: scratch.c scratch.h line.h error.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

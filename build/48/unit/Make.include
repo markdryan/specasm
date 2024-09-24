@@ -24,3 +24,4 @@ peer_unit.o: ../src/peer_unit.c ../src/peer.h ../src/error.h ../src/peer_unit.h 
 unittests_zx.o: ../src/unittests_zx.c ../src/error.h ../src/line.h \
   ../src/state.h ../src/state_base.h ../src/strings.h ../src/test_content.h ../src/test_content_zx.h \
   ../src/peer.h ../src/peer_file.h ../src/peer_unit.h
+scratch.o: scratch.c scratch.h line.h error.h

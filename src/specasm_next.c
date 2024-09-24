@@ -23,6 +23,7 @@
 #include <z80.h>
 
 #include "editor.h"
+#include "editor_buffers.h"
 #include "line.h"
 #include "specasm_mainloop.h"
 #include "state.h"

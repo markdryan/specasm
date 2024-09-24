@@ -23,6 +23,7 @@
 #include <z80.h>
 
 #include "editor.h"
+#include "editor_buffers.h"
 #include "specasm_mainloop.h"
 
 static uint8_t prv_calibration_loop(uint8_t k, uint16_t delay,

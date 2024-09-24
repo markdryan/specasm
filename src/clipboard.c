@@ -14,7 +14,7 @@
  * limitations under the License.
 */
 
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,14 +22,18 @@
 #include "clipboard.h"
 #include "line.h"
 
-#define SPECASM_CLIP_MAX_SIZE (15 * 512)
+#define SPECASM_CLIP_MAX_SIZE (16 * 1024)
 
+#if defined(SPECASM_TARGET_NEXT) || defined(SPECASM_TARGET_128)
+static uint8_t *clip_buffer = (uint8_t*) 0xc000;
+#else
 static uint8_t clip_buffer[SPECASM_CLIP_MAX_SIZE];
+#endif
 
 static uint16_t clip_end_ptr;
 static uint16_t clip_lines;
 
-#ifdef SPECASM_NEXT_BANKED
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 void specasm_clip_reset_banked(void)
 #else
 void specasm_clip_reset(void)
@@ -39,7 +43,7 @@ void specasm_clip_reset(void)
 	clip_lines = 0;
 }
 
-#ifdef SPECASM_NEXT_BANKED
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 void specasm_clip_add_line_banked_e(const char *line)
 #else
 void specasm_clip_add_line_e(const char *line)
@@ -76,7 +80,7 @@ void specasm_clip_add_line_e(const char *line)
 	clip_lines++;
 }
 
-#ifdef SPECASM_NEXT_BANKED
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 uint16_t specasm_clip_get_line_banked(uint16_t ptr, char *buffer)
 #else
 uint16_t specasm_clip_get_line(uint16_t ptr, char *buffer)
@@ -102,7 +106,7 @@ uint16_t specasm_clip_get_line(uint16_t ptr, char *buffer)
 	return ptr;
 }
 
-#ifdef SPECASM_NEXT_BANKED
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
 uint16_t specasm_clip_get_line_count_banked(void)
 #else
 uint16_t specasm_clip_get_line_count(void)

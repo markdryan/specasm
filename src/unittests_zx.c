@@ -71,7 +71,7 @@ static void prv_print_default_error(void)
 static int prv_test_opcode(const void *test)
 {
 	uint8_t parsed;
-	char buf[33] = {0};
+	char buf[SPECASM_MAX_SCRATCH] = {0};
 	specasm_line_t line = {0};
 	const test_zx_t *t = test;
 
@@ -116,14 +116,14 @@ static int prv_test_opcode(const void *test)
 
 static int prv_test_format(const void *test)
 {
-	char buf[SPECASM_LINE_MAX_LEN + 1];
-	char buf2[SPECASM_LINE_MAX_LEN + 1];
+	char buf[SPECASM_MAX_SCRATCH];
+	char buf2[SPECASM_MAX_SCRATCH];
 	uint8_t type;
 	const specasm_line_t *line = &state.lines.lines[0];
 	const test_zx_t *t = test;
 
-	memset(buf, ' ', sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = 0;
+	memset(buf, ' ', SPECASM_LINE_MAX_LEN);
+	buf[SPECASM_LINE_MAX_LEN] = 0;
 	memcpy(buf, t->source, strlen(t->source));
 
 	prv_print_test_name(t->source);
@@ -145,8 +145,8 @@ static int prv_test_format(const void *test)
 	}
 
 	memset(buf, 0, sizeof(buf));
-	memset(buf2, ' ', sizeof(buf2) - 1);
-	buf2[sizeof(buf2) - 1] = 0;
+	memset(buf2, ' ', SPECASM_LINE_MAX_LEN);
+	buf2[SPECASM_LINE_MAX_LEN] = 0;
 	type = specasm_line_get_adj_type(line);
 	if (type != SPECASM_LINE_TYPE_DB && type != SPECASM_LINE_TYPE_DW &&
 	    type != SPECASM_LINE_TYPE_DB_SUB &&
@@ -178,18 +178,20 @@ static int prv_test_format(const void *test)
 
 static int prv_test_bad(const void *test)
 {
-	char buf[SPECASM_LINE_MAX_LEN + 1];
+	char buf[SPECASM_MAX_SCRATCH];
 	const bad_test_zx_t *t = test;
 
 	err_type = SPECASM_ERROR_OK;
 
 	prv_print_test_name(t->source);
 
-	memset(buf, ' ', sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = 0;
+	memset(buf, ' ', SPECASM_LINE_MAX_LEN);
+	buf[SPECASM_LINE_MAX_LEN] = 0;
 	memcpy(buf, t->source, strlen(t->source));
 
 	(void)specasm_parse_line_e(0, buf);
+	if (err_type == SPECASM_ERROR_OK)
+		specasm_format_line_e(buf, 0);
 	if (err_type != t->error) {
 		(void)specasm_util_print(error_msgs[err_type], 0,
 					 UNITTEST_ZX_FORMAT_LINE,

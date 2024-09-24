@@ -8,6 +8,7 @@
   call TstCheckRegs
   ret
 
+
 .TestChkBaseBad
   ld hl, baseBad
   call TstParseRegs
@@ -54,40 +55,122 @@
   ret
 
 .TestChkPrime
+  di
+  exx
+  ex af, af'
+  push af
+  push bc
+  push de
+  push hl
+  ex af, af'
+  exx
+
   ld hl, primeGood
   call TstParseRegs
   call TstSaveRegs
   call modAllPrime
   call TstCheckRegs
+
+  exx
+  ex af, af'
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ex af, af'
+  exx
+  ei
   ret
 
 .TestChkPrimeBad
+  di
+  exx
+  ex af, af'
+  push af
+  push bc
+  push de
+  push hl
+  ex af, af'
+  exx
+
   ld hl, baseBad
   call TstParseRegs
   call TstSaveRegs
   call modAllPrime
   call TstCheckRegs
+
+  exx
+  ex af, af'
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ex af, af'
+  exx
+  ei
+
   ld a, c
   or b
-  jr z, badFail
+  jp z, badFail
   ld hl, primeGood
   call strcmp
   ret
 
 .TestChkMixed
+  di
+  exx
+  ex af, af'
+  push af
+  push bc
+  push de
+  push hl
+  ex af, af'
+  exx
+
   ld hl, mixedGood
   call TstParseRegs
   call TstSaveRegs
   call modMixed
   call TstCheckRegs
+
+  exx
+  ex af, af'
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ex af, af'
+  exx
+  ei
   ret
 
 .TestChkMixedBad
+  di
+  exx
+  ex af, af'
+  push af
+  push bc
+  push de
+  push hl
+  ex af, af'
+  exx
+
   ld hl, baseBad
   call TstParseRegs
   call TstSaveRegs
   call modMixed
   call TstCheckRegs
+
+  exx
+  ex af, af'
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ex af, af'
+  exx
+  ei
+
   ld a, c
   or b
   jp z, badFail
@@ -96,6 +179,13 @@
   ret
 
 .strcmp
+  ld a, 6
+  add a, c
+  ld c, a
+  ld a, 0
+  adc a, b
+  ld b, a
+.strcmpLoop
   ld a, (bc)
   cp (hl)
   jr nz, cmpFail
@@ -103,7 +193,7 @@
   jr z, cmpOk
   inc hl
   inc bc
-  jr strcmp
+  jr strcmpLoop
 .cmpFail
   ld bc, 1
   ret

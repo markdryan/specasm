@@ -53,7 +53,22 @@ static char *prv_format_equ_e(char *buf, const specasm_line_t *line)
 				   op_code[3], ' ');
 }
 
+/*
+ * buf must be SPECASM_MAX_SCRATCH or greater.  This is larger than
+ * SPECASM_LINE_MAX_LEN.  The problem is since we added support for
+ * expressions it's possible to enter a line in the editor, which when
+ * formatted, will be > SPECASM_LINE_MAX_LEN.  Ideally, we'd detect
+ * this when formatting, but this would introduce many if statements,
+ * so it's easier to use a slightly larger buffer to overflow into and
+ * then to check for the actual overflow once the formatting has finished,
+ * which is what we now do.
+ */
+
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_format_line_banked_e(char *buf, unsigned int l)
+#else
 void specasm_format_line_e(char *buf, unsigned int l)
+#endif
 {
 	const char *ptr;
 	const char *end_ptr;
@@ -120,6 +135,9 @@ void specasm_format_line_e(char *buf, unsigned int l)
 	}
 
 clear:
+	if (buf > end_ptr)
+		err_type = SPECASM_ERROR_NO_ROOM_IN_LINE;
+
 	while (buf < end_ptr)
 		*buf++ = ' ';
 	*buf = 0;

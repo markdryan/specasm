@@ -183,7 +183,15 @@
 #define SPECASM_MAX_LINES 512
 #define SPECASM_MAX_ROWS 23
 #define SPECASM_LINE_MAX_LEN 32
-#define SPECASM_MAX_SCRATCH (SPECASM_LINE_MAX_LEN + 1)
+
+/*
+ * We make SPECASM_MAX_SCRATCH larger than line as this buffer is used to format
+ * lines into.  It's possible that the formatting code might write more than
+ * SPECASM_LINE_MAX_LEN bytes.  We can detect this error, but we want to make
+ * sure that we're not overwriting memory, so we add a little extra buffer here.
+ */
+
+#define SPECASM_MAX_SCRATCH (SPECASM_LINE_MAX_LEN + 9)
 #define SPECASM_NULL 0xff
 #define SPECASM_MAX_INDENT 2
 #define SPECASM_LINE_MAX_OPCODE                                                \

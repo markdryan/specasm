@@ -1,6 +1,6 @@
 # Specasm
 
-Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums with an ESXDOS SD card solution, and the ZX Spectrum Next.  It includes an editor, an assembler and a linker.
+Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums with an ESXDOS SD card solution, and the ZX Spectrum Next.  It includes an editor, an assembler, a linker and a tap file generator.
 
 ## Editor/Assembler
 
@@ -63,7 +63,7 @@ On entering command mode, a '>' prompt appears at the bottom of the screen.  Fro
 | g *line number* | Moves the cursor to the specified line number|
 | f *string* | Searches for the first instance of *string* starting from the current line.  There's no wrap around. |
 
-The Next version of Specasm uses one of the Next's 8Kb memory banks to implement a clipboard.  This provides a more traditional copy, cut and paste mechanism than the copy and move commands described above, and allows code to be copied from one file to another.  Clipboard support is provided via three new Next specific commands.
+The Next and the Spectrum 128 versions of Specasm implement a clipboard.  This provides a more traditional copy, cut and paste mechanism than the copy and move commands described above, and allows code to be copied from one file to another.  Clipboard support is provided via three new Next/128 specific commands.
 
 | Command | Description |
 |---------|-------------|
@@ -71,11 +71,25 @@ The Next version of Specasm uses one of the Next's 8Kb memory banks to implement
 | cc       | Replaces the contents of the clipboard with the selected code |
 | v        | Pastes the contents of the clipboard into the selected code at the cursor position |
 
+The Next and the Spectrum 128 versions of Specasm provide two additional commands that can be used to help with code analysis.  Both commands operate on a previously selected block of code.
+
+| Command | Description |
+|---------|-------------|
+| t       | Displays the number of M cycles and T states the selected code will take to execute.  Specasm prints two numbers for each value, a minimum and a maximum.  The value is likely to be inaccurate for instructions whose running times depend on runtime state, e.g., LDIR.  |
+| fl       | Displays the flags modified by a selected block of code. |
+
+Finally, the Next and the Spectrum 128 versions of Specasm have a garbage collection command to reclaim unused strings.  See the *Limitations* section below for more details.
+
+| Command | Description |
+|---------|-------------|
+| gc      | Reclaim unused strings.  This command uses the clipboard and resets the contents of the clipboard.  |
+
+
 #### Selecting Mode
 
-The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  On the Next, the selected lines may be cut to the clipboard by typing 'x'.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c','b', 'x' and 'cc' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.
+The *sel* command switches the editor into selection mode.  In selection mode the user can press the up and down keys in addition to CAPS + 3 (Page Up), CAPS + 4 (Page Down), CAPS + 1 (Start of Buffer) and CAPS + 2 (End of Buffer) to select a block of code.  They can also press the 'a' key to select the entire file.  Only whole lines can be selected.  To cancel the selection and return to editor mode, press SPACE.  To delete the selected lines and return to editor mode, press DELETE.  On the Next and 128kb Spectrums, the selected lines may be cut to the clipboard by typing 'x'.  To confirm the selection and return to editor mode, press ENTER.  Once the selection has been confirmed an '*' will appear in the status row at the bottom of the screen to the right of 'INS' or 'OVR'.  This indicates that some lines are currently selected.  These lines can be manipulated using the 'd', 'm', 'c','b', 'x' and 'cc' commands described above.  For example, to count the number of machine code bytes in the selected line, type SYMSHIFT+w followed by 'b' and ENTER.  The editor is capable of computing the exact size in bytes of the machine code associated with the instructions and data in the selected region as it has already assembled these instructions and knows exactly how much space they will consume.
 
-All of the six commands that manipulate selections, cancel the selection once they have finished executing.  So if you select a block of text, and then issue the 'b' command to count the number of bytes it consumes, you'll need to reselect the text once more to copy it.  In addition, the current selection is cancelled if you make any changes to the contents of the editor, e.g., edit an existing line or insert a new one.
+Some of the commands that manipulate selections, cancel the selection once they have finished executing.  So if you select a block of text, and then issue the 'c' command to copy it, you'll need to reselect the text once more to copy it again.  In addition, the current selection is cancelled if you make any changes to the contents of the editor, e.g., edit an existing line or insert a new one.
 
 #### The Status Row
 
@@ -162,6 +176,8 @@ Labels can be up to 31 characters in length but in practice they need to be shor
 ```
 
 The assembler will let us define the label 'this_is_a_very_very_long_label' but the following statement cannot be entered as it is longer than 32 characters.
+
+Labels cannot be register names.  For example, 'a' and 'hl' are invalid label names.
 
 Here are some valid label examples.
 
@@ -518,25 +534,20 @@ On the ZX Spectrum Next a pseudo instruction called NBRK is supported.  This gen
 
 ### Strings
 
-Each .x file is limited to a total of 32 long strings and 128 short strings.  Long strings are strings which are greater than 11 characters.  Strings in this context refer to strings used in the string data directives, strings used for label names and strings used for comments.  If you exceed the limit of short or long strings in a file you'll get an error.  This means your limited to a maximum of 160 labels per file, and only if your file doesn't contain any comments or string data directives.  Using the exact same string multiple times only counts as one string.  For example, the following code consumes only 1 of the available 128 short strings, even though it uses 3 strings.
+Each .x file is limited to a total of 32 long strings and 128 short strings.  Long strings are strings which are greater than 11 characters.  Strings in this context refer to strings used in the string data directives, strings used for label names and strings used for comments.  If you exceed the limit of short or long strings in a file you'll get an error.  This means you're limited to a maximum of 160 labels per file, and only if your file doesn't contain any comments or string data directives.  Using the exact same string multiple times only counts as one string.  For example, the following code consumes only 1 of the available 128 short strings, even though it uses 3 strings.
 
 ```
 .hello
 call hello ;hello
 ```
 
-There's a known issue with the way in which Specasm treats strings.  Strings are never garbage collected.  This means that if you create a new label called say '.lbel', press ENTER, and then subsequently update the label's name to say '.label', the original label '.lbel' is not garbage collected.  It will continue to occupy a slot in the string table of the .x file you're editing.  If this file is small or doesn't change much this is unlikely to ever cause any issues.  If however, you're working on a large file with lots of strings and which, over time, receives lots of edits, Specasm may eventually report an error, e.g., "Too many long strings", even though your .x file uses less than the maximum 32 number of long strings.  I've decided not to fix this for now as doing so would use up some valuable bytes, that I'd prefer to use for something else, and would also slow down the editor.  If you do encounter this problem it can be solved, by using .saexport to export your .x file to a text file, a .s file, and then .saimport to re-assemble it, e.g.,
+There's a known issue with the way in which Specasm treats strings.  Strings are never garbage collected.  This means that if you create a new label called say '.lbel', press ENTER, and then subsequently update the label's name to say '.label', the original label '.lbel' is not garbage collected.  It will continue to occupy a slot in the string table of the .x file you're editing.  If this file is small or doesn't change much this is unlikely to ever cause any issues.  If however, you're working on a large file with lots of strings and which, over time, receives lots of edits, Specasm may eventually report an error, e.g., "Too many long strings", even though your .x file uses less than the maximum 32 number of long strings.  The 128 and Next versions of Specasm have a command, **gc**, which can be used to reclaim unused strings.  This command relies on the clipboard which isn't supported on the 48kb version, so a more cumbersome method must be used to solve this problem on the 48kb Spectrum, namely by using .saexport to export your .x file to a text file, a .s file, and then .saimport to re-assemble it, e.g.,
 
 ```
 CLEAR 32767
 .saexport big.x
 .saimport big.s
 ```
-
-> [!TIP]
-> Note the CLEAR statement is not needed on the ZX Spectrum Next as .saexport and .saimport are implemented as dotn files.
-
-A future 128kb version of Specasm will incorporate the import and export commands directly in the editor and will also contain a 'gc' command to allow the garbage collection to be performed in one simple step.
 
 ### Source files
 
@@ -552,7 +563,9 @@ CLEAR 32767
 > [!TIP]
 > Note the CLEAR statement is not needed on the ZX Spectrum Next.
 
-The reverse process can be performed using the .saexport command.  Note the use of the CLEAR statement.  This needs to be executed on the 48Kb or 128Kb Spectrum before the .saimport or .saexport commands as these are dotx commands and part of their code is loaded and executed from BASIC's memory.  To ensure there's no interference between BASIC and the dotx commands, the CLEAR command must be issued before their use.  If you're executing a sequence of .saimport/.saexport commands, You only need to issue the CLEAR command once.  The CLEAR statement is not needed at all on the ZX Spectrum Next which implements saexport and saimport using dotn commands.
+The reverse process can be performed using the .saexport command.  Note the use of the CLEAR statement.  This needs to be executed on the 48Kb or 128Kb Spectrum before the .saimport or .saexport commands as these are dotx commands and part of their code is loaded and executed from BASIC's memory.  To ensure there's no interference between BASIC and the dotx commands, the CLEAR command must be issued before their use.  If you're executing a sequence of .saimport/.saexport commands, you only need to issue the CLEAR command once.  The CLEAR statement is not needed at all on the ZX Spectrum Next which implements saexport and saimport using dotn commands.
+
+There is an issue with the ZX Spectrum and Next versions of saimport.  They do not check that the lines that assemble can be formatted so that they fit in 32 characters.  This can lead to .x file that cannot be displayed in the editor.  This can only really happen when using saimport on a .s file that was created manually with a text editor.  If you saexport a .x file created by Specasm and then saimport the resulting .s file, which is the most common use of saimport on the Spectrum 48kb (for garbage collection), there is no issue.  There's no easy way to fix this and the Spectrum versions of saimport and saexport may dissapear in future releases.  Their functionality may be merged into Specasm.  Note this does not happen when running saimport on modern computers.  The version you build yourselves for MacOS or Linux will return an error if a .s file contains lines that are too long to be displayed in the Specasm editor.
 
 ## Program structure
 
@@ -720,7 +733,7 @@ Samake takes two optional arguments.  The first argument specifies the type of l
 
 ## Versions, Binary and Source code Compatibility
 
-There are two separate versions of Specasm, one for the 48kb and 128kb ZX Spectrums and one for the ZX Spectrum Next.  The two versions are incompatible with each other.  The 48kb version will not work on the Next and the Next version will not work on an original Spectrum.  The two versions are also binary incompatible with each other.  .x files created on the ZX Spectrum Next cannot be loaded by Specasm on the 48kb and vice-versa.  Both versions of Specasm are source code compatible however, provided that the sources do not contain any of the Z80N instructions.  The same .s file can be assembled by .saimport on both the Next and the 48kb Spectrum.
+There are three separate versions of Specasm, one for the 48kb ZX Spectrum, one for the 128kb ZX Spectrums and one for the ZX Spectrum Next.  The Spectrum and the Next versions are incompatible with each other.  The 48kb version will not work on the Next and the Next version will not work on an original Spectrum.  The 48kb and 128kb versions are compatible with each other, but they are binary incompatible with each other.  .x files created on the ZX Spectrum Next cannot be loaded by Specasm on the 48kb and vice-versa.  Both versions of Specasm are source code compatible however, provided that the sources do not contain any of the Z80N instructions.  The same .s file can be assembled by .saimport on both the Next and the 48kb Spectrum.
 
 ## ZX81 Support
 

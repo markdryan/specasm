@@ -15,14 +15,16 @@
 */
 
 #include "editor.h"
+#include "editor_buffers.h"
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+#include "editor_extra.h"
+#endif
 #include "line.h"
 #include "line_parse_common.h"
 #include "peer.h"
+#include "scratch.h"
 #include "state.h"
 
-#ifdef SPECASM_TARGET_NEXT_OPCODES
-#include "clipboard.h"
-#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,20 +35,13 @@
 #define EDITOR_STATIC static
 #endif
 
-#define MAX_FNAME 28
-
-unsigned int line;
-uint8_t col;
-uint8_t quitting;
-EDITOR_STATIC uint8_t row;
 EDITOR_STATIC uint8_t command_col;
-EDITOR_STATIC uint8_t ovr;
 EDITOR_STATIC uint8_t editing;
 EDITOR_STATIC uint8_t mode;
-EDITOR_STATIC unsigned int select_start;
-EDITOR_STATIC unsigned int select_end;
-static char current_fname[MAX_FNAME + 1];
-char line_buf[SPECASM_MAX_SCRATCH];
+uint8_t ovr;
+uint8_t row;
+unsigned int select_start;
+unsigned int select_end;
 
 static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 {
@@ -57,6 +52,7 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 	uint8_t data_col;
 	uint8_t equ_col;
 	uint8_t type;
+	uint8_t i;
 	const specasm_line_t *line;
 
 	if (inv) {
@@ -103,33 +99,27 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 		col = data_col;
 	} else {
 		col = code_col;
-		if (line->comment != SPECASM_NULL)
-			scratch[SPECASM_LINE_MAX_OPCODE + 1] = 0;
 	}
 	if ((line->comment == SPECASM_NULL) || (type == SPECASM_LINE_TYPE_LC) ||
 	    (type == SPECASM_LINE_TYPE_SC)) {
 		(void)specasm_text_print(scratch, 0, r, col);
 		return;
 	}
-	scratch[SPECASM_LINE_MAX_OPCODE + 1] = 0;
+	for (i = SPECASM_LINE_MAX_OPCODE + 1; (i < SPECASM_LINE_MAX_LEN) &&
+		     (scratch[i] != ';'); i++);
+	scratch[i] = 0;
 	(void)specasm_text_print(scratch, 0, r, col);
-	scratch[SPECASM_LINE_MAX_OPCODE + 1] = ';';
-	(void)specasm_text_print(&scratch[SPECASM_LINE_MAX_OPCODE + 1],
-				 SPECASM_LINE_MAX_OPCODE + 1, r, com_col);
+	if (i < SPECASM_LINE_MAX_LEN - 2) {
+		scratch[i] = ';';
+		(void)specasm_text_print(&scratch[i], i, r, com_col);
+	}
 }
 
-static uint8_t prv_selecting_delete(void);
 static void prv_selecting_count(void);
 static void prv_selecting_copy_e(void);
 static void prv_selecting_move(void);
 static void prv_goto(const char *num);
 static void prv_find(const char *needle);
-
-#ifdef SPECASM_TARGET_NEXT_OPCODES
-static void prv_selecting_clip_copy_e(void);
-static uint8_t prv_selecting_clip_cut_e(void);
-static void prv_selecting_clip_paste_e(void);
-#endif
 
 static void prv_num_to_char(char *buf, unsigned int num, uint8_t digits)
 {
@@ -154,7 +144,11 @@ static void prv_draw_error(void)
 	err_type = SPECASM_ERROR_OK;
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_draw_status_banked(void)
+#else
 void specasm_draw_status(void)
+#endif
 {
 	memset(scratch, ' ', 32);
 	scratch[32] = 0;
@@ -186,7 +180,7 @@ void specasm_draw_status(void)
 	(void)specasm_text_print(scratch, 0, 23, SPECASM_STATUS_COLOUR);
 }
 
-static void prv_draw_screen(unsigned int i)
+void specasm_draw_screen(unsigned int i)
 {
 	unsigned int j;
 	uint8_t inv;
@@ -239,7 +233,10 @@ static uint8_t prv_update_line()
 		return 0;
 	}
 	specasm_dump_line_e(line, row, 0);
-	err_type = SPECASM_ERROR_OK;
+	if (err_type != SPECASM_ERROR_OK) {
+		prv_draw_error();
+		return 0;
+	}
 
 	editing = 0;
 	return 1;
@@ -261,7 +258,7 @@ static uint8_t prv_start_buf()
 	col = 0;
 	row = 0;
 	if (off > 0)
-		prv_draw_screen(line);
+		specasm_draw_screen(line);
 
 	specasm_text_set_flash(col, row, SPECASM_FLASH);
 	return 1;
@@ -290,7 +287,7 @@ static uint8_t prv_end_buf()
 		row = SPECASM_MAX_ROWS - 1;
 		line = last_line;
 		if (redraw)
-			prv_draw_screen(line - (SPECASM_MAX_ROWS - 1));
+			specasm_draw_screen(line - (SPECASM_MAX_ROWS - 1));
 	}
 	specasm_text_set_flash(col, row, SPECASM_FLASH);
 	return 1;
@@ -313,7 +310,7 @@ static uint8_t prv_page_up()
 	else
 		line = 0;
 	row = 0;
-	prv_draw_screen(line);
+	specasm_draw_screen(line);
 	specasm_text_set_flash(col, row, SPECASM_FLASH);
 	return 1;
 }
@@ -331,7 +328,7 @@ static uint8_t prv_page_down()
 	if (line + SPECASM_MAX_ROWS > state.lines.num_lines)
 		line = state.lines.num_lines - SPECASM_MAX_ROWS;
 	row = 0;
-	prv_draw_screen(line);
+	specasm_draw_screen(line);
 	specasm_text_set_flash(col, row, SPECASM_FLASH);
 	return 1;
 }
@@ -345,7 +342,7 @@ static uint8_t prv_move_up(void)
 		return 0;
 	if (row == 0) {
 		--line;
-		prv_draw_screen(line);
+		specasm_draw_screen(line);
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		return 1;
 	}
@@ -525,10 +522,10 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		quitting = 1;
 		break;
 	case 'd':
-		if (!prv_selecting_delete())
+		if (!specasm_selecting_delete())
 			break;
 
-		prv_draw_screen(line - row);
+		specasm_draw_screen(line - row);
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		specasm_draw_status();
 		break;
@@ -537,12 +534,15 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		break;
 	case 'c':
 		prv_selecting_copy_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
 		break;
 	case 'm':
 		prv_selecting_move();
 		break;
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+	case 't':
+		specasm_selecting_cycles();
+		break;
+#endif
 	case 'a':
 		select_start = 0;
 		select_end = state.lines.num_lines;
@@ -554,22 +554,21 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		}
 		specasm_save_e(current_fname);
 		break;
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 	case 'x':
-		(void)prv_selecting_clip_cut_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
+		(void)specasm_selecting_clip_cut_e();
 		break;
 	case 'v':
-		prv_selecting_clip_paste_e();
-		if (err_type != SPECASM_ERROR_OK)
-			return 0;
+		specasm_selecting_clip_paste_e();
 		break;
 #endif
 	default:
 		err_type = SPECASM_ERROR_BAD_COMMAND;
 		return 0;
 	}
+
+	if (err_type != SPECASM_ERROR_OK)
+		return 0;
 
 	prv_exit_command_mode(SPECASM_MODE_EDITOR);
 
@@ -578,9 +577,7 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 
 static char *prv_complete_filename_e(char *com, uint8_t len)
 {
-	uint8_t i;
 	char *com2;
-	uint8_t count = 0;
 
 	/*
 	 * Skip paste "l" or "s"
@@ -594,18 +591,34 @@ static char *prv_complete_filename_e(char *com, uint8_t len)
 		len--;
 	}
 
-	for (i = 0; i <= len; i++)
-		if (com[i] == '.')
-			count++;
+	/*
+	 * Do we already have a valid extension?
+	 */
 
-	if ((count == 1) && ((com[len] == 'x') || (com[len] == 't')) &&
-	    (com[len - 1] == '.'))
-		return com;
+	com2 = com + len;
+	if ((len >= 2) && ((*com2 == 't') || (*com2 == 'x'))) {
+		com2--;
+		if (*com2 == '.')
+			return com;
+	}
 
-	if (count != 0) {
+	while ((com2 >= com) && (*com2 != '.') && (*com2 != '/'))
+		com2--;
+
+	/*
+	 * We've got another extension where there shouldn't be one.
+	 */
+
+	if (*com2 == '.') {
 		err_type = SPECASM_ERROR_BAD_FNAME;
 		return NULL;
 	}
+
+	/*
+	 * If we get here the last part of the file name does not contain an
+	 * extension.  There must be an extension so we'll add the default
+	 * one before loading, '.x'.
+	 */
 
 	if (len + 2 >= SPECASM_MAX_SCRATCH) {
 		err_type = SPECASM_ERROR_BAD_FNAME;
@@ -621,7 +634,6 @@ static char *prv_complete_filename_e(char *com, uint8_t len)
 
 static uint8_t prv_long_command_e(char *com, uint8_t len)
 {
-	specasm_error_t old_err;
 	uint8_t reset = 0;
 
 	if (!strcmp(com, "sel")) {
@@ -642,40 +654,39 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 		    (err_type != SPECASM_ERROR_OPEN)) {
 			reset = 1;
 			current_fname[0] = 0;
+		} else if (err_type != SPECASM_ERROR_OK) {
+			return 0;
 		} else {
-			old_err = err_type;
-			err_type = SPECASM_ERROR_OK;
-			if (old_err == SPECASM_ERROR_OK)
-				strcpy(current_fname, com);
+			strcpy(current_fname, com);
 			line = row = col = select_end = select_start = 0;
 			specasm_cls(SPECASM_CODE_COLOUR |
 				    SPECASM_LABEL_BACKGROUND);
-			prv_draw_screen(0);
-			if (old_err != SPECASM_ERROR_OK) {
-				specasm_text_set_flash(command_col,
-						       SPECASM_MAX_ROWS, 0);
-				err_type = old_err;
-				prv_draw_error();
-				err_type = SPECASM_ERROR_OK;
-				specasm_sleep_ms(1000);
-			}
+			specasm_draw_screen(0);
 		}
 	} else if (com[0] == 's' && com[1] == ' ') {
 		com = prv_complete_filename_e(com, len);
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
 		specasm_save_e(com);
-		if (err_type == SPECASM_ERROR_OK)
-			strcpy(current_fname, com);
-	} else if (com[0] == 'g' && com[1] == ' ') {
-		prv_goto(&com[2]);
-	} else if (com[0] == 'f' && com[1] == ' ') {
-		prv_find(&com[2]);
-#ifdef SPECASM_TARGET_NEXT_OPCODES
-	} else if ((com[0] == 'c') && (com[1] == 'c')) {
-		prv_selecting_clip_copy_e();
+		com[len + 1] = 0;
 		if (err_type != SPECASM_ERROR_OK)
 			return 0;
+		strcpy(current_fname, com);
+	} else if (com[0] == 'g' && com[1] == ' ') {
+		prv_goto(&com[2]);
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+	} else if ((com[0] == 'g') && (com[1] == 'c') && !com[2]) {
+		specasm_garbage_collect_e();
+#endif
+	} else if (com[0] == 'f' && com[1] == ' ') {
+		prv_find(&com[2]);
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+	} else if ((com[0] == 'c') && (com[1] == 'c') && !com[2]) {
+		specasm_selecting_clip_copy_e();
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+	} else if ((com[0] == 'f') && (com[1] == 'l') && !com[2]) {
+		specasm_selecting_flags();
 #endif
 	} else {
 		err_type = SPECASM_ERROR_BAD_COMMAND;
@@ -710,8 +721,15 @@ static void prv_enter_command(void)
 		specasm_text_set_flash(command_col, SPECASM_MAX_ROWS, 0);
 		prv_draw_error();
 		specasm_sleep_ms(1000);
-		if (i < SPECASM_LINE_MAX_LEN)
-			line_buf[i + 1] = ' ';
+
+		/*
+		 * Some commands append data to the line buffer.  It's
+		 * easiest just to wipe the extra characters here rather
+		 * than undoing the damage after each command.
+		 */
+
+		for (i++; i < SPECASM_LINE_MAX_LEN; i++)
+			line_buf[i] = ' ';
 		(void)specasm_text_print(line_buf, 0, SPECASM_MAX_ROWS,
 					 SPECASM_CODE_COLOUR);
 		specasm_text_set_flash(command_col, SPECASM_MAX_ROWS,
@@ -773,7 +791,7 @@ static uint8_t prv_check_delete_line(void)
 		if (row > 0)
 			row--;
 	}
-	prv_draw_screen(line - row);
+	specasm_draw_screen(line - row);
 	specasm_text_set_flash(col, row, SPECASM_FLASH);
 	editing = 0;
 
@@ -807,7 +825,7 @@ static uint8_t prv_goto_line(unsigned int target)
 		starting_line = (state.lines.num_lines - SPECASM_MAX_ROWS);
 		row = line - starting_line;
 	}
-	prv_draw_screen(starting_line);
+	specasm_draw_screen(starting_line);
 
 	return 1;
 }
@@ -897,7 +915,7 @@ static uint8_t prv_enter_end(void)
 {
 	if (row == SPECASM_MAX_ROWS - 1) {
 		++line;
-		prv_draw_screen(line - (SPECASM_MAX_ROWS - 1));
+		specasm_draw_screen(line - (SPECASM_MAX_ROWS - 1));
 		col = 0;
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		return 1;
@@ -940,7 +958,7 @@ static uint8_t prv_enter_insert(void)
 		return 0;
 	}
 
-	prv_draw_screen(line - row);
+	specasm_draw_screen(line - row);
 	return prv_enter_end();
 }
 
@@ -964,7 +982,7 @@ static uint8_t prv_move_down(void)
 
 	if (row == SPECASM_MAX_ROWS - 1) {
 		++line;
-		prv_draw_screen(line - (SPECASM_MAX_ROWS - 1));
+		specasm_draw_screen(line - (SPECASM_MAX_ROWS - 1));
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		return 1;
 	}
@@ -1000,6 +1018,8 @@ static uint8_t prv_insert_space(void)
 
 static uint8_t prv_process_char(uint8_t k)
 {
+	uint8_t retval;
+
 	if (!ovr) {
 		if (!prv_insert_space())
 			return 0;
@@ -1014,10 +1034,15 @@ static uint8_t prv_process_char(uint8_t k)
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		return 1;
 	} else if (!ovr) {
-		return prv_enter_insert();
+		retval = prv_enter_insert();
 	} else {
-		return prv_enter();
+		retval = prv_enter();
 	}
+
+	if (retval == 0)
+		specasm_text_set_flash(col, row, SPECASM_FLASH);
+
+	return retval;
 }
 
 static void prv_keypress(uint8_t k)
@@ -1106,7 +1131,7 @@ static uint8_t prv_select_key_down(void)
 
 	if (row == SPECASM_MAX_ROWS - 1) {
 		++line;
-		prv_draw_screen(line - (SPECASM_MAX_ROWS - 1));
+		specasm_draw_screen(line - (SPECASM_MAX_ROWS - 1));
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		return 1;
 	}
@@ -1116,6 +1141,90 @@ static uint8_t prv_select_key_down(void)
 	err_type = SPECASM_ERROR_OK;
 	row++;
 	line++;
+	specasm_text_set_flash(col, row, SPECASM_FLASH);
+
+	return 1;
+}
+
+static uint8_t prv_select_block_down(uint16_t adj)
+{
+	unsigned int last_line;
+	unsigned int new_line;
+	unsigned int page_start;
+
+	last_line = state.lines.num_lines - 1;
+	if (line == last_line)
+		return prv_select_key_down();
+
+	new_line = line + adj;
+	if (new_line > last_line)
+		new_line = last_line;
+
+	if (line == select_start) {
+		select_start = new_line;
+		if (select_start > select_end) {
+			select_start = select_end;
+			select_end = new_line;
+		}
+	} else {
+		select_end = new_line;
+	}
+
+	page_start = (line - row);
+	if (page_start + SPECASM_MAX_ROWS > new_line) {
+
+		/*
+		 * The end of the selection is already on the screen, so just
+		 * adjust the row
+		 */
+
+		row = new_line - page_start;
+	} else {
+		row = (SPECASM_MAX_ROWS - 1);
+		page_start = (new_line - SPECASM_MAX_ROWS) + 1;
+		new_line = page_start + row;
+	}
+
+	col = 0;
+	line = new_line;
+	specasm_draw_screen(page_start);
+	specasm_text_set_flash(col, row, SPECASM_FLASH);
+
+	return 1;
+}
+
+
+static uint8_t prv_select_block_up(uint8_t adj)
+{
+	unsigned int new_line;
+	unsigned int page_start;
+
+	if (line == 0)
+		return 0;
+
+	if (adj > line)
+		new_line = 0;
+	else
+		new_line = line - adj;
+
+	if (line == select_end) {
+		if ((select_end - select_start) < adj)
+			select_end = select_start;
+		select_start = new_line;
+	} else {
+		select_start = new_line;
+	}
+
+	if (line < SPECASM_MAX_ROWS) {
+		page_start = 0;
+		row = new_line;
+	} else {
+		page_start = new_line;
+		row = 0;
+	}
+	col = 0;
+	line = new_line;
+	specasm_draw_screen(page_start);
 	specasm_text_set_flash(col, row, SPECASM_FLASH);
 
 	return 1;
@@ -1145,7 +1254,7 @@ static uint8_t prv_select_key_up(void)
 
 	if (row == 0) {
 		--line;
-		prv_draw_screen(line);
+		specasm_draw_screen(line);
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		return 1;
 	}
@@ -1158,7 +1267,7 @@ static uint8_t prv_select_key_up(void)
 	return 1;
 }
 
-static uint8_t prv_selecting_delete(void)
+uint8_t specasm_selecting_delete(void)
 {
 	unsigned int screen_start;
 	unsigned int range;
@@ -1211,7 +1320,7 @@ static uint8_t prv_selecting_delete(void)
 	return 1;
 }
 
-static uint16_t prv_make_space_e(uint16_t line_count)
+uint16_t specasm_make_space_e(uint16_t line_count)
 {
 	uint16_t size;
 	uint16_t lines_left;
@@ -1232,101 +1341,6 @@ static uint16_t prv_make_space_e(uint16_t line_count)
 
 	return size;
 }
-
-#ifdef SPECASM_TARGET_NEXT_OPCODES
-
-static void prv_clip_copy_e(const char *command)
-{
-	unsigned int i;
-
-	specasm_clip_reset();
-	for (i = select_start; i < select_end; i++) {
-		specasm_format_line_e(line_buf, i);
-		if (err_type != SPECASM_ERROR_OK)
-			goto on_error;
-		specasm_clip_add_line_e(line_buf);
-		if (err_type != SPECASM_ERROR_OK)
-			goto on_error;
-	}
-
-	return;
-
-on_error:
-
-	/*
-	 * We need to put line_buf back the way it was.
-	 */
-
-	memset(line_buf, ' ', SPECASM_LINE_MAX_LEN);
-	line_buf[0] = '>';
-	line_buf[2] = command[0];
-	if (command[1])
-		line_buf[3] = command[1];
-}
-
-static void prv_selecting_clip_copy_e(void)
-{
-	if (select_start >= select_end)
-		return;
-	prv_clip_copy_e("cc");
-}
-
-static uint8_t prv_selecting_clip_cut_e(void)
-{
-	if (select_start >= select_end)
-		return 0;
-	prv_clip_copy_e("x");
-	if (err_type != SPECASM_ERROR_OK)
-		return 0;
-
-	if (!prv_selecting_delete())
-		return 0;
-
-	prv_draw_screen(line - row);
-	specasm_text_set_flash(col, row, SPECASM_FLASH);
-	specasm_draw_status();
-
-	return 1;
-}
-
-static void prv_selecting_clip_paste_e(void)
-{
-	uint16_t i;
-	uint16_t ptr = 0;
-	uint16_t line_count = specasm_clip_get_line_count();
-
-	if (line_count == 0)
-		return;
-
-	(void)prv_make_space_e(line_count);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-
-	i = line;
-	ptr = specasm_clip_get_line(ptr, line_buf);
-	while (ptr) {
-		specasm_parse_line_e(i, line_buf);
-
-		/*
-		 * This can't really error unless there's some memory
-		 * corruption.  If we return an error here we'll need
-		 * to reset line_buf.  As this cannot happen it's not
-		 * worth the code to do it.  We'll clear the error here
-		 * to prevent the corrupted line_buf from being used
-		 * when the command prompt is redisplayed.
-		 */
-
-		err_type = SPECASM_ERROR_OK;
-		ptr = specasm_clip_get_line(ptr, line_buf);
-		i++;
-	}
-	prv_draw_screen(line - row);
-	if (select_start < select_end) {
-		select_end = select_start = 0;
-		specasm_draw_status();
-	}
-}
-#endif
 
 static void prv_selecting_count(void)
 {
@@ -1352,7 +1366,6 @@ static void prv_selecting_count(void)
 	ptr[5] = 's';
 	specasm_text_print(scratch, 0, SPECASM_MAX_ROWS, SPECASM_CODE_COLOUR);
 	specasm_sleep_ms(1000);
-	select_start = select_end = 0;
 }
 
 static void prv_selecting_copy_e(void)
@@ -1367,7 +1380,7 @@ static void prv_selecting_copy_e(void)
 	if (select_start >= select_end)
 		return;
 
-	size = prv_make_space_e(select_end - select_start);
+	size = specasm_make_space_e(select_end - select_start);
 	if (err_type != SPECASM_ERROR_OK)
 		return;
 
@@ -1385,7 +1398,7 @@ static void prv_selecting_copy_e(void)
 	}
 
 	select_start = select_end = 0;
-	prv_draw_screen(line - row);
+	specasm_draw_screen(line - row);
 }
 
 static void prv_selecting_move(void)
@@ -1443,7 +1456,7 @@ static void prv_selecting_move(void)
 	}
 
 	select_start = select_end = 0;
-	prv_draw_screen(line - row);
+	specasm_draw_screen(line - row);
 }
 
 static void prv_selecting_keypress(uint8_t k)
@@ -1452,12 +1465,12 @@ static void prv_selecting_keypress(uint8_t k)
 
 	switch (k) {
 	case SPECASM_KEY_DELETE:
-#ifdef SPECASM_TARGET_NEXT_OPCODES
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 	case 'x':
 		if (k == SPECASM_KEY_DELETE) {
-			update = prv_selecting_delete();
+			update = specasm_selecting_delete();
 		} else {
-			update = prv_selecting_clip_cut_e();
+			update = specasm_selecting_clip_cut_e();
 			if (err_type != SPECASM_ERROR_OK) {
 				prv_draw_error();
 				specasm_sleep_ms(1000);
@@ -1465,7 +1478,7 @@ static void prv_selecting_keypress(uint8_t k)
 			}
 		}
 #else
-		update = prv_selecting_delete();
+		update = specasm_selecting_delete();
 #endif
 	case ' ':
 		select_start = 0;
@@ -1473,7 +1486,7 @@ static void prv_selecting_keypress(uint8_t k)
 	case SPECASM_KEY_ENTER:
 		mode = SPECASM_MODE_EDITOR;
 		update = 1;
-		prv_draw_screen(line - row);
+		specasm_draw_screen(line - row);
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		break;
 	case 'a':
@@ -1485,7 +1498,7 @@ static void prv_selecting_keypress(uint8_t k)
 		col = 0;
 		select_start = 0;
 		select_end = state.lines.num_lines;
-		prv_draw_screen(line - row);
+		specasm_draw_screen(line - row);
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		break;
 	case SPECASM_KEY_DOWN:
@@ -1493,6 +1506,18 @@ static void prv_selecting_keypress(uint8_t k)
 		break;
 	case SPECASM_KEY_UP:
 		update = prv_select_key_up();
+		break;
+	case SPECASM_KEY_PAGE_DOWN:
+		update = prv_select_block_down(SPECASM_MAX_ROWS);
+		break;
+	case SPECASM_KEY_BUF_END:
+		update = prv_select_block_down(state.lines.num_lines - line);
+		break;
+	case SPECASM_KEY_PAGE_UP:
+		update = prv_select_block_up(SPECASM_MAX_ROWS);
+		break;
+	case SPECASM_KEY_BUF_START:
+		update = prv_select_block_up(line);
 		break;
 	default:
 		break;
@@ -1528,7 +1553,11 @@ static void prv_command_keypress(uint8_t k)
 	}
 }
 
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_handle_key_press_banked(uint8_t k)
+#else
 void specasm_handle_key_press(uint8_t k)
+#endif
 {
 	if (mode == SPECASM_MODE_SELECT)
 		prv_selecting_keypress(k);
@@ -1539,7 +1568,11 @@ void specasm_handle_key_press(uint8_t k)
 }
 
 #ifdef SPECASM_TARGET_NEXT
+#if defined(SPECASM_NEXT_BANKED)
+void specasm_editor_preload_banked(const char *fname)
+#else
 void specasm_editor_preload(const char *fname)
+#endif
 {
 	char *completed_fname;
 	size_t len = strlen(fname);
@@ -1567,7 +1600,7 @@ void specasm_editor_preload(const char *fname)
 
 	strcpy(current_fname, completed_fname);
 	line = row = col = select_end = select_start = 0;
-	prv_draw_screen(0);
+	specasm_draw_screen(0);
 
 	return;
 
@@ -1579,16 +1612,25 @@ on_error:
 }
 #endif
 
-void specasm_editor_reset(void)
+void specasm_editor_reset_no_cls(void)
 {
 	specasm_line_t *l;
 
 	ovr = line = row = col = select_end = select_start = editing = 0;
 	mode = quitting = command_col = 0;
 	specasm_state_reset();
-	specasm_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
 	l = &state.lines.lines[0];
 	state.lines.num_lines = 1;
 	l->type = SPECASM_LINE_TYPE_EMPTY;
 	err_type = SPECASM_ERROR_OK;
+}
+
+#if defined(SPECASM_NEXT_BANKED) || defined(SPECASM_128_BANKED)
+void specasm_editor_reset_banked(void)
+#else
+void specasm_editor_reset(void)
+#endif
+{
+	specasm_editor_reset_no_cls();
+	specasm_cls(SPECASM_CODE_COLOUR | SPECASM_LABEL_BACKGROUND);
 }

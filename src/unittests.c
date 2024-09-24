@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "analysis.h"
 #include "editor_tests.h"
 #include "error.h"
 #include "line.h"
@@ -31,7 +32,7 @@ static int prv_test_opcodes()
 	err_type = SPECASM_ERROR_OK;
 
 	for (i = 0; i < opcode_tests_count; i++) {
-		char buf[33] = {0};
+		char buf[SPECASM_MAX_SCRATCH] = {0};
 		specasm_line_t line = {0};
 		const test_t *t = &opcode_tests[i];
 
@@ -92,14 +93,14 @@ static int prv_test_parse_format_bare()
 	err_type = SPECASM_ERROR_OK;
 
 	for (i = 0; i < opcode_tests_count; i++) {
-		char buf[SPECASM_LINE_MAX_LEN + 1];
-		char buf2[SPECASM_LINE_MAX_LEN + 1];
+		char buf[SPECASM_MAX_SCRATCH];
+		char buf2[SPECASM_MAX_SCRATCH];
 		const test_t *t = &opcode_tests[i];
 		const specasm_line_t *line = &state.lines.lines[0];
 		uint8_t type;
 
-		memset(buf, ' ', sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
+		memset(buf, ' ', SPECASM_LINE_MAX_LEN);
+		buf[SPECASM_LINE_MAX_LEN] = 0;
 		memcpy(buf, t->source, strlen(t->source));
 
 		printf("opcode: %s : ", t->source);
@@ -129,8 +130,8 @@ static int prv_test_parse_format_bare()
 		}
 
 		memset(buf, 0, sizeof(buf));
-		memset(buf2, ' ', sizeof(buf2) - 1);
-		buf2[sizeof(buf2) - 1] = 0;
+		memset(buf2, ' ', SPECASM_LINE_MAX_LEN);
+		buf2[SPECASM_LINE_MAX_LEN] = 0;
 		type = specasm_line_get_adj_type(line);
 		if (type != SPECASM_LINE_TYPE_DB &&
 		    type != SPECASM_LINE_TYPE_DW &&
@@ -166,14 +167,14 @@ static int prv_test_format()
 	err_type = SPECASM_ERROR_OK;
 
 	for (i = 0; i < format_tests_count; i++) {
-		char buf[SPECASM_LINE_MAX_LEN + 1];
-		char buf2[SPECASM_LINE_MAX_LEN + 1];
+		char buf[SPECASM_MAX_SCRATCH];
+		char buf2[SPECASM_MAX_SCRATCH];
 		const format_test_t *t = &format_tests[i];
 		const specasm_line_t *line = &state.lines.lines[0];
 
 		printf("test: %s : ", t->source);
-		memset(buf, ' ', sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
+		memset(buf, ' ', SPECASM_LINE_MAX_LEN);
+		buf[SPECASM_LINE_MAX_LEN] = 0;
 		if (strlen(t->source) > SPECASM_LINE_MAX_LEN) {
 			printf("[ASSERT] test string too long\n");
 			return 1;
@@ -194,8 +195,8 @@ static int prv_test_format()
 		}
 
 		memset(buf, 0, sizeof(buf));
-		memset(buf2, ' ', sizeof(buf2) - 1);
-		buf2[sizeof(buf2) - 1] = 0;
+		memset(buf2, ' ', SPECASM_LINE_MAX_LEN);
+		buf2[SPECASM_LINE_MAX_LEN] = 0;
 		memcpy(buf2, t->str, strlen(t->str));
 		specasm_format_line_e(buf, 0);
 		if (err_type != SPECASM_ERROR_OK) {
@@ -215,19 +216,76 @@ static int prv_test_format()
 	return 0;
 }
 
+static int prv_test_anal()
+{
+	size_t i;
+	specasm_cycles_t cycles;
+	uint8_t flags;;
+
+	err_type = SPECASM_ERROR_OK;
+
+	for (i = 0; i < anal_tests_count; i++) {
+		char buf[SPECASM_MAX_SCRATCH];
+		const anal_test_t *t = &anal_tests[i];
+		const specasm_line_t *line = &state.lines.lines[0];
+
+		printf("anal test: %s : ", t->source);
+		memset(buf, ' ', SPECASM_LINE_MAX_LEN);
+		buf[SPECASM_LINE_MAX_LEN] = 0;
+		if (strlen(t->source) > SPECASM_LINE_MAX_LEN) {
+			printf("[ASSERT] test string too long\n");
+			return 1;
+		}
+		memcpy(buf, t->source, strlen(t->source));
+
+		specasm_parse_line_e(0, buf);
+		if (err_type != SPECASM_ERROR_OK) {
+			printf("[FAIL]\n\t>%s\n", error_msgs[err_type]);
+			return 1;
+		}
+
+		specasm_get_cycles(line, &cycles);
+		flags = specasm_get_flags(line);
+
+		if ((t->m[0] != cycles.m[0]) || (t->m[1] != cycles.m[1])) {
+			printf("[FAIL]\n\t>machine cycles do not"
+			       "match (%d %d) (%d %d)\n", t->m[0], t->m[1],
+			       cycles.m[0], cycles.m[1]);
+			return 1;
+		}
+
+		if ((t->t[0] != cycles.t[0]) || (t->t[1] != cycles.t[1])) {
+			printf("[FAIL]\n\t>t states do not"
+			       "match (%d %d) (%d %d)\n", t->t[0], t->t[1],
+			       cycles.t[0], cycles.t[1]);
+			return 1;
+		}
+
+		if (t->flags != flags) {
+			printf("[FAIL]\n\t>t flags do not match (%x) (%x)\n",
+			       t->flags, flags);
+			return 1;
+		}
+
+		printf("[OK]\n");
+	}
+
+	return 0;
+}
+
 static int prv_test_bad_opcodes()
 {
 	size_t i;
 
 	for (i = 0; i < bad_tests_count; i++) {
-		char buf[SPECASM_LINE_MAX_LEN + 1];
+		char buf[SPECASM_MAX_SCRATCH];
 		const bad_test_t *t = &bad_tests[i];
 		err_type = SPECASM_ERROR_OK;
 
 		printf("bad opcode: %s : ", t->source);
 
-		memset(buf, ' ', sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
+		memset(buf, ' ', SPECASM_LINE_MAX_LEN);
+		buf[SPECASM_LINE_MAX_LEN] = 0;
 		if (strlen(t->source) > SPECASM_LINE_MAX_LEN) {
 			printf("[ASSERT] test string too long\n");
 			return 1;
@@ -235,6 +293,8 @@ static int prv_test_bad_opcodes()
 		memcpy(buf, t->source, strlen(t->source));
 
 		(void)specasm_parse_line_e(0, buf);
+		if (err_type == SPECASM_ERROR_OK)
+			specasm_format_line_e(buf, 0);
 		if (err_type != t->error) {
 			printf("[FAIL]\n\t>expected %s got %s\n",
 			       error_msgs[t->error], error_msgs[err_type]);
@@ -279,6 +339,10 @@ int main(int argc, char *argv[])
 
 	printf("\n");
 	if (prv_test_format())
+		return 1;
+
+	printf("\n");
+	if (prv_test_anal())
 		return 1;
 
 	printf("\n");

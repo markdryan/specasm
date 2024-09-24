@@ -385,13 +385,8 @@ fail:
 	err_type = SPECASM_ERROR_BAD_REG;
 }
 
-#ifdef SPECASM_NEXT_BANKED
-uint8_t specasm_parse_ld_banked_e(const char *args, specasm_line_t *line,
-				  const specasm_opcode_t *op_entry)
-#else
 uint8_t specasm_parse_ld_e(const char *args, specasm_line_t *line,
 			   const specasm_opcode_t *op_entry)
-#endif
 {
 	const char *args2;
 	uint16_t val;

@@ -6,6 +6,9 @@ all: specasm.tap salink.tap SAEXPORT SAIMPORT SAMAKE
 CC=zcc
 CFLAGS=+zx -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy
 
+util_print_acc_zx.o: util_print_acc_zx.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 include Make.include
 
 SPECASM = \
@@ -18,11 +21,14 @@ SPECASM = \
 	line_parse_common.o \
 	error.o \
 	specasm_mainloop.o \
+	scratch.o \
 	state_base.o \
 	state_dump.o \
 	state_parse.o \
 	editor.o \
+	editor_buffers.o \
 	util_print_zx.o \
+	util_print_acc_zx.o \
 	peer_zx.o
 
 SALINK = \
@@ -35,6 +41,7 @@ SALINK = \
 	peer_file_zx.o \
 	queued_files.o \
 	util_print_zx.o \
+	util_print_acc_zx.o \
 	peer_zx.o
 
 SAEXPORT = \
@@ -55,6 +62,7 @@ SAIMPORT = \
 	line_common.o \
 	line_parse.o \
 	line_parse_common.o \
+	scratch.o \
 	state_parse.o \
 	peer_file_zx.o \
 	peer_zx.o \
@@ -73,7 +81,7 @@ specasm.tap: $(SPECASM)
 	cat ../../../bas/48/SPECLD.TAP specasm-bare.tap > specasm.tap
 
 salink.tap: $(SALINK)
-	$(CC) $(CFLAGS) -zorg=24000 -startup=31 -o salink-bare $^ -Cz"--noloader" -create-app
+	$(CC) $(CFLAGS) -m -zorg=24000 -startup=31 -o salink-bare $^ -Cz"--noloader" -create-app
 	cat ../../../bas/48/LINKLD.TAP salink-bare.tap > salink.tap
 
 SAEXPORT: $(SAEXPORT)

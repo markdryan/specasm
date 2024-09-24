@@ -220,6 +220,13 @@ if [ "$str" != "fd 36 01 41" ]; then
     echo "got      $str"
     exit 1
 fi
+offset=253
+str=`od -An -j$offset -t x1 -N1 zx81 | xargs`
+if [ "$str" != "26" ]; then
+    echo "Expected 26 at offset $offset"
+    echo "got      $str"
+    exit 1
+fi
 
 rm zx81
 rm *.x

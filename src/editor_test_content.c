@@ -864,7 +864,7 @@ const editor_test_t editor_tests[] = {
 		"@hello                          "
 		EDITOR_BLANK_LINE,
 		"",
-		{ .command_col = 3 },
+		{ .command_col = 3, .select_end = 5 },
 		6,
 	},
 	{

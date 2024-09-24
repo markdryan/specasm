@@ -84,6 +84,8 @@
 #define SALINK_TOKEN_LSL_VAL 1
 #define SALINK_TOKEN_ASR_VAL 2
 
+#define SALINK_MAX_DEPTH 3
+
 struct salink_token_t_ {
 	uint8_t type;
 	union {
@@ -94,16 +96,119 @@ struct salink_token_t_ {
 
 typedef struct salink_token_t_ salink_token_t;
 
+struct salink_exp_stack_entry_t_ {
+	uint8_t is_global;
+	uint8_t depth;
+	uint16_t line_no;
+};
+
+typedef struct salink_exp_stack_entry_t_ salink_exp_stack_entry_t;
+
+static salink_exp_stack_entry_t g_stack[SALINK_MAX_DEPTH + 1];
+static uint8_t g_stack_top;
+
 static salink_obj_t *g_obj;
 
-static const char *prv_exp_priority4_e(const char *str, int16_t *e,
-				       uint8_t depth, uint8_t is_global,
-				       uint16_t line_no);
+static const char *prv_exp_priority4_e(const char *str, int16_t *e);
 
 static void prv_equ_eval_local_e(salink_label_t *label, uint8_t depth,
 				 uint16_t line_no);
-
+void salink_equ_eval_global_banked_e(salink_obj_t *obj, salink_global_t *global,
+				     salink_label_t *label, uint8_t depth);
 static const char simple_ops[] = "()/*+-&|^~";
+
+static const char zx81_conseq_ops[] = {'"', '#', '$', ':', '?', '(',
+				       ')', '>', '<', '=', '+', '-',
+				       '*', '/', ';', ',', '.'};
+
+#ifdef SPECASM_NEXT_BANKED
+char salink_to_zx81_char_banked(char ch)
+#else
+char salink_to_zx81_char(char ch)
+#endif
+{
+	uint8_t i;
+
+	if (ch == ' ')
+		return 0;
+
+	for (i = 0; i < sizeof(zx81_conseq_ops); i++)
+		if (ch == zx81_conseq_ops[i])
+			return 11 + i;
+
+	if ((ch >= '0') && (ch <= '9'))
+		return ch - 20;
+
+	ch |= 32;
+	if ((ch >= 'a') && (ch <= 'z'))
+		return ch - 59;
+
+	return 15; // '?'
+}
+
+static void prv_unknown_error_label_e(salink_obj_t *obj, const char *str)
+{
+	snprintf(error_buf, sizeof(error_buf), "%s:Unknown label in equ:%s",
+		 obj->fname, str);
+	err_type = SALINK_ERROR_UNRESOLVED_LABEL;
+}
+
+/*
+ * Find a label id given a string.  We need this when evaluating expressions.
+ * Labels within expressions are encoded as strings rather than as ids.
+ */
+
+static unsigned int prv_find_local_label_e(const char *str, int len,
+					   salink_obj_t *obj)
+{
+	unsigned int i;
+	salink_label_t *label;
+	const char *lab_str;
+	uint8_t lng = len >= SPECASM_MAX_SHORT_LEN ? 1 : 0;
+	uint8_t lab_lng;
+
+	for (i = obj->label_start; i < obj->label_end; i++) {
+		label = &labels[i];
+		if ((label->type == SALINK_LABEL_TYPE_ALIGN) ||
+		    (label->type == SALINK_LABEL_TYPE_EQU_GLOBAL) ||
+		    (label->type == SALINK_LABEL_TYPE_EQU_EVAL_GLOBAL))
+			continue;
+		lab_lng = label->type & 1;
+		if (lng != lab_lng)
+			continue;
+
+		lab_str = salink_get_label_str_e(label->id, lng);
+		if (err_type != SPECASM_ERROR_OK)
+			return 0;
+
+		if (!strcmp(str, lab_str))
+			return i;
+	}
+
+	prv_unknown_error_label_e(obj, str);
+
+	return 0;
+}
+
+/*
+ * Returns the index of the global that matches str
+ */
+
+static unsigned int prv_find_global_label_e(const char *str, salink_obj_t *obj)
+{
+	unsigned int i;
+	salink_global_t *global;
+
+	for (i = 0; i < global_count; i++) {
+		global = &globals[i];
+		if (!strcmp(str, global->name))
+			return i;
+	}
+
+	prv_unknown_error_label_e(obj, str);
+
+	return 0;
+}
 
 const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 			    uint8_t is_global)
@@ -112,6 +217,7 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 	char *end_ptr;
 	uint8_t i;
 	char c;
+	char ch;
 	long lval;
 	int len;
 
@@ -127,6 +233,24 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 	if (c == 0) {
 		tok->type = SALINK_TOKEN_EOF;
 		return NULL;
+	}
+
+	if (c == '\'') {
+		buf++;
+		ch = *buf;
+		if (!ch || ch == '\'' || buf[1] != '\'') {
+			err_type = SALINK_ERROR_BAD_EXPRESSION;
+			return NULL;
+		}
+		tok->type = SALINK_TOKEN_NUM;
+		if (got_zx81)
+#ifdef SPECASM_NEXT_BANKED
+			ch = salink_to_zx81_char_banked(ch);
+#else
+			ch = salink_to_zx81_char(ch);
+#endif
+		tok->data.num = (int16_t)ch;
+		return buf + 2;
 	}
 
 	if ((c == '$') || ((c >= '0') && (c <= '9'))) {
@@ -184,11 +308,11 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 		c = *start;
 		if ((c >= 'A') && (c <= 'Z')) {
 			tok->data.id =
-			    salink_find_global_label_e(scratch, g_obj);
+			    prv_find_global_label_e(scratch, g_obj);
 			tok->type = SALINK_TOKEN_GLOBAL_LABEL;
 		} else {
-			tok->data.id =
-			    salink_find_local_label_e(scratch, len, g_obj);
+			tok->data.id = prv_find_local_label_e(scratch, len,
+							      g_obj);
 			if ((err_type == SPECASM_ERROR_ASSERT_BAD_STRING_ID) &&
 			    (is_global)) {
 				err_type = SALINK_ERROR_LOCAL_IN_GLOBAL_EQU;
@@ -204,13 +328,14 @@ const char *prv_get_token_e(const char *buf, salink_token_t *tok,
 	return NULL;
 }
 
-static const char *prv_exp_priority0_e(const char *str, int16_t *e,
-				       uint8_t depth, uint8_t is_global,
-				       uint16_t line_no)
+static const char *prv_exp_priority0_e(const char *str, int16_t *e)
 {
 	salink_token_t tok;
 	salink_label_t *label;
 	salink_global_t *global;
+	uint8_t is_global = g_stack[g_stack_top -1].is_global;
+	uint16_t line_no = g_stack[g_stack_top - 1].line_no;
+	uint8_t depth = g_stack[g_stack_top - 1].depth;
 
 	str = prv_get_token_e(str, &tok, is_global);
 	if (err_type != SPECASM_ERROR_OK) {
@@ -219,9 +344,20 @@ static const char *prv_exp_priority0_e(const char *str, int16_t *e,
 
 	switch (tok.type) {
 	case SALINK_TOKEN_OP:
-		str = prv_exp_priority4_e(str, e, depth, is_global, line_no);
+		if (depth == SALINK_MAX_DEPTH) {
+			err_type = SALINK_ERROR_RECURISVE_EQU;
+			return NULL;
+		}
+		g_stack[g_stack_top].is_global = is_global;
+		g_stack[g_stack_top].depth = depth + 1;
+		g_stack[g_stack_top].line_no = line_no;
+		g_stack_top++;
+
+		str = prv_exp_priority4_e(str, e);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
+
+		g_stack_top--;
 		switch (tok.data.id) {
 		case '-':
 			*e = -*e;
@@ -262,7 +398,7 @@ static const char *prv_exp_priority0_e(const char *str, int16_t *e,
 			break;
 		case SALINK_LABEL_TYPE_EQU_SHORT:
 		case SALINK_LABEL_TYPE_EQU_LONG:
-			if (depth == 8) {
+			if (depth == SALINK_MAX_DEPTH) {
 				err_type = SALINK_ERROR_RECURISVE_EQU;
 				return NULL;
 			}
@@ -288,12 +424,17 @@ static const char *prv_exp_priority0_e(const char *str, int16_t *e,
 			*e = label->data.off;
 			break;
 		case SALINK_LABEL_TYPE_EQU_GLOBAL:
-			if (depth == 8) {
+			if (depth == SALINK_MAX_DEPTH) {
 				err_type = SALINK_ERROR_RECURISVE_EQU;
 				return NULL;
 			}
+#ifdef SPECASM_NEXT_BANKED
+			salink_equ_eval_global_banked_e(g_obj, global, label,
+							depth + 1);
+#else
 			salink_equ_eval_global_e(g_obj, global, label,
 						 depth + 1);
+#endif
 			if (err_type != SPECASM_ERROR_OK)
 				return NULL;
 			*e = label->data.off;
@@ -313,17 +454,16 @@ static const char *prv_exp_priority0_e(const char *str, int16_t *e,
 	return str;
 }
 
-static const char *prv_exp_priority1_e(const char *str, int16_t *e,
-				       uint8_t depth, uint8_t is_global,
-				       uint16_t line_no)
+static const char *prv_exp_priority1_e(const char *str, int16_t *e)
 {
 	salink_token_t tok;
 	int16_t e1;
 	int16_t e2;
 	char op;
 	const char *next;
+	uint8_t is_global = g_stack[g_stack_top - 1].is_global;
 
-	str = prv_exp_priority0_e(str, &e1, depth, is_global, line_no);
+	str = prv_exp_priority0_e(str, &e1);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -336,7 +476,7 @@ static const char *prv_exp_priority1_e(const char *str, int16_t *e,
 		if (op != '*' && op != '/' && op != '%')
 			break;
 
-		str = prv_exp_priority0_e(next, &e2, depth, is_global, line_no);
+		str = prv_exp_priority0_e(next, &e2);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 
@@ -366,17 +506,16 @@ static const char *prv_exp_priority1_e(const char *str, int16_t *e,
 	return str;
 }
 
-static const char *prv_exp_priority2_e(const char *str, int16_t *e,
-				       uint8_t depth, uint8_t is_global,
-				       uint16_t line_no)
+static const char *prv_exp_priority2_e(const char *str, int16_t *e)
 {
 	salink_token_t tok;
 	int16_t e1;
 	int16_t e2;
 	char op;
 	const char *next;
+	uint8_t is_global = g_stack[g_stack_top - 1].is_global;
 
-	str = prv_exp_priority1_e(str, &e1, depth, is_global, line_no);
+	str = prv_exp_priority1_e(str, &e1);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -389,7 +528,7 @@ static const char *prv_exp_priority2_e(const char *str, int16_t *e,
 		if (op != '+' && op != '-')
 			break;
 
-		str = prv_exp_priority1_e(next, &e2, depth, is_global, line_no);
+		str = prv_exp_priority1_e(next, &e2);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 
@@ -411,17 +550,16 @@ static const char *prv_exp_priority2_e(const char *str, int16_t *e,
 	return str;
 }
 
-static const char *prv_exp_priority3_e(const char *str, int16_t *e,
-				       uint8_t depth, uint8_t is_global,
-				       uint16_t line_no)
+static const char *prv_exp_priority3_e(const char *str, int16_t *e)
 {
 	salink_token_t tok;
 	int16_t e1;
 	int16_t e2;
 	char op;
 	const char *next;
+	uint8_t is_global = g_stack[g_stack_top - 1].is_global;
 
-	str = prv_exp_priority2_e(str, &e1, depth, is_global, line_no);
+	str = prv_exp_priority2_e(str, &e1);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -435,7 +573,7 @@ static const char *prv_exp_priority3_e(const char *str, int16_t *e,
 		    (op != SALINK_TOKEN_ASR_VAL))
 			break;
 
-		str = prv_exp_priority2_e(next, &e2, depth, is_global, line_no);
+		str = prv_exp_priority2_e(next, &e2);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 
@@ -457,17 +595,16 @@ static const char *prv_exp_priority3_e(const char *str, int16_t *e,
 	return str;
 }
 
-static const char *prv_exp_priority4_e(const char *str, int16_t *e,
-				       uint8_t depth, uint8_t is_global,
-				       uint16_t line_no)
+static const char *prv_exp_priority4_e(const char *str, int16_t *e)
 {
 	salink_token_t tok;
 	int16_t e1;
 	int16_t e2;
 	char op;
 	const char *next;
+	uint8_t is_global = g_stack[g_stack_top - 1].is_global;
 
-	str = prv_exp_priority3_e(str, &e1, depth, is_global, line_no);
+	str = prv_exp_priority3_e(str, &e1);
 	if (err_type != SPECASM_ERROR_OK)
 		return NULL;
 
@@ -480,7 +617,7 @@ static const char *prv_exp_priority4_e(const char *str, int16_t *e,
 		if (op != '&' && op != '|' && op != '^')
 			break;
 
-		str = prv_exp_priority3_e(next, &e2, depth, is_global, line_no);
+		str = prv_exp_priority3_e(next, &e2);
 		if (err_type != SPECASM_ERROR_OK)
 			return NULL;
 
@@ -512,9 +649,16 @@ static int16_t prv_equ_eval_e(const char *name, uint8_t depth,
 	int16_t e;
 	salink_token_t tok;
 
-	str = prv_exp_priority4_e(name, &e, depth, is_global, line_no);
+	g_stack[g_stack_top].is_global = is_global;
+	g_stack[g_stack_top].depth = depth;
+	g_stack[g_stack_top].line_no = line_no;
+	g_stack_top++;
+
+	str = prv_exp_priority4_e(name, &e);
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
+
+	g_stack_top--;
 
 	(void)prv_get_token_e(str, &tok, is_global);
 	if (tok.type != SALINK_TOKEN_EOF)
@@ -556,7 +700,7 @@ static void prv_check_exp_err(const char *name, uint16_t line_no,
 		err_msg = "Divide by zero";
 		break;
 	case SALINK_ERROR_RECURISVE_EQU:
-		err_msg = "Recursive definition";
+		err_msg = "Max expression depth reached";
 		break;
 	case SALINK_ERROR_LOCAL_IN_GLOBAL_EQU:
 		err_msg = "Global EQU references local EQU";
@@ -576,18 +720,6 @@ static void prv_check_equ_err(const char *name, const char *equ,
 {
 	snprintf(scratch, sizeof(scratch), "%s = %s", name, equ);
 	prv_check_exp_err(scratch, line_no, exact_line);
-}
-
-static int16_t prv_equ_eval_wrapper_e(salink_obj_t *obj, const char *str,
-				      uint16_t line_no)
-{
-	int16_t e;
-
-	g_obj = obj;
-	e = prv_equ_eval_e(str, 0, 0, line_no);
-	prv_check_exp_err(str, line_no, 1);
-
-	return e;
 }
 
 static void prv_equ_eval_local_e(salink_label_t *label, uint8_t depth,
@@ -645,7 +777,9 @@ static int16_t prv_eval_exp_from_id_e(salink_obj_t *obj, unsigned int line_no,
 	if (err_type != SPECASM_ERROR_OK)
 		return 0;
 
-	exp = prv_equ_eval_wrapper_e(obj, str, line_no);
+	g_obj = obj;
+	exp = prv_equ_eval_e(str, 0, 0, line_no);
+	prv_check_exp_err(str, line_no, 1);
 
 	if ((err_type != SPECASM_ERROR_OK) && (err_type < SPECASM_MAX_ERRORS)) {
 		snprintf(error_buf, sizeof(error_buf), "%s:%d %s", obj->fname,
