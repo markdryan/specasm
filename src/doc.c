@@ -39,11 +39,589 @@ struct specasm_ins_form_t_ {
 
 typedef struct specasm_ins_form_t_ specasm_ins_form_t;
 
+#define SPECASM_DOC_ADC_FORMS 0
+#define SPECASM_DOC_ADC_NUM_FORMS 6
+#define SPECASM_DOC_ADD1_FORMS \
+	(SPECASM_DOC_ADC_FORMS + SPECASM_DOC_ADC_NUM_FORMS)
+#define SPECASM_DOC_ADD1_NUM_FORMS 5
+#define SPECASM_DOC_ADD2_FORMS \
+	(SPECASM_DOC_ADD1_FORMS + SPECASM_DOC_ADD1_NUM_FORMS)
+#define SPECASM_DOC_ADD2_NUM_FORMS 1
+#define SPECASM_DOC_ADD3_FORMS \
+	(SPECASM_DOC_ADD2_FORMS + SPECASM_DOC_ADD2_NUM_FORMS)
+#define SPECASM_DOC_ADD3_NUM_FORMS 1
+#define SPECASM_DOC_ADD4_FORMS \
+	(SPECASM_DOC_ADD3_FORMS + SPECASM_DOC_ADD3_NUM_FORMS)
+#define SPECASM_DOC_ADD4_NUM_FORMS 1
+#define SPECASM_DOC_ALIGN_FORMS \
+	(SPECASM_DOC_ADD4_FORMS + SPECASM_DOC_ADD4_NUM_FORMS)
+#define SPECASM_DOC_ALIGN_NUM_FORMS 1
+#define SPECASM_DOC_AND_FORMS \
+	(SPECASM_DOC_ALIGN_FORMS + SPECASM_DOC_ALIGN_NUM_FORMS)
+#define SPECASM_DOC_AND_NUM_FORMS 5
+#define SPECASM_DOC_BIT_FORMS \
+	(SPECASM_DOC_AND_FORMS + SPECASM_DOC_AND_NUM_FORMS)
+#define SPECASM_DOC_BIT_NUM_FORMS 4
+#define SPECASM_DOC_CALL_FORMS \
+	(SPECASM_DOC_BIT_FORMS + SPECASM_DOC_BIT_NUM_FORMS)
+#define SPECASM_DOC_CALL_NUM_FORMS 3
+#define SPECASM_DOC_CCF_FORMS \
+	(SPECASM_DOC_CALL_FORMS + SPECASM_DOC_CALL_NUM_FORMS)
+#define SPECASM_DOC_CCF_NUM_FORMS 1
+#define SPECASM_DOC_CP_FORMS \
+	(SPECASM_DOC_CCF_FORMS + SPECASM_DOC_CCF_NUM_FORMS)
+#define SPECASM_DOC_CP_NUM_FORMS 5
+#define SPECASM_DOC_CPD_FORMS \
+	(SPECASM_DOC_CP_FORMS + SPECASM_DOC_CP_NUM_FORMS)
+#define SPECASM_DOC_CPD_NUM_FORMS 1
+#define SPECASM_DOC_CPDR_FORMS \
+	(SPECASM_DOC_CPD_FORMS + SPECASM_DOC_CPD_NUM_FORMS)
+#define SPECASM_DOC_CPDR_NUM_FORMS 2
+#define SPECASM_DOC_CPI_FORMS \
+	(SPECASM_DOC_CPDR_FORMS + SPECASM_DOC_CPDR_NUM_FORMS)
+#define SPECASM_DOC_CPI_NUM_FORMS 1
+#define SPECASM_DOC_CPIR_FORMS \
+	(SPECASM_DOC_CPI_FORMS + SPECASM_DOC_CPI_NUM_FORMS)
+#define SPECASM_DOC_CPIR_NUM_FORMS 2
+#define SPECASM_DOC_CPL_FORMS \
+	(SPECASM_DOC_CPIR_FORMS + SPECASM_DOC_CPIR_NUM_FORMS)
+#define SPECASM_DOC_CPL_NUM_FORMS 1
+#define SPECASM_DOC_DAA_FORMS \
+	(SPECASM_DOC_CPL_FORMS + SPECASM_DOC_CPL_NUM_FORMS)
+#define SPECASM_DOC_DAA_NUM_FORMS 1
+#define SPECASM_DOC_DB_FORMS \
+	(SPECASM_DOC_DAA_FORMS + SPECASM_DOC_DAA_NUM_FORMS)
+#define SPECASM_DOC_DB_NUM_FORMS 4
+#define SPECASM_DOC_DEC1_FORMS \
+	(SPECASM_DOC_DB_FORMS + SPECASM_DOC_DB_NUM_FORMS)
+#define SPECASM_DOC_DEC1_NUM_FORMS 4
+#define SPECASM_DOC_DEC2_FORMS \
+	(SPECASM_DOC_DEC1_FORMS + SPECASM_DOC_DEC1_NUM_FORMS)
+#define SPECASM_DOC_DEC2_NUM_FORMS 3
+#define SPECASM_DOC_DI_FORMS \
+	(SPECASM_DOC_DEC2_FORMS + SPECASM_DOC_DEC2_NUM_FORMS)
+#define SPECASM_DOC_DI_NUM_FORMS 1
+#define SPECASM_DOC_DJNZ_FORMS \
+	(SPECASM_DOC_DI_FORMS + SPECASM_DOC_DI_NUM_FORMS)
+#define SPECASM_DOC_DJNZ_NUM_FORMS 2
+#define SPECASM_DOC_DS_FORMS \
+	(SPECASM_DOC_DJNZ_FORMS + SPECASM_DOC_DJNZ_NUM_FORMS)
+#define SPECASM_DOC_DS_NUM_FORMS 1
+#define SPECASM_DOC_DW_FORMS \
+	(SPECASM_DOC_DS_FORMS + SPECASM_DOC_DS_NUM_FORMS)
+#define SPECASM_DOC_DW_NUM_FORMS 2
+#define SPECASM_DOC_EI_FORMS \
+	(SPECASM_DOC_DW_FORMS + SPECASM_DOC_DW_NUM_FORMS)
+#define SPECASM_DOC_EI_NUM_FORMS 1
+#define SPECASM_DOC_EX_FORMS \
+	(SPECASM_DOC_EI_FORMS + SPECASM_DOC_EI_NUM_FORMS)
+#define SPECASM_DOC_EX_NUM_FORMS 5
+#define SPECASM_DOC_EXX_FORMS \
+	(SPECASM_DOC_EX_FORMS + SPECASM_DOC_EX_NUM_FORMS)
+#define SPECASM_DOC_EXX_NUM_FORMS 1
+#define SPECASM_DOC_HALT_FORMS \
+	(SPECASM_DOC_EXX_FORMS + SPECASM_DOC_EXX_NUM_FORMS)
+#define SPECASM_DOC_HALT_NUM_FORMS 1
+#define SPECASM_DOC_IM_FORMS \
+	(SPECASM_DOC_HALT_FORMS + SPECASM_DOC_HALT_NUM_FORMS)
+#define SPECASM_DOC_IM_NUM_FORMS 3
+#define SPECASM_DOC_IN1_FORMS \
+	(SPECASM_DOC_IM_FORMS + SPECASM_DOC_IM_NUM_FORMS)
+#define SPECASM_DOC_IN1_NUM_FORMS 1
+#define SPECASM_DOC_IN2_FORMS \
+	(SPECASM_DOC_IN1_FORMS + SPECASM_DOC_IN1_NUM_FORMS)
+#define SPECASM_DOC_IN2_NUM_FORMS 1
+#define SPECASM_DOC_INC1_FORMS \
+	(SPECASM_DOC_IN2_FORMS + SPECASM_DOC_IN2_NUM_FORMS)
+#define SPECASM_DOC_INC1_NUM_FORMS 4
+#define SPECASM_DOC_INC2_FORMS \
+	(SPECASM_DOC_INC1_FORMS + SPECASM_DOC_INC1_NUM_FORMS)
+#define SPECASM_DOC_INC2_NUM_FORMS 3
+#define SPECASM_DOC_IND_FORMS \
+	(SPECASM_DOC_INC2_FORMS + SPECASM_DOC_INC2_NUM_FORMS)
+#define SPECASM_DOC_IND_NUM_FORMS 1
+#define SPECASM_DOC_INDR_FORMS \
+	(SPECASM_DOC_IND_FORMS + SPECASM_DOC_IND_NUM_FORMS)
+#define SPECASM_DOC_INDR_NUM_FORMS 2
+#define SPECASM_DOC_INI_FORMS \
+	(SPECASM_DOC_INDR_FORMS + SPECASM_DOC_INDR_NUM_FORMS)
+#define SPECASM_DOC_INI_NUM_FORMS 1
+#define SPECASM_DOC_INIR_FORMS \
+	(SPECASM_DOC_INI_FORMS + SPECASM_DOC_INI_NUM_FORMS)
+#define SPECASM_DOC_INIR_NUM_FORMS 2
+#define SPECASM_DOC_JP_FORMS \
+	(SPECASM_DOC_INIR_FORMS + SPECASM_DOC_INIR_NUM_FORMS)
+#define SPECASM_DOC_JP_NUM_FORMS 6
+#define SPECASM_DOC_LDD_FORMS \
+	(SPECASM_DOC_JP_FORMS + SPECASM_DOC_JP_NUM_FORMS)
+#define SPECASM_DOC_LDD_NUM_FORMS 1
+#define SPECASM_DOC_LDDR_FORMS \
+	(SPECASM_DOC_LDD_FORMS + SPECASM_DOC_LDD_NUM_FORMS)
+#define SPECASM_DOC_LDDR_NUM_FORMS 2
+#define SPECASM_DOC_LDI_FORMS \
+	(SPECASM_DOC_LDDR_FORMS + SPECASM_DOC_LDDR_NUM_FORMS)
+#define SPECASM_DOC_LDI_NUM_FORMS 1
+#define SPECASM_DOC_LDIR_FORMS \
+	(SPECASM_DOC_LDI_FORMS + SPECASM_DOC_LDI_NUM_FORMS)
+#define SPECASM_DOC_LDIR_NUM_FORMS 2
+#define SPECASM_DOC_MAP_FORMS \
+	(SPECASM_DOC_LDIR_FORMS + SPECASM_DOC_LDIR_NUM_FORMS)
+#define SPECASM_DOC_MAP_NUM_FORMS 1
+#define SPECASM_DOC_NEG_FORMS \
+	(SPECASM_DOC_MAP_FORMS + SPECASM_DOC_MAP_NUM_FORMS)
+#define SPECASM_DOC_NEG_NUM_FORMS 1
+#define SPECASM_DOC_NOP_FORMS \
+	(SPECASM_DOC_NEG_FORMS + SPECASM_DOC_NEG_NUM_FORMS)
+#define SPECASM_DOC_NOP_NUM_FORMS 1
+#define SPECASM_DOC_OR_FORMS \
+	(SPECASM_DOC_NOP_FORMS + SPECASM_DOC_NOP_NUM_FORMS)
+#define SPECASM_DOC_OR_NUM_FORMS 5
+#define SPECASM_DOC_ORG_FORMS \
+	(SPECASM_DOC_OR_FORMS + SPECASM_DOC_OR_NUM_FORMS)
+#define SPECASM_DOC_ORG_NUM_FORMS 1
+#define SPECASM_DOC_OUT1_FORMS \
+	(SPECASM_DOC_ORG_FORMS + SPECASM_DOC_ORG_NUM_FORMS)
+#define SPECASM_DOC_OUT1_NUM_FORMS 1
+#define SPECASM_DOC_OUT2_FORMS \
+	(SPECASM_DOC_OUT1_FORMS + SPECASM_DOC_OUT1_NUM_FORMS)
+#define SPECASM_DOC_OUT2_NUM_FORMS 1
+#define SPECASM_DOC_OUTD_FORMS \
+	(SPECASM_DOC_OUT2_FORMS + SPECASM_DOC_OUT2_NUM_FORMS)
+#define SPECASM_DOC_OUTD_NUM_FORMS 1
+#define SPECASM_DOC_OUTDR_FORMS \
+	(SPECASM_DOC_OUTD_FORMS + SPECASM_DOC_OUTD_NUM_FORMS)
+#define SPECASM_DOC_OUTDR_NUM_FORMS 2
+#define SPECASM_DOC_OUTI_FORMS \
+	(SPECASM_DOC_OUTDR_FORMS + SPECASM_DOC_OUTDR_NUM_FORMS)
+#define SPECASM_DOC_OUTI_NUM_FORMS 1
+#define SPECASM_DOC_OUTIR_FORMS \
+	(SPECASM_DOC_OUTI_FORMS + SPECASM_DOC_OUTI_NUM_FORMS)
+#define SPECASM_DOC_OUTIR_NUM_FORMS 2
+#define SPECASM_DOC_POP_FORMS \
+	(SPECASM_DOC_OUTIR_FORMS + SPECASM_DOC_OUTIR_NUM_FORMS)
+#define SPECASM_DOC_POP_NUM_FORMS 3
+#define SPECASM_DOC_PUSH_FORMS \
+	(SPECASM_DOC_POP_FORMS + SPECASM_DOC_POP_NUM_FORMS)
+#define SPECASM_DOC_PUSH_NUM_FORMS 3
+#define SPECASM_DOC_RES_FORMS \
+	(SPECASM_DOC_PUSH_FORMS + SPECASM_DOC_PUSH_NUM_FORMS)
+#define SPECASM_DOC_RES_NUM_FORMS 4
+#define SPECASM_DOC_RET_FORMS \
+	(SPECASM_DOC_RES_FORMS + SPECASM_DOC_RES_NUM_FORMS)
+#define SPECASM_DOC_RET_NUM_FORMS 3
+#define SPECASM_DOC_RETI_FORMS \
+	(SPECASM_DOC_RET_FORMS + SPECASM_DOC_RET_NUM_FORMS)
+#define SPECASM_DOC_RETI_NUM_FORMS 1
+#define SPECASM_DOC_RETN_FORMS \
+	(SPECASM_DOC_RETI_FORMS + SPECASM_DOC_RETI_NUM_FORMS)
+#define SPECASM_DOC_RETN_NUM_FORMS 1
+#define SPECASM_DOC_RL_FORMS \
+	(SPECASM_DOC_RETN_FORMS + SPECASM_DOC_RETN_NUM_FORMS)
+#define SPECASM_DOC_RL_NUM_FORMS 4
+#define SPECASM_DOC_RLA_FORMS \
+	(SPECASM_DOC_RL_FORMS + SPECASM_DOC_RL_NUM_FORMS)
+#define SPECASM_DOC_RLA_NUM_FORMS 1
+#define SPECASM_DOC_RLC_FORMS \
+	(SPECASM_DOC_RLA_FORMS + SPECASM_DOC_RLA_NUM_FORMS)
+#define SPECASM_DOC_RLC_NUM_FORMS 4
+#define SPECASM_DOC_RLCA_FORMS \
+	(SPECASM_DOC_RLC_FORMS + SPECASM_DOC_RLC_NUM_FORMS)
+#define SPECASM_DOC_RLCA_NUM_FORMS 1
+#define SPECASM_DOC_RLD_FORMS \
+	(SPECASM_DOC_RLCA_FORMS + SPECASM_DOC_RLCA_NUM_FORMS)
+#define SPECASM_DOC_RLD_NUM_FORMS 1
+#define SPECASM_DOC_RR_FORMS \
+	(SPECASM_DOC_RLD_FORMS + SPECASM_DOC_RLD_NUM_FORMS)
+#define SPECASM_DOC_RR_NUM_FORMS 4
+#define SPECASM_DOC_RRA_FORMS \
+	(SPECASM_DOC_RR_FORMS + SPECASM_DOC_RR_NUM_FORMS)
+#define SPECASM_DOC_RRA_NUM_FORMS 1
+#define SPECASM_DOC_RRC_FORMS \
+	(SPECASM_DOC_RRA_FORMS + SPECASM_DOC_RRA_NUM_FORMS)
+#define SPECASM_DOC_RRC_NUM_FORMS 4
+#define SPECASM_DOC_RRCA_FORMS \
+	(SPECASM_DOC_RRC_FORMS + SPECASM_DOC_RRC_NUM_FORMS)
+#define SPECASM_DOC_RRCA_NUM_FORMS 1
+#define SPECASM_DOC_RRD_FORMS \
+	(SPECASM_DOC_RRCA_FORMS + SPECASM_DOC_RRCA_NUM_FORMS)
+#define SPECASM_DOC_RRD_NUM_FORMS 1
+#define SPECASM_DOC_RST_FORMS \
+	(SPECASM_DOC_RRD_FORMS + SPECASM_DOC_RRD_NUM_FORMS)
+#define SPECASM_DOC_RST_NUM_FORMS 1
+#define SPECASM_DOC_SBC_FORMS \
+	(SPECASM_DOC_RST_FORMS + SPECASM_DOC_RST_NUM_FORMS)
+#define SPECASM_DOC_SBC_NUM_FORMS 6
+#define SPECASM_DOC_SCF_FORMS \
+	(SPECASM_DOC_SBC_FORMS + SPECASM_DOC_SBC_NUM_FORMS)
+#define SPECASM_DOC_SCF_NUM_FORMS 1
+#define SPECASM_DOC_SET_FORMS \
+	(SPECASM_DOC_SCF_FORMS + SPECASM_DOC_SCF_NUM_FORMS)
+#define SPECASM_DOC_SET_NUM_FORMS 4
+#define SPECASM_DOC_SLA_FORMS \
+	(SPECASM_DOC_SET_FORMS + SPECASM_DOC_SET_NUM_FORMS)
+#define SPECASM_DOC_SLA_NUM_FORMS 4
+#define SPECASM_DOC_SRA_FORMS \
+	(SPECASM_DOC_SLA_FORMS + SPECASM_DOC_SLA_NUM_FORMS)
+#define SPECASM_DOC_SRA_NUM_FORMS 4
+#define SPECASM_DOC_SRL_FORMS \
+	(SPECASM_DOC_SRA_FORMS + SPECASM_DOC_SRA_NUM_FORMS)
+#define SPECASM_DOC_SRL_NUM_FORMS 4
+#define SPECASM_DOC_SUB_FORMS \
+	(SPECASM_DOC_SRL_FORMS + SPECASM_DOC_SRL_NUM_FORMS)
+#define SPECASM_DOC_SUB_NUM_FORMS 5
+#define SPECASM_DOC_XOR_FORMS \
+	(SPECASM_DOC_SUB_FORMS + SPECASM_DOC_SUB_NUM_FORMS)
+#define SPECASM_DOC_XOR_NUM_FORMS 5
+
+
+static const specasm_ins_form_t specasm_forms[] = {
+	/* SPECASM_DOC_ADC_FORMS */
+	{"a,r", "88+r", 1, 4},
+	{"a,n", "CE n",  2, 7},
+	{"a,(hl)", "8E", 2, 7},
+	{"a,(ix+d)", "DD 8E d", 5, 19 },
+	{"a,(iy+d)", "FD 8E d", 5, 19 },
+	{"hl,rr", "ED 4A+rr", 4, 15 },
+
+	/* SPECASM_DOC_ADD1_FORMS */
+	{"a,r", "80+r", 1, 4},
+	{"a,n", "C6 n",  2, 7},
+	{"a,(hl)", "86", 2, 7},
+	{"a,(ix+d)", "DD 86 d", 5, 19 },
+	{"a,(iy+d)", "FD 86 d", 5, 19 },
+
+	/* SPECASM_DOC_ADD2_FORMS */
+	{"hl,rr", "9+rr", 3, 11 },
+
+	/* SPECASM_DOC_ADD3_FORMS */
+	{"ix,rr", "DD 9+rr", 4, 15 },
+
+	/* SPECASM_DOC_ADD4_FORMS */
+	{"iy,rr", "FD 9+rr", 4, 15 },
+
+	/* SPECASM_DOC_ALIGN_FORMS */
+	{"n", "0", 1, 4 },
+
+	/* SPECASM_DOC_AND_FORMS */
+	{"r", "A0+r", 1, 4},
+	{"n", "E6 n",  2, 7},
+	{"(hl)", "A6", 2, 7},
+	{"(ix+d)", "DD A6 d", 5, 19 },
+	{"(iy+d)", "FD A6 d", 5, 19 },
+
+	/* SPECASM_DOC_BIT_FORMS */
+	{"n,r", "CB 40+b+r", 2, 8},
+	{"n,(hl)", "CB 46+b", 3, 12},
+	{"n,(ix+d)", "DDCBd46+b", 5, 20},
+	{"n,(iy+d)", "FDCBd46+b", 5, 20},
+
+	/* SPECASM_DOC_CALL_FORMS */
+	{"nn", "CD n n", 5, 17},
+	{"cc,nn", "C4+cc n n", 5, 17},
+	{"cc,nn", "C4+cc n n", 3, 10},
+
+	/* SPECASM_DOC_CCF_FORMS */
+	{"", "3F", 1, 4},
+
+	/* SPECASM_DOC_CP_FORMS */
+	{"r", "B8+r", 1, 4},
+	{"n", "FE n",  2, 7},
+	{"(hl)", "BE", 2, 7},
+	{"(ix+d)", "DD BE d", 5, 19 },
+	{"(iy+d)", "FD BE d", 5, 19 },
+
+	/* SPECASM_DOC_CPD_FORMS */
+	{"", "ED A9", 4, 16},
+
+	/* SPECASM_DOC_CPDR_FORMS */
+	{"", "ED B9", 4, 16},
+	{"", "ED B9", 5, 21},
+
+	/* SPECASM_DOC_CPI_FORMS */
+	{"", "ED A1", 4, 16},
+
+	/* SPECASM_DOC_CPIR_FORMS */
+	{"", "ED B1", 4, 16},
+	{"", "ED B1", 5, 21},
+
+	/* SPECASM_DOC_CPL_FORMS */
+	{"", "2F", 1, 4},
+
+	/* SPECASM_DOC_DAA_FORMS */
+	{"", "27", 1, 4},
+
+	/* SPECASM_DOC_DB_FORMS */
+	{"n", "n", 0, 0},
+	{"n,n", "n n", 0, 0},
+	{"n,n,n", "n n n", 0, 0},
+	{"n,n,n,n", "n n n n", 0, 0},
+
+	/* SPECASM_DOC_DEC1_FORMS */
+	{"r", "5+r", 1, 4},
+	{"(hl)", "35", 3, 11},
+	{"(ix+d)", "DD 35 d", 6, 23 },
+	{"(iy+d)", "FD 35 d", 6, 23 },
+
+	/* SPECASM_DOC_DEC2_FORMS */
+	{"rr", "B+rr", 1, 6},
+	{"ix", "DD 2B", 2, 10 },
+	{"iy", "FD 2B", 2, 10 },
+
+	/* SPECASM_DOC_DI_FORMS */
+	{"", "F3", 1, 4},
+
+	/* SPECASM_DOC_DJNZ_FORMS */
+	{"n", "10 n", 2, 8},
+	{"n", "10 n", 3, 13},
+
+	/* SPECASM_DOC_DS_FORMS */
+	{"c n", "n c times", 0, 0},
+
+	/* SPECASM_DOC_DW_FORMS */
+	{"nn", "nn", 0, 0},
+	{"nn,nn", "nn nn", 0, 0},
+
+	/* SPECASM_DOC_EI_FORMS */
+	{"", "FB", 1, 4},
+
+	/* SPECASM_DOC_EX_FORMS */
+	{"af, af'", "08", 1, 4},
+	{"de, hl", "EB", 1, 4},
+	{"sp, (hl)", "E3", 5, 19},
+	{"(sp), ix", "DD E3", 6, 23},
+	{"(sp), iy", "FD E3", 6, 23},
+
+	/* SPECASM_DOC_EXX_FORMS */
+	{"", "D9", 1, 4},
+
+	/* SPECASM_DOC_HALT_FORMS */
+	{"", "76", 1, 4},
+
+	/* SPECASM_DOC_IM_FORMS */
+	{"0", "ED 46", 2, 8},
+	{"1", "ED 56", 2, 8},
+	{"2", "ED 5E", 2, 8},
+
+	/* SPECASM_DOC_IN1_FORMS */
+	{"r, (c)", "ED 40+r", 3, 12},
+
+	/* SPECASM_DOC_IN2_FORMS */
+	{"a, (n)", "DB n", 3, 11},
+
+	/* SPECASM_DOC_INC1_FORMS */
+	{"r", "4+r", 1, 4},
+	{"(hl)", "34", 3, 11},
+	{"(ix+d)", "DD 34 d", 6, 23 },
+	{"(iy+d)", "FD 34 d", 6, 23 },
+
+	/* SPECASM_DOC_INC2_FORMS */
+	{"rr", "3+rr", 1, 6},
+	{"ix", "DD 23", 2, 10 },
+	{"iy", "FD 23", 2, 10 },
+
+	/* SPECASM_DOC_IND_FORMS */
+	{"", "ED AA", 4, 16},
+
+	/* SPECASM_DOC_INDR_FORMS */
+	{"", "ED BA", 4, 16},
+	{"", "ED BA", 5, 21},
+
+	/* SPECASM_DOC_INI_FORMS */
+	{"", "ED A2", 4, 16},
+
+	/* SPECASM_DOC_INIR_FORMS */
+	{"", "ED B2", 4, 16},
+	{"", "ED B2", 5, 21},
+
+	/* SPECASM_DOC_JP_FORMS */
+	{"nn", "C3 n n", 3, 10},
+	{"(hl)", "E9", 1, 4},
+	{"(ix)", "DD E9", 2, 8},
+	{"(iy)", "FD E9", 2, 8},
+	{"cc,nn", "C2+cc n n", 3, 12},
+	{"cc,nn", "C2+cc n n", 2, 7},
+
+	/* SPECASM_DOC_LDD_FORMS */
+	{"", "ED A8", 4, 16},
+
+	/* SPECASM_DOC_LDDR_FORMS */
+	{"", "ED B8", 4, 16},
+	{"", "ED B8", 5, 21},
+
+	/* SPECASM_DOC_LDI_FORMS */
+	{"", "ED A0", 4, 16},
+
+	/* SPECASM_DOC_LDIR_FORMS */
+	{"", "ED B0", 4, 16},
+	{"", "ED B0", 5, 21},
+
+	/* SPECASM_DOC_MAP_FORMS */
+	{"", "", 0, 0},
+
+	/* SPECASM_DOC_NEG_FORMS */
+	{"", "ED 44", 2, 8},
+
+	/* SPECASM_DOC_NOP_FORMS */
+	{"", "0", 1, 4},
+
+	/* SPECASM_DOC_OR_FORMS */
+	{"r", "B8+r", 1, 4},
+	{"n", "F6 n",  2, 7},
+	{"(hl)", "B6", 2, 7},
+	{"(ix+d)", "DD B6 d", 5, 19 },
+	{"(iy+d)", "FD B6 d", 5, 19 },
+
+	/* SPECASM_DOC_ORG_FORMS */
+	{"nn","", 0, 0},
+
+	/* SPECASM_DOC_OUT1_FORMS */
+	{"(c), r", "ED 41+r", 3, 12},
+
+	/* SPECASM_DOC_OUT2_FORMS */
+	{"(n), a", "D3 n", 3, 11},
+
+	/* SPECASM_DOC_OUTD_FORMS */
+	{"","ED AB", 4, 16},
+
+	/* SPECASM_DOC_OUTDR_FORMS */
+	{"","ED BB", 4, 16},
+	{"","ED BB", 5, 21},
+
+	/* SPECASM_DOC_OUTI_FORMS */
+	{"","ED A3", 4, 16},
+
+	/* SPECASM_DOC_OUTIR_FORMS */
+	{"","ED B3", 4, 16},
+	{"","ED B3", 5, 21},
+
+	/* SPECASM_DOC_POP_FORMS */
+	{"rr", "C1+rr", 3, 10},
+	{"ix", "DD E1", 4, 14},
+	{"iy", "FD E1", 4, 14},
+
+	/* SPECASM_DOC_PUSH_FORMS */
+	{"rr", "C5+rr", 3, 11},
+	{"ix", "DD E5", 4, 15},
+	{"iy", "FD E5", 4, 15},
+
+	/* SPECASM_DOC_RES_FORMS */
+	{"n,r", "CB 80+b+r", 2, 8},
+	{"n,(hl)", "CB 86+b", 4, 15},
+	{"n,(ix+d)", "DDCBd86+b", 6, 23},
+	{"n,(iy+d)", "FDCBd86+b", 6, 23},
+
+	/* SPECASM_DOC_RET_FORMS */
+	{"", "C9", 3, 10},
+	{"cc", "C0+cc", 1, 5},
+	{"cc", "C0+cc", 3, 10},
+
+	/* SPECASM_DOC_RETI_FORMS */
+	{"", "ED 4D", 4, 14},
+
+	/* SPECASM_DOC_RETN_FORMS */
+	{"", "ED 45", 4, 14},
+
+	/* SPECASM_DOC_RL_FORMS */
+	{"r", "CB 10+r", 2, 8},
+	{"(hl)", "CB 16", 4, 15},
+	{"(ix+d)", "DD CB d 16", 6, 23 },
+	{"(iy+d)", "FD CB d 16", 6, 23 },
+
+	/* SPECASM_DOC_RLA_FORMS */
+	{"", "17", 1, 4},
+
+	/* SPECASM_DOC_RLC_FORMS */
+	{"r", "CB r", 2, 8},
+	{"(hl)", "CB 06", 4, 15},
+	{"(ix+d)", "DD CB d 06", 6, 23 },
+	{"(iy+d)", "FD CB d 06", 6, 23 },
+
+	/* SPECASM_DOC_RLCA_FORMS */
+	{"", "07", 1, 4},
+
+	/* SPECASM_DOC_RLD_FORMS */
+	{"", "ED 6F", 5, 18},
+
+	/* SPECASM_DOC_RR_FORMS */
+	{"r", "CB 18+r", 2, 8},
+	{"(hl)", "CB 1E", 4, 15},
+	{"(ix+d)", "DD CB d 1E", 6, 23 },
+	{"(iy+d)", "FD CB d 1E", 6, 23 },
+
+	/* SPECASM_DOC_RRA_FORMS */
+	{"", "1F", 1, 4},
+
+	/* SPECASM_DOC_RRC_FORMS */
+	{"r", "CB 8+r", 2, 8},
+	{"(hl)", "CB 0E", 4, 15},
+	{"(ix+d)", "DD CB d 0E", 6, 23 },
+	{"(iy+d)", "FD CB d 0E", 6, 23 },
+
+	/* SPECASM_DOC_RRCA_FORMS */
+	{"", "0F", 1, 4},
+
+	/* SPECASM_DOC_RRD_FORMS */
+	{"", "ED 67", 5, 18},
+
+	/* SPECASM_DOC_RST_FORMS */
+	{"n", "C3+n", 3, 11},
+
+	/* SPECASM_DOC_SBC_FORMS */
+	{"a,r", "98+r", 1, 4},
+	{"a,n", "DE n",  2, 7},
+	{"a,(hl)", "9E", 2, 7},
+	{"a,(ix+d)", "DD 9E d", 5, 19 },
+	{"a,(iy+d)", "FD 9E d", 5, 19 },
+	{"hl,rr", "ED 42+rr", 4, 15 },
+
+	/* SPECASM_DOC_SCF_FORMS */
+	{"", "37", 1, 4},
+
+	/* SPECASM_DOC_SET_FORMS */
+	{"n,r", "CB C0+b+r", 2, 8},
+	{"n,(hl)", "CB C6+b", 4, 15},
+	{"n,(ix+d)", "DDCBdC6+b", 6, 23},
+	{"n,(iy+d)", "FDCBdC6+b", 6, 23},
+
+	/* SPECASM_DOC_SLA_FORMS */
+	{"r", "CB 20+r", 2, 8},
+	{"(hl)", "CB 26", 4, 15},
+	{"(ix+d)", "DD CB d 26", 6, 23 },
+	{"(iy+d)", "FD CB d 26", 6, 23 },
+
+	/* SPECASM_DOC_SRA_FORMS */
+	{"r", "CB 28+r", 2, 8},
+	{"(hl)", "CB 2E", 4, 15},
+	{"(ix+d)", "DD CB d 2E", 6, 23 },
+	{"(iy+d)", "FD CB d 2E", 6, 23 },
+
+	/* SPECASM_DOC_SRL_FORMS */
+	{"r", "CB 38+r", 2, 8},
+	{"(hl)", "CB 3E", 4, 15},
+	{"(ix+d)", "DD CB d 3E", 6, 23 },
+	{"(iy+d)", "FD CB d 3E", 6, 23 },
+
+	/* SPECASM_DOC_SUB_FORMS */
+	{"r", "A0+r", 1, 4},
+	{"n", "D6 n",  2, 7},
+	{"(hl)", "96", 2, 7},
+	{"(ix+d)", "DD 96 d", 5, 19 },
+	{"(iy+d)", "FD 96 d", 5, 19 },
+
+	/* SPECASM_DOC_XOR_FORMS */
+	{"r", "A8+r", 1, 4},
+	{"n", "EE n",  2, 7},
+	{"(hl)", "AE", 2, 7},
+	{"(ix+d)", "DD AE d", 5, 19 },
+	{"(iy+d)", "FD AE d", 5, 19 },
+};
+
 #define SPECASM_DOC_MAX_REG_ENCODING (SPECASM_BYTE_REG_IY+1)
 
 struct specasm_ins_doc_t_ {
 	char name[8];
-	specasm_ins_form_t forms[6];
+	uint8_t forms;
+	uint8_t num_forms;
 	uint8_t reg_encoding;
 	uint8_t bits;
 	uint8_t all_cc;
@@ -87,7 +665,7 @@ const uint8_t reg_encodings[][SPECASM_DOC_MAX_REG_ENCODING] = {
 const static char specasm_doc_add_16[] =
 	"The second argument is added to the contents of the "
 	"destination register. The carry flag is set according "
-	"to the result of the addition. H represents carry from "
+	"to the result of the addition. h represents carry from "
 	"bit 11.";
 
 const static char specasm_doc_inc[] =
@@ -96,30 +674,19 @@ const static char specasm_doc_inc[] =
 const static specasm_ins_doc_t docs[] = {
 	{
 		"adc",
-		{
-			{"a,r", "88+r", 1, 4},
-			{"a,n", "CE n",  2, 7},
-			{"a,(hl)", "8E", 2, 7},
-			{"a,(ix + d)", "DD 8E d", 5, 19 },
-			{"a,(iy + d)", "FD 8E d", 5, 19 },
-			{"hl,rr", "ED 4A+rr", 4, 15 },
-		},
+		SPECASM_DOC_ADC_FORMS,
+		SPECASM_DOC_ADC_NUM_FORMS,
 		1,
 		0,
 		0,
 		"The second argument and the carry flag are added to the "
-		"contents of the destination register, either a or hl.",
+		"contents of the destination register.",
 		"XX X X0X",
 	},
 	{
 		"add",
-		{
-			{"a,r", "80+r", 1, 4},
-			{"a,n", "C6 n",  2, 7},
-			{"a,(hl)", "86", 2, 7},
-			{"a,(ix + d)", "DD 86 d", 5, 19 },
-			{"a,(iy + d)", "FD 86 d", 5, 19 },
-		},
+		SPECASM_DOC_ADD1_FORMS,
+		SPECASM_DOC_ADD1_NUM_FORMS,
 		2,
 		0,
 		0,
@@ -129,9 +696,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"add",
-		{
-			{"hl,rr", "9+rr", 3, 11 },
-		},
+		SPECASM_DOC_ADD2_FORMS,
+		SPECASM_DOC_ADD2_NUM_FORMS,
 		3,
 		0,
 		0,
@@ -140,9 +706,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"add",
-		{
-			{"ix,rr", "DD 9+rr", 4, 15 },
-		},
+		SPECASM_DOC_ADD3_FORMS,
+		SPECASM_DOC_ADD3_NUM_FORMS,
 		4,
 		0,
 		0,
@@ -151,9 +716,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"add",
-		{
-			{"iy,rr", "FD 9+rr", 4, 15 },
-		},
+		SPECASM_DOC_ADD4_FORMS,
+		SPECASM_DOC_ADD4_NUM_FORMS,
 		5,
 		0,
 		0,
@@ -162,44 +726,33 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"align",
-		{
-			{"n", "0", 1, 4 },
-		},
+		SPECASM_DOC_ALIGN_FORMS,
+		SPECASM_DOC_ALIGN_NUM_FORMS,
 		0,
 		0,
 		0,
 		"The align directive takes one immediate argument that must be "
-		"a power of 2, greater than or equal to 2 and less and or equal"
-		" to 256.  It inserts null bytes into the binary until the "
-		"requested alignment is achieved.  The number of t-states "
-		"consumed by an align directive is the number of bytes inserted"
-		" * 4",
+		"a power of 2, >= 2 and <= 256.  It inserts null bytes into "
+		"the binary until the requested alignment is achieved. The "
+		"number of t-states consumed by an align directive is the "
+		"number of bytes inserted * 4.",
 		NULL,
 	},
 	{
 		"and",
-		{
-			{"r", "A0+r", 1, 4},
-			{"n", "E6 n",  2, 7},
-			{"(hl)", "A6", 2, 7},
-			{"(ix + d)", "DD A6 d", 5, 19 },
-			{"(iy + d)", "FD A6 d", 5, 19 },
-		},
+		SPECASM_DOC_AND_FORMS,
+		SPECASM_DOC_AND_NUM_FORMS,
 		2,
 		0,
 		0,
-		"The result of a bitwise AND of the accumulator and the "
-		"argument is stored in the accumulator.",
+		"The result of a bitwise AND of a and the "
+		"argument is stored in a.",
 		"XX 1 X00",
 	},
 	{
 		"bit",
-		{
-			{"n,r", "CB 40+b+r", 2, 8},
-			{"n,(HL)", "CB 46+b", 3, 12},
-			{"n,(IX + d)", "DDCBd46+b", 5, 20},
-			{"n,(IY + d)", "FDCBd46+b", 5, 20},
-		},
+		SPECASM_DOC_BIT_FORMS,
+		SPECASM_DOC_BIT_NUM_FORMS,
 		2,
 		8,
 		0,
@@ -209,11 +762,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"call",
-		{
-			{"nn", "CD n n", 5, 17},
-			{"cc,nn", "C4+cc n n", 5, 17},
-			{"cc,nn", "C4+cc n n", 3, 10},
-		},
+		SPECASM_DOC_CALL_FORMS,
+		SPECASM_DOC_CALL_NUM_FORMS,
 		0,
 		0,
 		8,
@@ -225,130 +775,106 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"ccf",
-		{
-			{"", "3F", 1, 4},
-		},
+		SPECASM_DOC_CCF_FORMS,
+		SPECASM_DOC_CCF_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Inverts the carry flag, setting it to 1 if it were previously "
-		"0 and 1 if it were previously 0.",
+		"Inverts the carry flag.",
 		"   ?  0X"
 	},
 	{
 		"cp",
-		{
-			{"r", "B8+r", 1, 4},
-			{"n", "FE n",  2, 7},
-			{"(hl)", "BE", 2, 7},
-			{"(ix + d)", "DD BE d", 5, 19 },
-			{"(iy + d)", "FD BE d", 5, 19 },
-		},
+		SPECASM_DOC_CP_FORMS,
+		SPECASM_DOC_CP_NUM_FORMS,
 		2,
 		0,
 		0,
-		"The operand is subtracted from the accumulator setting the "
+		"The operand is subtracted from a setting the "
 		"flags accordingly. The result of the subtraction is "
 		"discarded.",
 		"XX X X1X",
 	},
 	{
 		"cpd",
-		{
-			{"", "ED A9", 4, 16},
-		},
+		SPECASM_DOC_CPD_FORMS,
+		SPECASM_DOC_CPD_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The byte pointed to by the address in hl is subtracted from "
-		"the accumulator and the flags are set accordingly. The result "
-		"is discarded. bc and hl are decremented. The p flag is set "
-		"if bc != 0 after the instruction has finished and is "
-		"otherwise reset.",
+		"(hl) is subtracted from a and the flags are set "
+		"accordingly. The result is discarded. bc and hl are "
+		"decremented. The p flag is set if bc != 0 after the "
+		"instruction has finished and is otherwise reset.",
 		"XX X X1 ",
 	},
 	{
 		"cpdr",
-		{
-			{"", "ED B9", 4, 16},
-			{"", "ED B9", 5, 21},
-		},
+		SPECASM_DOC_CPDR_FORMS,
+		SPECASM_DOC_CPDR_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The byte pointed to by the address in hl is subtracted from "
-		"the accumulator and the flags are set accordingly. The result "
-		"is discarded. bc and hl are decremented. If bc > 0 and the "
-		"result of the subtraction is != 0 the instructon repeats. "
-		"The p flag is set if bc != 0 after the instruction has "
+		"(hl) is subtracted from a and the flags are set accordingly. "
+		"The result is discarded. bc and hl are decremented. If bc>0 "
+		"and the result of the subtraction is != 0 cpdr "
+		"repeats. The p flag is set if bc!=0 after cpdr has "
 		"finished and is otherwise reset. The slower timings apply "
-		"when the instruction repeats.",
+		"when cpdr repeats.",
 		"XX X X1 ",
 	},
 	{
 		"cpi",
-		{
-			{"", "ED A1", 4, 16},
-		},
+		SPECASM_DOC_CPI_FORMS,
+		SPECASM_DOC_CPI_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The byte pointed to by the address in hl is subtracted from "
-		"the accumulator and the flags are set accordingly. The result "
-		"is discarded. bc is decremented while hl is incremented. The "
-		"p flag is set if bc != 0 after the instruction has finished "
-		"and is otherwise reset.",
+		"(hl) is subtracted from a and the flags are set accordingly. "
+		"The result is discarded. bc is decremented while hl is "
+		"incremented. The p flag is set if bc != 0 after the cpi has "
+		"finished and is otherwise reset.",
 		"XX X X1 ",
 	},
 	{
 		"cpir",
-		{
-			{"", "ED B1", 4, 16},
-			{"", "ED B1", 5, 21},
-		},
+		SPECASM_DOC_CPIR_FORMS,
+		SPECASM_DOC_CPIR_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The byte pointed to by the address in hl is subtracted from "
-		"the accumulator and the flags are set accordingly. The result "
-		"is discarded. bc is decremented while hl is incremented. If "
-		"bc > 0 and the result of the subtraction is != 0 the "
-		"instructon repeats. The p flag is set if bc != 0 after the "
-		"instruction has finished and is otherwise reset. The slower "
-		"timings apply when the instruction repeats.",
+		"(hl) is subtracted from a and the flags are set accordingly. "
+		"The result is discarded. bc is decremented while hl is "
+		"incremented. If bc>0 and the result of the subtraction is != 0"
+		" cpir repeats. The p flag is set if bc!=0 after cpir "
+		"has finished and is otherwise reset. The slower "
+		"timings apply when the cpir repeats.",
 		"XX X X1 ",
 	},
 	{
 		"cpl",
-		{
-			{"", "2F", 1, 4},
-		},
+		SPECASM_DOC_CPL_FORMS,
+		SPECASM_DOC_CPL_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Invert the contents of the accumlator.",
+		"Invert a.",
 		"   1  1 ",
 	},
 	{
 		"daa",
-		{
-			{"", "27", 1, 4},
-		},
+		SPECASM_DOC_DAA_FORMS,
+		SPECASM_DOC_DAA_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Conditionally adjusts the accumulator for BCD addition "
-		"and subtraction.",
+		"Conditionally adjusts a for BCD addition and subtraction.",
 		"XX X X X",
 	},
 	{
 		"db",
-		{
-			{"n", "n", 0, 0},
-			{"n,n", "n n", 0, 0},
-			{"n,n,n", "n n n", 0, 0},
-			{"n,n,n,n", "n n n n", 0, 0},
-		},
+		SPECASM_DOC_DB_FORMS,
+		SPECASM_DOC_DB_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -359,12 +885,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"dec",
-		{
-			{"r", "5+r", 1, 4},
-			{"(hl)", "35", 3, 11},
-			{"(ix + d)", "DD 35 d", 6, 23 },
-			{"(iy + d)", "FD 35 d", 6, 23 },
-		},
+		SPECASM_DOC_DEC1_FORMS,
+		SPECASM_DOC_DEC1_NUM_FORMS,
 		6,
 		0,
 		0,
@@ -373,11 +895,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"dec",
-		{
-			{"rr", "B+rr", 1, 6},
-			{"ix", "DD 2B", 2, 10 },
-			{"iy", "FD 2B", 2, 10 },
-		},
+		SPECASM_DOC_DEC2_FORMS,
+		SPECASM_DOC_DEC2_NUM_FORMS,
 		3,
 		0,
 		0,
@@ -386,9 +905,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"di",
-		{
-			{"", "F3", 1, 4},
-		},
+		SPECASM_DOC_DI_FORMS,
+		SPECASM_DOC_DI_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -397,23 +915,20 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"djnz",
-		{
-			{"n", "10 n", 2, 8},
-			{"n", "10 n", 3, 13},
-		},
+		SPECASM_DOC_DJNZ_FORMS,
+		SPECASM_DOC_DJNZ_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The b register is decremented by 1.  If the result is > 0 "
-		"the cpu jumps to PC + 2 + n, where n is a signed 8 byte.  The "
-		"instruction executes more quickly when the jump it not taken.",
+		"b is decremented by 1. If the result is>0 the cpu jumps to "
+		"PC+2+n, where n is a signed 8 byte. djnz executes "
+		"more quickly when the jump it not taken.",
 		NULL,
 	},
 	{
 		"ds",
-		{
-			{"c n", "n c times", 0, 0},
-		},
+		SPECASM_DOC_DS_FORMS,
+		SPECASM_DOC_DS_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -422,10 +937,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"dw",
-		{
-			{"nn", "nn", 0, 0},
-			{"nn,nn", "nn nn", 0, 0},
-		},
+		SPECASM_DOC_DW_FORMS,
+		SPECASM_DOC_DW_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -436,9 +949,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"ei",
-		{
-			{"", "FB", 1, 4},
-		},
+		SPECASM_DOC_EI_FORMS,
+		SPECASM_DOC_EI_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -447,13 +959,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"ex",
-		{
-			{"af, af'", "08", 1, 4},
-			{"de, hl", "EB", 1, 4},
-			{"sp, (hl)", "E3", 5, 19},
-			{"(sp), ix", "DD E3", 6, 23},
-			{"(sp), iy", "FD E3", 6, 23},
-		},
+		SPECASM_DOC_EX_FORMS,
+		SPECASM_DOC_EX_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -464,20 +971,18 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"exx",
-		{
-			{"", "D9", 1, 4},
-		},
+		SPECASM_DOC_EXX_FORMS,
+		SPECASM_DOC_EXX_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Exchange BC, DE and HL with BC', DE', HL'.",
+		"Exchange bc, de and hl with bc', de', hl'.",
 		NULL,
 	},
 	{
 		"halt",
-		{
-			{"", "76", 1, 4},
-		},
+		SPECASM_DOC_HALT_FORMS,
+		SPECASM_DOC_HALT_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -486,51 +991,42 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"im",
-		{
-			{"0", "ED 46", 2, 8},
-			{"1", "ED 56", 2, 8},
-			{"2", "ED 5E", 2, 8},
-		},
+		SPECASM_DOC_IM_FORMS,
+		SPECASM_DOC_IM_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Sets the interrupt mode.  With IM 2 the MSB of the vector "
-		"address is taken from the I register.",
+		"Sets the interrupt mode.  With im 2 the MSB of the vector "
+		"address is taken from the i register.",
 		NULL,
 	},
 	{
 		"in",
-		{
-			{"r, (c)", "ED 40+r", 3, 12},
-		},
+		SPECASM_DOC_IN1_FORMS,
+		SPECASM_DOC_IN1_NUM_FORMS,
 		6,
 		0,
 		0,
-		"Reads a byte from the device at the adddress stored in the bc "
-		"register and stores it in r.",
+		"Reads a byte from the device identified by bc and stores it "
+		"in r.",
 		"XX X X0 ",
 	},
 	{
 		"in",
-		{
-			{"a, (n)", "DB n", 3, 11},
-		},
+		SPECASM_DOC_IN2_FORMS,
+		SPECASM_DOC_IN2_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Reads a byte from the device at the adddress whose MSB is "
-		"taken from the accumulator and whose LSB is n. The byte is "
-		"stored in the accumulator.",
+		"Reads a byte from the device adddress whose MSB is "
+		"taken from a and whose LSB is n. The byte is "
+		"stored in a.",
 		NULL,
 	},
 	{
 		"inc",
-		{
-			{"r", "4+r", 1, 4},
-			{"(hl)", "34", 3, 11},
-			{"(ix + d)", "DD 34 d", 6, 23 },
-			{"(iy + d)", "FD 34 d", 6, 23 },
-		},
+		SPECASM_DOC_INC1_FORMS,
+		SPECASM_DOC_INC1_NUM_FORMS,
 		6,
 		0,
 		0,
@@ -539,11 +1035,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"inc",
-		{
-			{"rr", "3+rr", 1, 6},
-			{"ix", "DD 23", 2, 10 },
-			{"iy", "FD 23", 2, 10 },
-		},
+		SPECASM_DOC_INC2_FORMS,
+		SPECASM_DOC_INC2_NUM_FORMS,
 		3,
 		0,
 		0,
@@ -551,69 +1044,57 @@ const static specasm_ins_doc_t docs[] = {
 		NULL,
 	},
 	{
-		"ldd",
-		{
-			{"", "ED A8", 4, 16},
-		},
+		"ind",
+		SPECASM_DOC_IND_FORMS,
+		SPECASM_DOC_IND_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The byte pointed to by hl is loaded into the address in de. "
-		"hl, de and bc are decremented.",
-		"    0 X0 ",
+		"A byte is read from the device identified by bc and stored "
+		"in (hl). b and hl are decremented.",
+		"?X ? ?1 ",
 	},
 	{
-		"lddr",
-		{
-			{"", "ED B8", 4, 16},
-			{"", "ED B8", 5, 21},
-		},
+		"indr",
+		SPECASM_DOC_INDR_FORMS,
+		SPECASM_DOC_INDR_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The byte pointed to by hl is loaded into the address in de. "
-		"hl, de and bc are decremented.  If bc!=0 the instruction "
-		"repeats. The instruction consumes more t-states when it "
+		"A byte is read from the device identified by bc and stored "
+		"(hl). b and hl are decremented. If bc!=0 indr "
+		"repeats. indr consumes more t-states when it "
 		"repeats.",
-		"   0 00 ",
+		"?1 ? ?1 "
 	},
 	{
-		"ldi",
-		{
-			{"", "ED A0", 4, 16},
-		},
+		"ini",
+		SPECASM_DOC_INI_FORMS,
+		SPECASM_DOC_INI_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The byte pointed to by hl is loaded into the address in de. "
-		"Both hl and de are incremented while bc is decremented.",
-		"    0 X0 ",
+		"A byte is read from the device identified by bc "
+		"and stored in (hl). b is decremented and h is incremented.",
+		"?X ? ?1 ",
 	},
 	{
-		"ldir",
-		{
-			{"", "ED B0", 4, 16},
-			{"", "ED B0", 5, 21},
-		},
+		"inir",
+		SPECASM_DOC_INIR_FORMS,
+		SPECASM_DOC_INIR_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The byte pointed to by hl is loaded into the address in de. "
-		"Both hl and de are incremented while bc is decremented.  If "
-		"bc!=0 the instruction repeats. The instruction consumes more "
-		"t-states when it repeats.",
-		"   0 00 ",
+		"A byte is read from the device identified by bc "
+		"and stored in (hl). b is decremented and h is incremented. "
+		"If bc!=0 inir repeats. inir consumes more t-states when it "
+		"repeats.",
+		"?1 ? ?1 "
 	},
 	{
 		"jp",
-		{
-			{"nn", "C3 n n", 3, 10},
-			{"(hl)", "E9", 1, 4},
-			{"(ix)", "DD E9", 2, 8},
-			{"(iy)", "FD E9", 2, 8},
-			{"cc,nn", "C2+cc n n", 3, 12},
-			{"cc,nn", "C2+cc n n", 2, 7},
-		},
+		SPECASM_DOC_JP_FORMS,
+		SPECASM_DOC_JP_NUM_FORMS,
 		0,
 		0,
 		8,
@@ -623,10 +1104,54 @@ const static specasm_ins_doc_t docs[] = {
 		NULL,
 	},
 	{
+		"ldd",
+		SPECASM_DOC_LDD_FORMS,
+		SPECASM_DOC_LDD_NUM_FORMS,
+		0,
+		0,
+		0,
+		"Load (hl) into (de). hl, de and bc are decremented.",
+		"    0 X0 ",
+	},
+	{
+		"lddr",
+		SPECASM_DOC_LDDR_FORMS,
+		SPECASM_DOC_LDDR_NUM_FORMS,
+		0,
+		0,
+		0,
+		"Load (hl) into (de). hl, de and bc are decremented. If "
+		"bc!=0 lddr repeats. lddr consumes more t-states when it "
+		"repeats.",
+		"   0 00 ",
+	},
+	{
+		"ldi",
+		SPECASM_DOC_LDI_FORMS,
+		SPECASM_DOC_LDI_NUM_FORMS,
+		0,
+		0,
+		0,
+		"Load (hl) into (de). Both hl and de are incremented while bc "
+		"is decremented.",
+		"    0 X0 ",
+	},
+	{
+		"ldir",
+		SPECASM_DOC_LDIR_FORMS,
+		SPECASM_DOC_LDIR_NUM_FORMS,
+		0,
+		0,
+		0,
+		"Load (hl) into (de). Both hl and de are incremented while bc "
+		"is decremented. If bc!=0 ldir repeats. ldir "
+		"consumes more t-states when it repeats.",
+		"   0 00 ",
+	},
+	{
 		"map",
-		{
-			{"", "", 0, 0},
-		},
+		SPECASM_DOC_MAP_FORMS,
+		SPECASM_DOC_MAP_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -635,9 +1160,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"neg",
-		{
-			{"", "ED 44", 2, 8},
-		},
+		SPECASM_DOC_NEG_FORMS,
+		SPECASM_DOC_NEG_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -646,9 +1170,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"nop",
-		{
-			{"", "0", 1, 4},
-		},
+		SPECASM_DOC_NOP_FORMS,
+		SPECASM_DOC_NOP_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -657,25 +1180,19 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"or",
-		{
-			{"r", "B8+r", 1, 4},
-			{"n", "F6 n",  2, 7},
-			{"(hl)", "B6", 2, 7},
-			{"(ix + d)", "DD B6 d", 5, 19 },
-			{"(iy + d)", "FD B6 d", 5, 19 },
-		},
+		SPECASM_DOC_OR_FORMS,
+		SPECASM_DOC_OR_NUM_FORMS,
 		2,
 		0,
 		0,
-		"The result of a bitwise OR of the accumulator and the "
-		"argument is stored in the accumulator.",
+		"The result of a bitwise OR of a and the argument is stored "
+		"in a.",
 		"XX 0 X00",
 	},
 	{
 		"org",
-		{
-			{"nn","", 0, 0},
-		},
+		SPECASM_DOC_ORG_FORMS,
+		SPECASM_DOC_ORG_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -686,91 +1203,78 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"out",
-		{
-			{"(c), r", "ED 41+r", 3, 12},
-		},
+		SPECASM_DOC_OUT1_FORMS,
+		SPECASM_DOC_OUT1_NUM_FORMS,
 		6,
 		0,
 		0,
-		"Writes the register r to the device at the adddress stored "
-		"in the bc register.",
+		"Writes the register r to the device identified by bc.",
 		NULL,
 	},
 	{
-		"outdr",
-		{
-			{"","ED BB", 4, 16},
-			{"","ED BB", 5, 21},
-		},
-		0,
-		0,
-		0,
-		"b is decremented. The byte at the address in hl is written to "
-		"the port given by the address in bc, where b has already been "
-		"decremented. hl is decremented. The instruction repeats if "
-		"b!=0. The instruction consumes more t-states when it repeats.",
-		"?1 ? ?1 ",
-	},
-	{
-		"outir",
-		{
-			{"","ED B3", 4, 16},
-			{"","ED B3", 5, 21},
-		},
-		0,
-		0,
-		0,
-		"b is decremented. The byte at the address in hl is written to "
-		"the port given by the address in bc, where b has already been "
-		"decremented. hl is incremented. The instruction repeats if "
-		"b!=0. The instruction consumes more t-states when it repeats.",
-		"?1 ? ?1 ",
-	},
-	{
 		"out",
-		{
-			{"(n), a", "D3 n", 3, 11},
-		},
+		SPECASM_DOC_OUT2_FORMS,
+		SPECASM_DOC_OUT2_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Writes the accumulator to the device at the adddress whose MSB"
-		" is taken from the accumulator and whose LSB is n.",
+		"Writes a to the device at the adddress whose MSB "
+		"is taken from the a and whose LSB is n.",
 		NULL,
 	},
 	{
 		"outd",
-		{
-			{"","ED AB", 4, 16},
-		},
+		SPECASM_DOC_OUTD_FORMS,
+		SPECASM_DOC_OUTD_NUM_FORMS,
 		0,
 		0,
 		0,
-		"b is decremented. The byte at the address in hl is written to "
-		"the port given by the address in bc, where b has already been "
-		"decremented. hl is decremented.",
+		"b is decremented. (hl) is written to the device identified "
+		"by  bc, where b has already been decremented. hl is "
+		"decremented.",
 		"?X ? ?1 ",
+	},
+	{
+		"outdr",
+		SPECASM_DOC_OUTDR_FORMS,
+		SPECASM_DOC_OUTDR_NUM_FORMS,
+		0,
+		0,
+		0,
+		"b is decremented. (hl) is written to the device identified "
+		"by bc, where b has already been decremented. hl is "
+		"decremented. outdr repeats if b!=0. It consumes more t-states "
+		"when it repeats.",
+		"?1 ? ?1 ",
 	},
 	{
 		"outi",
-		{
-			{"","ED A3", 4, 16},
-		},
+		SPECASM_DOC_OUTI_FORMS,
+		SPECASM_DOC_OUTI_NUM_FORMS,
 		0,
 		0,
 		0,
-		"b is decremented. The byte at the address in hl is written to "
-		"the port given by the address in bc, where b has already been "
-		"decremented. hl is incremented.",
+		"b is decremented. (hl) is written to the device identified by "
+		"bc, where b has already been decremented. hl is incremented.",
 		"?X ? ?1 ",
 	},
 	{
+		"outir",
+		SPECASM_DOC_OUTIR_FORMS,
+		SPECASM_DOC_OUTIR_NUM_FORMS,
+		0,
+		0,
+		0,
+		"b is decremented. (hl) is written to the device identified by "
+		"bc, where b has already been decremented. hl is incremented. "
+		"outir repeats if b!=0. It consumes more t-states "
+		"when it repeats.",
+		"?1 ? ?1 ",
+	},
+	{
 		"pop",
-		{
-			{"rr", "C1+rr", 3, 10},
-			{"ix", "DD E1", 4, 14},
-			{"iy", "FD E1", 4, 14},
-		},
+		SPECASM_DOC_POP_FORMS,
+		SPECASM_DOC_POP_NUM_FORMS,
 		7,
 		0,
 		0,
@@ -779,11 +1283,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"push",
-		{
-			{"rr", "C5+rr", 3, 11},
-			{"ix", "DD E5", 4, 15},
-			{"iy", "FD E5", 4, 15},
-		},
+		SPECASM_DOC_PUSH_FORMS,
+		SPECASM_DOC_PUSH_NUM_FORMS,
 		7,
 		0,
 		0,
@@ -792,12 +1293,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"res",
-		{
-			{"n,r", "CB 80+b+r", 2, 8},
-			{"n,(HL)", "CB 86+b", 4, 15},
-			{"n,(IX + d)", "DDCBd86+b", 6, 23},
-			{"n,(IY + d)", "FDCBd86+b", 6, 23},
-		},
+		SPECASM_DOC_RES_FORMS,
+		SPECASM_DOC_RES_NUM_FORMS,
 		2,
 		8,
 		0,
@@ -806,54 +1303,45 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"ret",
-		{
-			{"", "C9", 3, 10},
-			{"cc", "C0 + cc", 1, 5},
-			{"cc", "C0 + cc", 3, 10},
-		},
+		SPECASM_DOC_RET_FORMS,
+		SPECASM_DOC_RET_NUM_FORMS,
 		0,
 		0,
 		8,
-		"If there is no condition or the condition is met value of "
-		"the stack is popped into the PC, from which program execution "
-		"continues. ret takes fewer cycles if the condition is not met"
-		".",
+		"If there is no condition or the condition is met, a word "
+		"is popped off the stack into the PC, from which program "
+		"execution continues. ret takes fewer cycles if the condition "
+		"is not met.",
 		NULL,
 	},
 	{
 		"reti",
-		{
-			{"", "ED 4D", 4, 14},
-		},
+		SPECASM_DOC_RETI_FORMS,
+		SPECASM_DOC_RETI_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Return from interrupt. The stack is popped into PC. An ei "
-		"instruction must be executed prior to the reti to renable "
+		"Return from interrupt. A word is popped off the stack into PC."
+		" An ei must be executed prior to the reti to renable "
 		"maskable interrupts.",
 		NULL,
 	},
 	{
 		"retn",
-		{
-			{"", "ED 45", 4, 14},
-		},
+		SPECASM_DOC_RETN_FORMS,
+		SPECASM_DOC_RETN_NUM_FORMS,
 		0,
 		0,
 		0,
-		"Return from NMI. The stack is popped into PC and the "
-		"maskable interrupts are re-enabled if they were enabled "
+		"Return from NMI. A word is popped off the stack into PC and "
+		"the maskable interrupts are re-enabled if they were enabled "
 		"before the NMI.",
 		NULL,
 	},
 	{
 		"rl",
-		{
-			{"r", "CB 10+r", 2, 8},
-			{"(hl)", "CB 16", 4, 15},
-			{"(ix + d)", "DD CB d 16", 6, 23 },
-			{"(iy + d)", "FD CB d 16", 6, 23 },
-		},
+		SPECASM_DOC_RL_FORMS,
+		SPECASM_DOC_RL_NUM_FORMS,
 		2,
 		0,
 		0,
@@ -864,49 +1352,41 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"rla",
-		{
-			{"", "17", 1, 4},
-		},
+		SPECASM_DOC_RLA_FORMS,
+		SPECASM_DOC_RLA_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The accumulator is rotated left 1 bit. The carry flag is "
-		"moved to bit 0 of the accumulator and its old bit 7 is moved "
-		"to the carry flag.",
+		"a is rotated left 1 bit. The carry flag is moved to bit 0 of "
+		"a and its old bit 7 is moved to the carry flag.",
 		"   0  0X",
 	},
 	{
 		"rlc",
-		{
-			{"r", "CB r", 2, 8},
-			{"(hl)", "CB 06", 4, 15},
-			{"(ix + d)", "DD CB d 06", 6, 23 },
-			{"(iy + d)", "FD CB d 06", 6, 23 },
-		},
+		SPECASM_DOC_RLC_FORMS,
+		SPECASM_DOC_RLC_NUM_FORMS,
 		2,
 		0,
 		0,
 		"The operand is rotated left 1 bit. The old bit 7 is moved to "
-		"both the carry flag and bit 0.",
+		"both the carry flag and bit 0 of the operand.",
 		"XX 0 X0X",
 	},
 	{
 		"rlca",
-		{
-			{"", "07", 1, 4},
-		},
+		SPECASM_DOC_RLCA_FORMS,
+		SPECASM_DOC_RLCA_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The accumulator is rotated left 1 bit. The old bit 7 is moved "
-		"to both the carry flag and bit 0.",
+		"a is rotated left 1 bit. The old bit 7 is moved "
+		"to both the carry flag and bit 0 of a.",
 		"   0  0X",
 	},
 	{
 		"rld",
-		{
-			{"", "ED 6F", 5, 18},
-		},
+		SPECASM_DOC_RLD_FORMS,
+		SPECASM_DOC_RLD_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -917,12 +1397,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"rr",
-		{
-			{"r", "CB 18+r", 2, 8},
-			{"(hl)", "CB 1E", 4, 15},
-			{"(ix + d)", "DD CB d 1E", 6, 23 },
-			{"(iy + d)", "FD CB d 1E", 6, 23 },
-		},
+		SPECASM_DOC_RR_FORMS,
+		SPECASM_DOC_RR_NUM_FORMS,
 		2,
 		0,
 		0,
@@ -933,49 +1409,42 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"rra",
-		{
-			{"", "1F", 1, 4},
-		},
+		SPECASM_DOC_RRA_FORMS,
+		SPECASM_DOC_RRA_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The accumulator is shifted right 1 bit. The carry flag is "
-		"moved into bit 7 of the accumulator and the old contents of "
-		"the accumulator's bit 0 are moved into the carry flag."
+		"a is shifted right 1 bit. The carry flag is "
+		"moved into bit 7 of a and the old contents of a's "
+		"bit 0 are moved into the carry flag.",
 		"   0  0X",
 	},
 	{
 		"rrc",
-		{
-			{"r", "CB 8+r", 2, 8},
-			{"(hl)", "CB 0E", 4, 15},
-			{"(ix + d)", "DD CB d 0E", 6, 23 },
-			{"(iy + d)", "FD CB d 0E", 6, 23 },
-		},
+		SPECASM_DOC_RRC_FORMS,
+		SPECASM_DOC_RRC_NUM_FORMS,
 		2,
 		0,
 		0,
-		"The second argument and the carry flag are subtracted from "
-		"the contents of the destination register, either a or hl.",
+		"The operand is rotated right by 1 bit. Its old bit 0 is "
+		"moved into both the carry flag and bit 7 of the operand.",
 		"XX 0 X0X",
 	},
 	{
 		"rrca",
-		{
-			{"", "0F", 1, 4},
-		},
+		SPECASM_DOC_RRCA_FORMS,
+		SPECASM_DOC_RRCA_NUM_FORMS,
 		0,
 		0,
 		0,
-		"The accumulator is rotated right by 1 bit. The old bit 0 is "
-		"moved into both the carry flag and bit 7 of the accumulator.",
+		"a is rotated right by 1 bit. a's old bit 0 is "
+		"moved into both the carry flag and bit 7 of a.",
 		"   0  0X",
 	},
 	{
 		"rrd",
-		{
-			{"", "ED 67", 5, 18},
-		},
+		SPECASM_DOC_RRD_FORMS,
+		SPECASM_DOC_RRD_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -986,9 +1455,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"rst",
-		{
-			{"n", "C3+n", 3, 11},
-		},
+		SPECASM_DOC_RST_FORMS,
+		SPECASM_DOC_RST_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -999,14 +1467,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"sbc",
-		{
-			{"a,r", "98+r", 1, 4},
-			{"a,n", "DE n",  2, 7},
-			{"a,(hl)", "9E", 2, 7},
-			{"a,(ix + d)", "DD 9E d", 5, 19 },
-			{"a,(iy + d)", "FD 9E d", 5, 19 },
-			{"hl,rr", "ED 42+rr", 4, 15 },
-		},
+		SPECASM_DOC_SBC_FORMS,
+		SPECASM_DOC_SBC_NUM_FORMS,
 		1,
 		0,
 		0,
@@ -1016,9 +1478,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"scf",
-		{
-			{"", "37", 1, 4},
-		},
+		SPECASM_DOC_SCF_FORMS,
+		SPECASM_DOC_SCF_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -1027,12 +1488,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"set",
-		{
-			{"n,r", "CB C0+b+r", 2, 8},
-			{"n,(HL)", "CB C6+b", 4, 15},
-			{"n,(IX + d)", "DDCBdC6+b", 6, 23},
-			{"n,(IY + d)", "FDCBdC6+b", 6, 23},
-		},
+		SPECASM_DOC_SET_FORMS,
+		SPECASM_DOC_SET_NUM_FORMS,
 		2,
 		8,
 		0,
@@ -1041,12 +1498,8 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"sla",
-		{
-			{"r", "CB 20+r", 2, 8},
-			{"(hl)", "CB 26", 4, 15},
-			{"(ix + d)", "DD CB d 26", 6, 23 },
-			{"(iy + d)", "FD CB d 26", 6, 23 },
-		},
+		SPECASM_DOC_SLA_FORMS,
+		SPECASM_DOC_SLA_NUM_FORMS,
 		2,
 		0,
 		0,
@@ -1056,70 +1509,51 @@ const static specasm_ins_doc_t docs[] = {
 	},
 	{
 		"sra",
-		{
-			{"r", "CB 28+r", 2, 8},
-			{"(hl)", "CB 2E", 4, 15},
-			{"(ix + d)", "DD CB d 2E", 6, 23 },
-			{"(iy + d)", "FD CB d 2E", 6, 23 },
-		},
+		SPECASM_DOC_SRA_FORMS,
+		SPECASM_DOC_SRA_NUM_FORMS,
 		2,
 		0,
 		0,
 		"The operand is arithmetically shifted right by 1 bit. Bit 7 "
-		"is set to 0. Bit 0 is moved into the carry flag.",
+		"remains unchanged. Bit 0 is moved into the carry flag.",
 		"XX 0 X0X",
 	},
 	{
 		"srl",
-		{
-			{"r", "CB 38+r", 2, 8},
-			{"(hl)", "CB 3E", 4, 15},
-			{"(ix + d)", "DD CB d 3E", 6, 23 },
-			{"(iy + d)", "FD CB d 3E", 6, 23 },
-		},
+		SPECASM_DOC_SRL_FORMS,
+		SPECASM_DOC_SRL_NUM_FORMS,
 		2,
 		0,
 		0,
 		"The operand is logically shifted right by 1 bit. Bit 7 is "
-		"unchanged. Bit 0 is moved into the carry flag.",
+		"set to 0. Bit 0 is moved into the carry flag.",
 		"XX 0 X0X",
 	},
 	{
 		"sub",
-		{
-			{"r", "A0+r", 1, 4},
-			{"n", "D6 n",  2, 7},
-			{"(hl)", "96", 2, 7},
-			{"(ix + d)", "DD 96 d", 5, 19 },
-			{"(iy + d)", "FD 96 d", 5, 19 },
-		},
+		SPECASM_DOC_SUB_FORMS,
+		SPECASM_DOC_SUB_NUM_FORMS,
 		2,
 		0,
 		0,
-		"The operand is subracted from the accumlator.",
+		"The operand is subracted from a.",
 		"XX X X1X",
 	},
 	{
 		"xor",
-		{
-			{"r", "A8+r", 1, 4},
-			{"n", "EE n",  2, 7},
-			{"(hl)", "AE", 2, 7},
-			{"(ix + d)", "DD AE d", 5, 19 },
-			{"(iy + d)", "FD AE d", 5, 19 },
-		},
+		SPECASM_DOC_XOR_FORMS,
+		SPECASM_DOC_XOR_NUM_FORMS,
 		2,
 		0,
 		0,
-		"The result of a bitwise XOR of the accumulator and the "
-		"argument is stored in the accumulator.",
+		"The result of a bitwise XOR of a and the argument is stored "
+		"in a.",
 		"XX 0 X00",
 	},
 	{
 		"zx81",
-		{
-			{"", "", 0, 0 },
-		},
+		SPECASM_DOC_MAP_FORMS,
+		SPECASM_DOC_MAP_NUM_FORMS,
 		0,
 		0,
 		0,
@@ -1354,11 +1788,9 @@ static void prv_draw_help(uint8_t ins_id)
 	specasm_util_print(scratch, 0, y, PAPER_BLUE | INK_WHITE);
 	y++;
 	col = PAPER_BLACK | INK_WHITE;
-	for (i = 0; i < 6; i++) {
+	form = &specasm_forms[doc->forms];
+	for (i = 0; i < doc->num_forms; i++) {
 		col ^= 1 << 6;
-		form = &doc->forms[i];
-		if (!form->form)
-			break;
 		x = 0;
 		specasm_util_print(ins_name, x, y, col);
 		x += ins_name_len + 1;
@@ -1370,6 +1802,7 @@ static void prv_draw_help(uint8_t ins_id)
 		prv_justify_num(form->t_states);
 		specasm_util_print(scratch, SPECASM_DOC_T_STATES_X, y, col);
 		y++;
+		form++;
 	}
 
 	y = prv_print_register_encoding(doc, y + 1);
