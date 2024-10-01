@@ -17,6 +17,7 @@
 #include "editor.h"
 #include "editor_buffers.h"
 #if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+#include "doc.h"
 #include "editor_extra.h"
 #endif
 #include "line.h"
@@ -561,6 +562,13 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 	case 'v':
 		specasm_selecting_clip_paste_e();
 		break;
+	case 'h':
+		specasm_text_set_flash(col, row, 0);
+		specasm_help("a");
+		specasm_text_set_flash(col, row, SPECASM_FLASH);
+		specasm_draw_screen(line - row);
+		specasm_draw_status();
+		break;
 #endif
 	default:
 		err_type = SPECASM_ERROR_BAD_COMMAND;
@@ -687,6 +695,12 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 			return 0;
 	} else if ((com[0] == 'f') && (com[1] == 'l') && !com[2]) {
 		specasm_selecting_flags();
+	} else if (com[0] == 'h' && com[1] == ' ') {
+		specasm_text_set_flash(col, row, 0);
+		specasm_help(&com[2]);
+		specasm_text_set_flash(col, row, SPECASM_FLASH);
+		specasm_draw_screen(line - row);
+		specasm_draw_status();
 #endif
 	} else {
 		err_type = SPECASM_ERROR_BAD_COMMAND;

@@ -23,13 +23,15 @@ static uint8_t banks[] = {
 	0 + 16,
 	1 + 16,
 	4 + 16,
-	6 + 16
+	6 + 16,
+	3 + 16
 };
 
 #define SPECASM_128_PARSE_BANK 0
 #define SPECASM_128_CLIP_BANK 1
 #define SPECASM_128_DUMP_BANK 2
 #define SPECASM_128_EDITOR_BANK 3
+#define SPECASM_128_HELP_BANK 4
 
 #ifdef UNITTESTS
 #define SPECASM_128_UNIT_BANK 3
@@ -56,6 +58,7 @@ void specasm_format_line_banked_e(char *buf, unsigned int l);
 void specasm_draw_status_banked(void);
 void specasm_handle_key_press_banked(uint8_t k);
 void specasm_editor_reset_banked(void);
+void specasm_help_banked(const char *ins_name);
 
 #ifdef UNITTESTS
 void specasm_peer_write_state_banked_e(const char *fname, uint16_t checksum);
@@ -73,6 +76,7 @@ void specasm_trampolines_init(void)
 	banks[SPECASM_128_CLIP_BANK] = 4 + 16;
 	banks[SPECASM_128_DUMP_BANK] = 1 + 16;
 	banks[SPECASM_128_EDITOR_BANK] = 3 + 16;
+	banks[SPECASM_128_HELP_BANK] = 6 + 16;
 }
 
 /* clang-format off */
@@ -268,6 +272,15 @@ void specasm_editor_reset(void)
 
 	bank = prv_map_bank(banks[SPECASM_128_EDITOR_BANK]);
 	specasm_editor_reset_banked();
+	(void) prv_map_bank(bank);
+}
+
+void specasm_help(const char *ins_name)
+{
+	uint8_t bank;
+
+	bank = prv_map_bank(banks[SPECASM_128_HELP_BANK]);
+	specasm_help_banked(ins_name);
 	(void) prv_map_bank(bank);
 }
 #else

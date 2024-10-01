@@ -37,6 +37,9 @@ editor_extra_banked.o: editor_extra.c
 analysis_banked.o: analysis.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_6 --constsegBANK_6 --datasegBANK_6 -c $<
 
+doc_banked.o: doc.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_3 --constsegBANK_3 --datasegBANK_3 -c $<
+
 clipboard.o: clipboard.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ -c $<
 
@@ -67,7 +70,8 @@ SPECASM = \
 	ld_parse_banked.o \
 	editor_banked.o \
 	editor_extra_banked.o \
-	analysis_banked.o
+	analysis_banked.o \
+	doc_banked.o
 
 specasm_bare.tap: $(SPECASM)
 	$(CC) $(CFLAGS) -zorg=32768 -m -startup=31 -o $@ $^ -pragma-include:zpragma.inc $(CZFLAGS)
@@ -80,8 +84,9 @@ specasm.tap: specasm_bare.tap sald128/sald128
 	z88dk-appmake +zx -b specasm_bare_BANK_0.bin -o bank0.tap --org 49152 --noloader
 	z88dk-appmake +zx -b specasm_bare_BANK_4.bin -o bank4.tap --org 49152 --noloader
 	z88dk-appmake +zx -b specasm_bare_BANK_6.bin -o bank6.tap --org 49152 --noloader
+	z88dk-appmake +zx -b specasm_bare_BANK_3.bin -o bank3.tap --org 49152 --noloader
 	z88dk-appmake +zx -b sald128/sald128 -o sald128.tap --org 32768 --noloader
-	cat ../../../bas/128/specld.tap sald128.tap bank0.tap bank4.tap bank6.tap specasm_bare.tap > specasm.tap
+	cat ../../../bas/128/specld.tap sald128.tap bank0.tap bank4.tap bank6.tap bank3.tap specasm_bare.tap > specasm.tap
 
 clean:
 	- rm -rf specasm *.zip -rf unitzx sald128

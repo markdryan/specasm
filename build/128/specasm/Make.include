@@ -58,6 +58,7 @@ editor_buffers.o: editor_buffers.c editor_buffers.h line.h \
   error.h
 scratch.o: scratch.c scratch.h line.h error.h
 analysis_banked.o: analysis.c state.h state_base.h line_common.h line.h error.h strings.h
+doc_banked.o: doc.h editor.h error.h line.h line_common.h peer.h peer_zx.h scratch.h util_print_zx.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<
