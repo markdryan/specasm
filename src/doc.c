@@ -44,7 +44,7 @@ typedef struct specasm_ins_form_t_ specasm_ins_form_t;
 struct specasm_ins_doc_t_ {
 	char name[8];
 	specasm_ins_form_t forms[6];
-	const uint8_t reg_encoding[SPECASM_DOC_MAX_REG_ENCODING];
+	uint8_t reg_encoding;
 	uint8_t bits;
 	uint8_t all_cc;
 	const char *description;
@@ -68,6 +68,16 @@ static const char* const reg_names[] = {
 	"sp",
 	"ix",
 	"iy"
+};
+
+const uint8_t reg_encodings[][SPECASM_DOC_MAX_REG_ENCODING] = {
+	{ 8, 1, 2, 3, 4, 5, 6, 1, 17, 33, 0, 49 },
+	{ 8, 1, 2, 3, 4, 5, 6 },
+	{ 0, 0, 0, 0, 0, 0, 0, 1, 17, 33, 0, 49 },
+	{ 0, 0, 0, 0, 0, 0, 0, 1, 17, 0, 0, 49, 33 },
+	{ 0, 0, 0, 0, 0, 0, 0, 1, 17, 0, 0, 49, 0, 33},
+	{ 57, 1, 9, 17, 25, 33, 49},
+	{ 0, 0, 0, 0, 0, 0, 0, 1, 17, 33, 49 },
 };
 
 /*
@@ -94,9 +104,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"a,(iy + d)", "FD 8E d", 5, 19 },
 			{"hl,rr", "ED 4A+rr", 4, 15 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6, 1, 17, 33, 0, 49,
-		},
+		1,
 		0,
 		0,
 		"The second argument and the carry flag are added to the "
@@ -112,9 +120,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"a,(ix + d)", "DD 86 d", 5, 19 },
 			{"a,(iy + d)", "FD 86 d", 5, 19 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6
-		},
+		2,
 		0,
 		0,
 		"The second argument is added to the contents of the "
@@ -126,9 +132,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"hl,rr", "9+rr", 3, 11 },
 		},
-		{
-			0, 0, 0, 0, 0, 0, 0, 1, 17, 33, 0, 49,
-		},
+		3,
 		0,
 		0,
 		specasm_doc_add_16,
@@ -139,9 +143,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"ix,rr", "DD 9+rr", 4, 15 },
 		},
-		{
-			0, 0, 0, 0, 0, 0, 0, 1, 17, 0, 0, 49, 33,
-		},
+		4,
 		0,
 		0,
 		specasm_doc_add_16,
@@ -152,9 +154,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"iy,rr", "FD 9+rr", 4, 15 },
 		},
-		{
-			0, 0, 0, 0, 0, 0, 0, 1, 17, 0, 0, 49, 0, 33,
-		},
+		5,
 		0,
 		0,
 		specasm_doc_add_16,
@@ -165,9 +165,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"n", "0", 1, 4 },
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"The align directive takes one immediate argument that must be "
@@ -187,9 +185,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD A6 d", 5, 19 },
 			{"(iy + d)", "FD A6 d", 5, 19 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		0,
 		0,
 		"The result of a bitwise AND of the accumulator and the "
@@ -204,9 +200,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"n,(IX + d)", "DDCBd46+b", 5, 20},
 			{"n,(IY + d)", "FDCBd46+b", 5, 20},
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		8,
 		0,
 		"Sets the zero flag to 1 if bit n of the 2nd operand "
@@ -220,9 +214,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"cc,nn", "C4+cc n n", 5, 17},
 			{"cc,nn", "C4+cc n n", 3, 10},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		8,
 		"Pushes the PC on the stack and jumps to nn. The conditional "
@@ -236,9 +228,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "3F", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Inverts the carry flag, setting it to 1 if it were previously "
@@ -254,9 +244,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD BE d", 5, 19 },
 			{"(iy + d)", "FD BE d", 5, 19 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		0,
 		0,
 		"The operand is subtracted from the accumulator setting the "
@@ -269,9 +257,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "ED A9", 4, 16},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"The byte pointed to by the address in hl is subtracted from "
@@ -287,9 +273,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"", "ED B9", 4, 16},
 			{"", "ED B9", 5, 21},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"The byte pointed to by the address in hl is subtracted from "
@@ -306,9 +290,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "ED A1", 4, 16},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"The byte pointed to by the address in hl is subtracted from "
@@ -324,9 +306,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"", "ED B1", 4, 16},
 			{"", "ED B1", 5, 21},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"The byte pointed to by the address in hl is subtracted from "
@@ -343,9 +323,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "2F", 1, 4},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"Invert the contents of the accumlator.",
@@ -356,9 +334,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "27", 1, 4},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"Conditionally adjusts the accumulator for BCD addition "
@@ -373,9 +349,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"n,n,n", "n n n", 0, 0},
 			{"n,n,n,n", "n n n n", 0, 0},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"Stores up to 4 bytes in the program binary.  All ns must be "
@@ -391,9 +365,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD 35 d", 6, 23 },
 			{"(iy + d)", "FD 35 d", 6, 23 },
 		},
-		{
-			57, 1, 9, 17, 25, 33, 49,
-		},
+		6,
 		0,
 		0,
 		"The specified operand is decremented by 1.",
@@ -406,9 +378,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"ix", "DD 2B", 2, 10 },
 			{"iy", "FD 2B", 2, 10 },
 		},
-		{
-			0, 0, 0, 0, 0, 0, 0, 1, 17, 33, 0, 49,
-		},
+		3,
 		0,
 		0,
 		"The specified operand is decremented by 1.",
@@ -419,9 +389,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "F3", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Disables maskable interrupts.",
@@ -433,9 +401,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"n", "10 n", 2, 8},
 			{"n", "10 n", 3, 13},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"The b register is decremented by 1.  If the result is > 0 "
@@ -448,9 +414,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"c n", "n c times", 0, 0},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"Stores c copies of the byte n in the binary.",
@@ -462,9 +426,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"nn", "nn", 0, 0},
 			{"nn,nn", "nn nn", 0, 0},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"Stores up to 2 words in the program binary.  All nns must be "
@@ -477,9 +439,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "FB", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Enables maskable interrupts.",
@@ -494,9 +454,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(sp), ix", "DD E3", 6, 23},
 			{"(sp), iy", "FD E3", 6, 23},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"The contents of the two operands are exchanged. "
@@ -509,9 +467,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "D9", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Exchange BC, DE and HL with BC', DE', HL'.",
@@ -522,9 +478,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "76", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"CPU execution is suspended until the next interrupt or reset.",
@@ -537,9 +491,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"1", "ED 56", 2, 8},
 			{"2", "ED 5E", 2, 8},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Sets the interrupt mode.  With IM 2 the MSB of the vector "
@@ -551,9 +503,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"r, (c)", "ED 40+r", 3, 12},
 		},
-		{
-			57, 1, 9, 17, 25, 33, 49,
-		},
+		6,
 		0,
 		0,
 		"Reads a byte from the device at the adddress stored in the bc "
@@ -565,9 +515,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"a, (n)", "DB n", 3, 11},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"Reads a byte from the device at the adddress whose MSB is "
@@ -583,9 +531,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD 34 d", 6, 23 },
 			{"(iy + d)", "FD 34 d", 6, 23 },
 		},
-		{
-			57, 1, 9, 17, 25, 33, 49,
-		},
+		6,
 		0,
 		0,
 		specasm_doc_inc,
@@ -598,12 +544,93 @@ const static specasm_ins_doc_t docs[] = {
 			{"ix", "DD 23", 2, 10 },
 			{"iy", "FD 23", 2, 10 },
 		},
-		{
-			0, 0, 0, 0, 0, 0, 0, 1, 17, 33, 0, 49,
-		},
+		3,
 		0,
 		0,
 		specasm_doc_inc,
+		NULL,
+	},
+	{
+		"ldd",
+		{
+			{"", "ED A8", 4, 16},
+		},
+		0,
+		0,
+		0,
+		"The byte pointed to by hl is loaded into the address in de. "
+		"hl, de and bc are decremented.",
+		"    0 X0 ",
+	},
+	{
+		"lddr",
+		{
+			{"", "ED B8", 4, 16},
+			{"", "ED B8", 5, 21},
+		},
+		0,
+		0,
+		0,
+		"The byte pointed to by hl is loaded into the address in de. "
+		"hl, de and bc are decremented.  If bc!=0 the instruction "
+		"repeats. The instruction consumes more t-states when it "
+		"repeats.",
+		"   0 00 ",
+	},
+	{
+		"ldi",
+		{
+			{"", "ED A0", 4, 16},
+		},
+		0,
+		0,
+		0,
+		"The byte pointed to by hl is loaded into the address in de. "
+		"Both hl and de are incremented while bc is decremented.",
+		"    0 X0 ",
+	},
+	{
+		"ldir",
+		{
+			{"", "ED B0", 4, 16},
+			{"", "ED B0", 5, 21},
+		},
+		0,
+		0,
+		0,
+		"The byte pointed to by hl is loaded into the address in de. "
+		"Both hl and de are incremented while bc is decremented.  If "
+		"bc!=0 the instruction repeats. The instruction consumes more "
+		"t-states when it repeats.",
+		"   0 00 ",
+	},
+	{
+		"jp",
+		{
+			{"nn", "C3 n n", 3, 10},
+			{"(hl)", "E9", 1, 4},
+			{"(ix)", "DD E9", 2, 8},
+			{"(iy)", "FD E9", 2, 8},
+			{"cc,nn", "C2+cc n n", 3, 12},
+			{"cc,nn", "C2+cc n n", 2, 7},
+		},
+		0,
+		0,
+		8,
+		"Jump to the last operand if the condition is met or no "
+		"condition is supplied. Instruction consumes fewer t-states "
+		"if condition is not met.",
+		NULL,
+	},
+	{
+		"map",
+		{
+			{"", "", 0, 0},
+		},
+		0,
+		0,
+		0,
+		"Instructs the linker to generate a map file.",
 		NULL,
 	},
 	{
@@ -611,9 +638,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "ED 44", 2, 8},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Let a = 0 - a.",
@@ -624,9 +649,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "0", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"CPU does nothing for 1 m-cycle.",
@@ -641,9 +664,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD B6 d", 5, 19 },
 			{"(iy + d)", "FD B6 d", 5, 19 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		0,
 		0,
 		"The result of a bitwise OR of the accumulator and the "
@@ -655,9 +676,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"nn","", 0, 0},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Assembler directive that sets the org address of the program, "
@@ -670,9 +689,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"(c), r", "ED 41+r", 3, 12},
 		},
-		{
-			57, 1, 9, 17, 25, 33, 49,
-		},
+		6,
 		0,
 		0,
 		"Writes the register r to the device at the adddress stored "
@@ -685,9 +702,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"","ED BB", 4, 16},
 			{"","ED BB", 5, 21},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"b is decremented. The byte at the address in hl is written to "
@@ -702,9 +717,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"","ED B3", 4, 16},
 			{"","ED B3", 5, 21},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"b is decremented. The byte at the address in hl is written to "
@@ -718,9 +731,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"(n), a", "D3 n", 3, 11},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"Writes the accumulator to the device at the adddress whose MSB"
@@ -732,9 +743,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"","ED AB", 4, 16},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"b is decremented. The byte at the address in hl is written to "
@@ -747,9 +756,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"","ED A3", 4, 16},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"b is decremented. The byte at the address in hl is written to "
@@ -764,9 +771,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"ix", "DD E1", 4, 14},
 			{"iy", "FD E1", 4, 14},
 		},
-		{
-			0, 0, 0, 0, 0, 0, 0, 1, 17, 33, 49
-		},
+		7,
 		0,
 		0,
 		"Pops 2 bytes off the stack into the operand.",
@@ -779,9 +784,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"ix", "DD E5", 4, 15},
 			{"iy", "FD E5", 4, 15},
 		},
-		{
-			0, 0, 0, 0, 0, 0, 0, 1, 17, 33, 49
-		},
+		7,
 		0,
 		0,
 		"Pushes the operand onto the stack.",
@@ -795,9 +798,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"n,(IX + d)", "DDCBd86+b", 6, 23},
 			{"n,(IY + d)", "FDCBd86+b", 6, 23},
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		8,
 		0,
 		"Resets bit n in the second operand.",
@@ -810,9 +811,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"cc", "C0 + cc", 1, 5},
 			{"cc", "C0 + cc", 3, 10},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		8,
 		"If there is no condition or the condition is met value of "
@@ -826,9 +825,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "ED 4D", 4, 14},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Return from interrupt. The stack is popped into PC. An ei "
@@ -841,9 +838,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "ED 45", 4, 14},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Return from NMI. The stack is popped into PC and the "
@@ -859,9 +854,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD CB d 16", 6, 23 },
 			{"(iy + d)", "FD CB d 16", 6, 23 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		0,
 		0,
 		"The operand is shifted left by 1 bit. The carry flag "
@@ -874,9 +867,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "17", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"The accumulator is rotated left 1 bit. The carry flag is "
@@ -892,9 +883,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD CB d 06", 6, 23 },
 			{"(iy + d)", "FD CB d 06", 6, 23 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		0,
 		0,
 		"The operand is rotated left 1 bit. The old bit 7 is moved to "
@@ -906,9 +895,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "07", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"The accumulator is rotated left 1 bit. The old bit 7 is moved "
@@ -920,9 +907,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "ED 6F", 5, 18},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Let tmp = (hl) >> 4             "
@@ -938,9 +923,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD CB d 1E", 6, 23 },
 			{"(iy + d)", "FD CB d 1E", 6, 23 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		0,
 		0,
 		"The operand is shifted right by 1 bit. The carry flag "
@@ -953,9 +936,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "1F", 1, 4},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"The accumulator is shifted right 1 bit. The carry flag is "
@@ -971,9 +952,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD CB d 0E", 6, 23 },
 			{"(iy + d)", "FD CB d 0E", 6, 23 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		0,
 		0,
 		"The second argument and the carry flag are subtracted from "
@@ -985,9 +964,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "0F", 1, 4},
 		},
-		{
-			0
-		},
+		0,
 		0,
 		0,
 		"The accumulator is rotated right by 1 bit. The old bit 0 is "
@@ -999,9 +976,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "ED 67", 5, 18},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Let tmp = a << 4             "
@@ -1014,9 +989,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"n", "C3+n", 3, 11},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"The PC is pushed to the stack and the CPU jumps to the "
@@ -1034,9 +1007,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"a,(iy + d)", "FD 9E d", 5, 19 },
 			{"hl,rr", "ED 42+rr", 4, 15 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6, 1, 17, 33, 0, 49,
-		},
+		1,
 		0,
 		0,
 		"The second argument and the carry flag are subtracted from "
@@ -1048,9 +1019,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "37", 1, 4},
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Sets the carry flag.",
@@ -1064,9 +1033,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"n,(IX + d)", "DDCBdC6+b", 6, 23},
 			{"n,(IY + d)", "FDCBdC6+b", 6, 23},
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		8,
 		0,
 		"Sets bit n in the second operand.",
@@ -1080,9 +1047,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD CB d 26", 6, 23 },
 			{"(iy + d)", "FD CB d 26", 6, 23 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6
-		},
+		2,
 		0,
 		0,
 		"The operand is shifted left by 1 bit. Bit 0 "
@@ -1097,9 +1062,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD CB d 2E", 6, 23 },
 			{"(iy + d)", "FD CB d 2E", 6, 23 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6
-		},
+		2,
 		0,
 		0,
 		"The operand is arithmetically shifted right by 1 bit. Bit 7 "
@@ -1114,9 +1077,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD CB d 3E", 6, 23 },
 			{"(iy + d)", "FD CB d 3E", 6, 23 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6
-		},
+		2,
 		0,
 		0,
 		"The operand is logically shifted right by 1 bit. Bit 7 is "
@@ -1132,9 +1093,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD 96 d", 5, 19 },
 			{"(iy + d)", "FD 96 d", 5, 19 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6
-		},
+		2,
 		0,
 		0,
 		"The operand is subracted from the accumlator.",
@@ -1149,9 +1108,7 @@ const static specasm_ins_doc_t docs[] = {
 			{"(ix + d)", "DD AE d", 5, 19 },
 			{"(iy + d)", "FD AE d", 5, 19 },
 		},
-		{
-			8, 1, 2, 3, 4, 5, 6,
-		},
+		2,
 		0,
 		0,
 		"The result of a bitwise XOR of the accumulator and the "
@@ -1163,9 +1120,7 @@ const static specasm_ins_doc_t docs[] = {
 		{
 			{"", "", 0, 0 },
 		},
-		{
-			0,
-		},
+		0,
 		0,
 		0,
 		"Linker directive that causes string and character literals to "
@@ -1223,17 +1178,16 @@ static uint8_t prv_print_register_encoding(const specasm_ins_doc_t *doc,
 	const char* reg_name;
 	char *s2;
 	char *rr_start = NULL;
+	const uint8_t* enc;
 	char *s = scratch;
 
-	for (i = 0; i < SPECASM_DOC_MAX_REG_ENCODING; i++)
-		if (doc->reg_encoding[i])
-			break;
-
-	if (i == SPECASM_DOC_MAX_REG_ENCODING)
+	if (!doc->reg_encoding)
 		return y;
 
+	enc = (const uint8_t*) &reg_encodings[doc->reg_encoding-1];
+
 	for (i = 0; i < SPECASM_DOC_MAX_REG_ENCODING; i++) {
-		reg_encoding = doc->reg_encoding[i];
+		reg_encoding = enc[i];
 		if (reg_encoding) {
 			if ((i > 6) && !rr_start)
 				rr_start = s;
@@ -1261,7 +1215,7 @@ static uint8_t prv_print_register_encoding(const specasm_ins_doc_t *doc,
 	s = scratch;
 	memset(scratch, ' ', SPECASM_LINE_MAX_LEN);
 	for (i = 0; i < SPECASM_DOC_MAX_REG_ENCODING; i++) {
-		reg_encoding = doc->reg_encoding[i];
+		reg_encoding = enc[i];
 		if (reg_encoding) {
 			s2 = s;
 			reg_name = reg_names[i];
@@ -1276,7 +1230,7 @@ static uint8_t prv_print_register_encoding(const specasm_ins_doc_t *doc,
 	memset(scratch, ' ', SPECASM_LINE_MAX_LEN);
 	s = scratch;
 	for (i = 0; i < SPECASM_DOC_MAX_REG_ENCODING; i++) {
-		reg_encoding = doc->reg_encoding[i];
+		reg_encoding = enc[i];
 		if (reg_encoding) {
 			reg_encoding--;
 			s2 = s;
