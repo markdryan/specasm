@@ -152,8 +152,35 @@ typedef struct specasm_ins_form_t_ specasm_ins_form_t;
 #define SPECASM_DOC_JP_FORMS \
 	(SPECASM_DOC_INIR_FORMS + SPECASM_DOC_INIR_NUM_FORMS)
 #define SPECASM_DOC_JP_NUM_FORMS 6
-#define SPECASM_DOC_LDD_FORMS \
+#define SPECASM_DOC_JR_FORMS \
 	(SPECASM_DOC_JP_FORMS + SPECASM_DOC_JP_NUM_FORMS)
+#define SPECASM_DOC_JR_NUM_FORMS 3
+#define SPECASM_DOC_LD1_FORMS \
+	(SPECASM_DOC_JR_FORMS + SPECASM_DOC_JR_NUM_FORMS)
+#define SPECASM_DOC_LD1_NUM_FORMS 7
+#define SPECASM_DOC_LD2_FORMS \
+	(SPECASM_DOC_LD1_FORMS + SPECASM_DOC_LD1_NUM_FORMS)
+#define SPECASM_DOC_LD2_NUM_FORMS 3
+#define SPECASM_DOC_LD3_FORMS \
+	(SPECASM_DOC_LD2_FORMS + SPECASM_DOC_LD2_NUM_FORMS)
+#define SPECASM_DOC_LD3_NUM_FORMS 2
+#define SPECASM_DOC_LD4_FORMS \
+	(SPECASM_DOC_LD3_FORMS + SPECASM_DOC_LD3_NUM_FORMS)
+#define SPECASM_DOC_LD4_NUM_FORMS 6
+#define SPECASM_DOC_LD5_FORMS \
+	(SPECASM_DOC_LD4_FORMS + SPECASM_DOC_LD4_NUM_FORMS)
+#define SPECASM_DOC_LD5_NUM_FORMS 4
+#define SPECASM_DOC_LD6_FORMS \
+	(SPECASM_DOC_LD5_FORMS + SPECASM_DOC_LD5_NUM_FORMS)
+#define SPECASM_DOC_LD6_NUM_FORMS 3
+#define SPECASM_DOC_LD7_FORMS \
+	(SPECASM_DOC_LD6_FORMS + SPECASM_DOC_LD6_NUM_FORMS)
+#define SPECASM_DOC_LD7_NUM_FORMS 5
+#define SPECASM_DOC_LD8_FORMS \
+	(SPECASM_DOC_LD7_FORMS + SPECASM_DOC_LD7_NUM_FORMS)
+#define SPECASM_DOC_LD8_NUM_FORMS 4
+#define SPECASM_DOC_LDD_FORMS \
+	(SPECASM_DOC_LD8_FORMS + SPECASM_DOC_LD8_NUM_FORMS)
 #define SPECASM_DOC_LDD_NUM_FORMS 1
 #define SPECASM_DOC_LDDR_FORMS \
 	(SPECASM_DOC_LDD_FORMS + SPECASM_DOC_LDD_NUM_FORMS)
@@ -440,6 +467,61 @@ static const specasm_ins_form_t specasm_forms[] = {
 	{"(iy)", "FD E9", 2, 8},
 	{"cc,nn", "C2+cc n n", 3, 12},
 	{"cc,nn", "C2+cc n n", 2, 7},
+
+	/* SPECASM_DOC_JR_FORMS */
+	{"n", "18 n", 3, 12},
+	{"cc,n", "40+cc n", 3, 12},
+	{"cc,n", "40+cc n", 2, 7},
+
+	/* SPECASM_DOC_LD1_FORMS */
+	{"rr,nn", "1+rr n n", 3, 10},
+	{"ix,nn", "DD 21 n n", 4, 14},
+	{"iy,nn", "FD 21 n n", 4, 14},
+	{"hl,(nn)","2A n n", 5, 16},
+	{"rr,(nn)", "ED 4A+rr", 6, 20},
+	{"ix,(nn)", "DD 2A n n", 6, 20},
+	{"iy,(nn)", "FD 2A n n", 6, 20},
+
+	/* SPECASM_DOC_LD2_FORMS */
+	{"sp,hl", "F9", 1, 6},
+	{"sp,ix", "DD F9", 2, 10},
+	{"sp,iy", "FD F9", 2, 10},
+
+	/* SPECASM_DOC_LD3_FORMS */
+	{"r,n", "6+r n", 2, 7},
+	{"r,r'", "40+r+(r'/8)", 1, 4},
+
+	/* SPECASM_DOC_LD4_FORMS */
+	{"(bc),a", "02", 2, 7},
+	{"(de),a", "12", 2, 7},
+	{"(hl),r", "70+r", 2, 7},
+	{"(ix+d),r", "DD 70+r d", 5, 19},
+	{"(iy+d),r", "FD 70+r d", 5, 19},
+	{"(nn),a", "32 n n", 4, 13},
+
+	/* SPECASM_DOC_LD5_FORMS */
+	{"(nn), hl", "22 nn", 5, 16},
+	{"(nn), rr", "ED 43+rr nn", 6, 20},
+	{"(nn), ix", "DD 22 nn", 6, 20},
+	{"(nn), iy", "FD 22 nn", 6, 20},
+
+	/* SPECASM_DOC_LD6_FORMS */
+	{"(hl),n", "36 n", 3, 10},
+	{"(ix+d),n", "DD 36 d n", 5, 19},
+	{"(iy+d),n", "FD 36 d n", 5, 19},
+
+	/* SPECASM_DOC_LD7_FORMS */
+	{"r,(hl)", "46+r", 2, 7},
+	{"a,(bc)", "0A", 2, 7},
+	{"a,(de)", "1A", 2, 7},
+	{"r,(ix+d)","DD 46 d", 5, 19},
+	{"r,(iy+d)","FD 46 d", 5, 19},
+
+	/* SPECASM_DOC_LD8_FORMS */
+	{"a,i", "ED 57", 2, 9},
+	{"a,r", "ED 5F", 2, 9},
+	{"i,a", "ED 47", 2, 9},
+	{"r,a", "ED 4F", 2, 9},
 
 	/* SPECASM_DOC_LDD_FORMS */
 	{"", "ED A8", 4, 16},
@@ -1104,6 +1186,104 @@ const static specasm_ins_doc_t docs[] = {
 		NULL,
 	},
 	{
+		"jr",
+		SPECASM_DOC_JR_FORMS,
+		SPECASM_DOC_JR_NUM_FORMS,
+		0,
+		0,
+		8,
+		"Jump to PC+2+n if the condition is met or no condition is "
+		"supplied. Range of jump is -126 + 129 bytes. Instruction "
+		"consumes fewer t-states if condition is not met.",
+		NULL,
+	},
+	{
+		"ld",
+		SPECASM_DOC_LD1_FORMS,
+		SPECASM_DOC_LD1_NUM_FORMS,
+		3,
+		0,
+		0,
+		"Loads register pair from an immediate value or from an "
+		"absolute address.",
+		NULL,
+	},
+	{
+		"ld",
+		SPECASM_DOC_LD2_FORMS,
+		SPECASM_DOC_LD2_NUM_FORMS,
+		0,
+		0,
+		0,
+		"Loads SP with the value of another 16 bit register pair.",
+		NULL,
+	},
+	{
+		"ld",
+		SPECASM_DOC_LD3_FORMS,
+		SPECASM_DOC_LD3_NUM_FORMS,
+		6,
+		0,
+		0,
+		"Loads byte register an immediate value or another register.",
+		NULL,
+	},
+	{
+		"ld",
+		SPECASM_DOC_LD4_FORMS,
+		SPECASM_DOC_LD4_NUM_FORMS,
+		2,
+		0,
+		0,
+		"Stores a byte register to the memory location provided "
+		"by the first operand.",
+		NULL,
+	},
+	{
+		"ld",
+		SPECASM_DOC_LD5_FORMS,
+		SPECASM_DOC_LD5_NUM_FORMS,
+		3,
+		0,
+		0,
+		"Loads a 16 bit value from a register into an absolute "
+		"address.",
+		NULL,
+	},
+	{
+		"ld",
+		SPECASM_DOC_LD6_FORMS,
+		SPECASM_DOC_LD6_NUM_FORMS,
+		0,
+		0,
+		0,
+		"Stores an 8 bit immediate to the memory location provided "
+		"by the first operand.",
+		NULL,
+	},
+	{
+		"ld",
+		SPECASM_DOC_LD7_FORMS,
+		SPECASM_DOC_LD7_NUM_FORMS,
+		6,
+		0,
+		0,
+		"Indirectly loads a byte into register using the pointer given "
+		"in the second operator.",
+		NULL,
+	},
+	{
+		"ld",
+		SPECASM_DOC_LD8_FORMS,
+		SPECASM_DOC_LD8_NUM_FORMS,
+		0,
+		0,
+		0,
+		"Instructions to load and store the interrupt vector and "
+		"memory refresh registers to and from a.",
+		NULL,
+	},
+	{
 		"ldd",
 		SPECASM_DOC_LDD_FORMS,
 		SPECASM_DOC_LDD_NUM_FORMS,
@@ -1735,6 +1915,7 @@ static uint8_t prv_print_cc_encoding(const specasm_ins_doc_t *doc,
 	uint8_t i;
 	uint8_t x;
 	uint8_t num;
+	uint8_t limit;
 	char *s;
 
 	if (!doc->all_cc)
@@ -1746,11 +1927,18 @@ static uint8_t prv_print_cc_encoding(const specasm_ins_doc_t *doc,
 	specasm_util_print(scratch, 0, y, PAPER_WHITE | INK_BLACK);
 	y++;
 
-	specasm_util_print(" nz   z  nc   c  po  pe   p   m ", 0,
-			   y, PAPER_BLUE | INK_WHITE);
+	if (strcmp(doc->name, "jr")) {
+		limit = 8;
+		specasm_util_print(" nz   z  nc   c  po  pe   p   m ", 0,
+				   y, PAPER_BLUE | INK_WHITE);
+	} else {
+		limit = 4;
+		specasm_util_print(" nz   z  nc   c ", 0,
+				   y, PAPER_BLUE | INK_WHITE);
+	}
 	y++;
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < limit; i++) {
 		num = doc->all_cc * i;
 		itoa(num, scratch, 16);
 		x = (i*4)+1;
@@ -1835,6 +2023,7 @@ static uint8_t prv_find_mnemomic(const char *ins_name)
 				break;
 			r = m - 1;
 		} else {
+			for (; m > 0 && !strcmp(docs[m-1].name, ins_name); m--);
 			return m;
 		}
 	}
@@ -1850,20 +2039,36 @@ void specasm_help_banked(const char *ins_name)
 {
 	uint8_t id;
 	uint8_t k;
+	char jmp[2];
+	uint8_t redraw = 1;
+
+	jmp[1] = 0;
 
 	id = prv_find_mnemomic(ins_name);
 	do {
-		prv_draw_help(id);
+		if (redraw)
+			prv_draw_help(id);
 		do {
 			specasm_sleep_ms(25);
 		} while(!(k = in_inkey()));
 
+		redraw = 0;
 		if (k == SPECASM_KEY_LEFT) {
-			if (id > 0)
+			if (id > 0) {
 				id--;
+				redraw = 1;
+			}
 		} else if (k == SPECASM_KEY_RIGHT) {
+			if (id < max_docs - 1) {
+				id++;
+				redraw = 1;
+			}
+		} else if (k >= 'a' && k <= 'z') {
+			jmp[0] = k;
+			id = prv_find_mnemomic(jmp);
 			if (id < max_docs - 1)
 				id++;
+			redraw = 1;
 		} else {
 			break;
 		}
