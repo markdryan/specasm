@@ -1,12 +1,15 @@
 VPATH=../../../src
 
 .PHONY: all
-all: specasm.tap salink.tap SAEXPORT SAIMPORT SAMAKE
+all: specasm.tap salink.tap SAEXPORT SAIMPORT SAMAKE SAMAC
 
 CC=zcc
 CFLAGS=+zx -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy
 
 util_print_acc_zx.o: util_print_acc_zx.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+samac_cmds.o: samac_cmds.asm
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 include Make.include
@@ -75,9 +78,25 @@ SAMAKE =\
 	peer_file_zx.o \
 	peer_zx.o
 
+SAMAC = \
+	samac.o \
+	samac_cmds.o \
+	ld_parse.o \
+	line_common.o \
+	line_dump.o \
+	line_dump_common.o \
+	line_parse.o \
+	line_parse_common.o \
+	error.o \
+	scratch.o \
+	state_base.o \
+	state_dump.o \
+	state_parse.o \
+	peer_zx.o
+
 
 specasm.tap: $(SPECASM)
-	$(CC) $(CFLAGS) -zorg=24310 -startup=31 -o specasm-bare $^ -create-app
+	$(CC) $(CFLAGS) -m -zorg=24310 -startup=31 -o specasm-bare $^ -create-app
 	cat ../../../bas/48/SPECLD.TAP specasm-bare.tap > specasm.tap
 
 salink.tap: $(SALINK)
@@ -93,9 +112,13 @@ SAIMPORT: $(SAIMPORT)
 SAMAKE: $(SAMAKE)
 	$(CC) $(CFLAGS) -startup=30 -o $@ $(SAMAKE) -subtype=dotx -Cz"--clean" -create-app
 
+SAMAC: $(SAMAC)
+	$(CC) $(CFLAGS) -m -zorg=32768 -pragma-output="CLIB_MALLOC_HEAP_SIZE=0" -pragma-output="REGISTER_SP=-1" -startup=31 -o $@ $^
+#	$(CC) $(CFLAGS) -m -zorg=26000 -startup=31 -o $@ $^ -Cz"--bin" -create-app -pragma-output="REGISTER_SP=-1"
+
 clean:
 	- rm -rf specasm *.zip -rf unitzx
-	- rm *.X *.o *.bin *.tap SAIMPORT SAEXPORT SAMAKE
+	- rm *.X *.o *.bin *.tap SAIMPORT SAEXPORT SAMAKE SAMAC
 
 .PHONY: release
 release:
@@ -105,6 +128,7 @@ release:
 	cp ../../../COPYING release/specasm
 	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
 	cp SAMAKE SAIMPORT SAEXPORT *.X release/specasm
+	cp SAMAC_CODE.bin release/specasm/SAMAC
 	cp ../../../bas/48/INSTALL.BAS release/specasm
 	cp ../../../bas/48/REMOVE.BAS release/specasm
 	../../../buildlib.sh `realpath release` 48 specasm
