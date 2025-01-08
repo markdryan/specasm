@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -29,6 +29,7 @@
 #define SAMAKE_TARGET_TYPE_TAP 2
 #define SAMAKE_TARGET_TYPE_P 3
 #define SAMAKE_TARGET_TYPE_TST 4
+#define SAMAKE_TARGET_TYPE_MAC 5
 
 #define SAMAKE_CODE_BUF_SIZE 1024
 
@@ -39,6 +40,7 @@ static char start_address[6] = "32768";
 static char clear_address[6] = "32767";
 static char fsize_file_address[6] = "60000";
 static uint16_t org_address = 0x8000;
+static const char *samac_name = "/specasm/SAMAC";
 static uint16_t basic_prog_len;
 static uint8_t got_org;
 uint8_t got_zx81;
@@ -173,19 +175,25 @@ finish:
 	specasm_closedir(dir);
 }
 
-static void prv_make_app_name(const char *type)
+static void prv_make_app_name_gen(const char *type, const char *name,
+				  uint8_t len)
 {
 	uint8_t ext_pos;
-	uint8_t bin_name_len_plus_ext;
+	uint8_t len_plus_ext;
 
-	bin_name_len_plus_ext = bin_name_len + strlen(type) + 1;
-	if (bin_name_len_plus_ext > MAX_FNAME)
-		ext_pos = bin_name_len - (bin_name_len_plus_ext - MAX_FNAME);
+	len_plus_ext = len + strlen(type) + 1;
+	if (len_plus_ext > MAX_FNAME)
+		ext_pos = len - (len_plus_ext - MAX_FNAME);
 	else
-		ext_pos = bin_name_len;
-	strcpy(app_name, bin_name);
+		ext_pos = len;
+	strcpy(app_name, name);
 	app_name[ext_pos] = '.';
 	strcpy(&app_name[ext_pos + 1], type);
+}
+
+static void prv_make_app_name(const char *type)
+{
+	prv_make_app_name_gen(type, bin_name, bin_name_len);
 }
 
 static uint8_t *prv_write_address(uint8_t *ptr, const char *address)
@@ -296,20 +304,10 @@ close_in_f:
 	return 0;
 }
 
-static void prv_make_bas_e(void)
+static void prv_create_bas_file_e(void)
 {
 	specasm_handle_t f;
-	uint16_t bin_size;
 
-	/* Check bin file exists and is not too big. */
-
-	f = prv_open_bin_e(&bin_size);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-	specasm_file_close_e(f);
-	err_type = SPECASM_ERROR_OK;
-
-	prv_make_app_name("bas");
 #ifdef SPECASM_TARGET_NEXT
 	prv_make_basic_file(0, bin_name, bin_name_len);
 #else
@@ -335,6 +333,49 @@ static void prv_make_bas_e(void)
 on_error:
 	specasm_file_close_e(f);
 	specasm_remove_file(app_name);
+}
+
+static void prv_make_bas_e(void)
+{
+	specasm_handle_t f;
+	uint16_t bin_size;
+
+	/* Check bin file exists and is not too big. */
+
+	f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	specasm_file_close_e(f);
+	err_type = SPECASM_ERROR_OK;
+
+	prv_make_app_name("bas");
+	prv_create_bas_file_e();
+}
+
+static void prv_make_mac_e(const char *apn)
+{
+	specasm_handle_t f;
+	uint16_t bin_size;
+
+	/* Check bin file exists and is not too big. */
+
+	f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	specasm_file_close_e(f);
+	err_type = SPECASM_ERROR_OK;
+
+	if (!strchr(apn, '.')) {
+		prv_make_app_name_gen("bas", apn, strlen(apn));
+	} else {
+		if (strlen(apn) > MAX_FNAME) {
+			err_type = SPECASM_ERROR_BAD_FNAME;
+			return;
+		}
+		strcpy(app_name, apn);
+	}
+
+	prv_create_bas_file_e();
 }
 
 static void prv_make_basic_header(void)
@@ -599,7 +640,7 @@ static void prv_make_p_e(void)
 	uint16_t i;
 
 	const uint8_t loader[] = {118, 0,  2,  11, 0,  249, 212, 197,
-				  11,  29, 34, 33, 29, 32,  11,  118};
+				  11,  29, 34, 33, 29, 32,  11,	 118};
 	const uint8_t footer[] = {118, 128};
 
 	if (got_org && strcmp(start_address, "16514")) {
@@ -926,9 +967,16 @@ on_error:
 
 static void prv_make_e(const char *dir, uint8_t target_type)
 {
-	prv_find_bin_name_e(dir, target_type);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
+	const char *apn;
+
+	if (target_type == SAMAKE_TARGET_TYPE_MAC) {
+		strcpy(bin_name, samac_name);
+		bin_name_len = strlen(samac_name);
+	} else {
+		prv_find_bin_name_e(dir, target_type);
+		if (err_type != SPECASM_ERROR_OK)
+			return;
+	}
 
 	if (got_zx81 && (target_type != SAMAKE_TARGET_TYPE_P) &&
 	    (target_type != SAMAKE_TARGET_TYPE_NONE)) {
@@ -962,14 +1010,18 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 	if ((target_type != SAMAKE_TARGET_TYPE_P) && (org_address < 24000))
 		printf("Warning: org %" PRIu16 " is very low\n", org_address);
 
-	if (target_type == SAMAKE_TARGET_TYPE_BAS)
+	if (target_type == SAMAKE_TARGET_TYPE_BAS) {
 		prv_make_bas_e();
-	else if (target_type == SAMAKE_TARGET_TYPE_TAP)
+	} else if (target_type == SAMAKE_TARGET_TYPE_MAC) {
+		apn = strcmp(dir, ".") ? dir : "mac";
+		prv_make_mac_e(apn);
+	} else if (target_type == SAMAKE_TARGET_TYPE_TAP) {
 		prv_make_tap_e();
-	else if (target_type == SAMAKE_TARGET_TYPE_P)
+	} else if (target_type == SAMAKE_TARGET_TYPE_P) {
 		prv_make_p_e();
-	else
+	} else {
 		prv_make_tst_e();
+	}
 }
 
 int main(int argc, char *argv[])
@@ -998,6 +1050,8 @@ int main(int argc, char *argv[])
 			target_type = SAMAKE_TARGET_TYPE_BAS;
 		} else if (!strcmp(argv[1], "tst")) {
 			target_type = SAMAKE_TARGET_TYPE_TST;
+		} else if (!strcmp(argv[1], "mac")) {
+			target_type = SAMAKE_TARGET_TYPE_MAC;
 		} else {
 			err_type = SAMAKE_ERROR_USAGE;
 			goto on_error;
