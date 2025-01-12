@@ -30,6 +30,7 @@
 #define SAMAKE_TARGET_TYPE_P 3
 #define SAMAKE_TARGET_TYPE_TST 4
 #define SAMAKE_TARGET_TYPE_MAC 5
+#define SAMAKE_TARGET_TYPE_ACE 6
 
 #define SAMAKE_CODE_BUF_SIZE 1024
 
@@ -453,10 +454,10 @@ static void prv_make_code_header(uint16_t bin_size)
 	container.tap_block[23] = 0xff;
 }
 
-static uint8_t prv_write_code_e(specasm_handle_t in_f, specasm_handle_t out_f)
+static uint8_t prv_write_code_e(specasm_handle_t in_f, specasm_handle_t out_f,
+				uint8_t checksum)
 {
 	uint16_t i;
-	uint8_t checksum = 0xff;
 	size_t read;
 
 	for (;;) {
@@ -474,6 +475,71 @@ static uint8_t prv_write_code_e(specasm_handle_t in_f, specasm_handle_t out_f)
 	}
 
 	return checksum;
+}
+
+static void prv_make_ace_e(void)
+{
+	specasm_handle_t out_f;
+	specasm_handle_t in_f;
+	uint16_t bin_size;
+	uint16_t i;
+	uint8_t header[30];
+	uint16_t data_block_size;
+	uint8_t checksum = 0;
+	uint8_t ace_name_len = bin_name_len;
+
+	prv_make_app_name("tap");
+	in_f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	if (ace_name_len > 10)
+		ace_name_len = 10;
+
+	memset(&header[3], 0x20, 24);
+	header[0] = 26; /* header block size LSB */
+	header[1] = 0;	/* header block size MSB */
+	header[2] = 32; /* file type (byte) */
+	memcpy(&header[3], bin_name, ace_name_len);
+	memcpy(&header[13], &bin_size, sizeof(bin_size));
+	memcpy(&header[15], &org_address, sizeof(org_address));
+
+	for (i = 2; i < 27; i++)
+		checksum ^= header[i];
+	header[27] = checksum;
+	data_block_size = bin_size + 1;
+	memcpy(&header[28], &data_block_size, sizeof(data_block_size));
+
+	out_f = specasm_file_wopen_e(app_name);
+	if (err_type != SPECASM_ERROR_OK) {
+		specasm_file_close_e(in_f);
+		return;
+	}
+
+	specasm_file_write_e(out_f, &header, sizeof(header));
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	/*
+	 * Now write out code file and compute the checksum.
+	 */
+
+	checksum = prv_write_code_e(in_f, out_f, 0);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_write_e(out_f, &checksum, 1);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	return;
+
+on_error:
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	specasm_remove_file(app_name);
 }
 
 static void prv_make_tap_e(void)
@@ -533,7 +599,7 @@ static void prv_make_tap_e(void)
 	 * Now write out code file and compute the checksum.
 	 */
 
-	checksum = prv_write_code_e(in_f, out_f);
+	checksum = prv_write_code_e(in_f, out_f, 0xff);
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
@@ -667,7 +733,7 @@ static void prv_make_p_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
-	(void)prv_write_code_e(in_f, out_f);
+	(void)prv_write_code_e(in_f, out_f, 0xff);
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
@@ -1007,10 +1073,13 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 	 * to stop people creating a loader for a dot program.
 	 */
 
-	if ((target_type != SAMAKE_TARGET_TYPE_P) && (org_address < 24000))
+	if ((target_type != SAMAKE_TARGET_TYPE_P) &&
+	    (target_type != SAMAKE_TARGET_TYPE_ACE) && (org_address < 24000))
 		printf("Warning: org %" PRIu16 " is very low\n", org_address);
 
-	if (target_type == SAMAKE_TARGET_TYPE_BAS) {
+	if (target_type == SAMAKE_TARGET_TYPE_ACE) {
+		prv_make_ace_e();
+	} else if (target_type == SAMAKE_TARGET_TYPE_BAS) {
 		prv_make_bas_e();
 	} else if (target_type == SAMAKE_TARGET_TYPE_MAC) {
 		apn = strcmp(dir, ".") ? dir : "mac";
@@ -1052,6 +1121,8 @@ int main(int argc, char *argv[])
 			target_type = SAMAKE_TARGET_TYPE_TST;
 		} else if (!strcmp(argv[1], "mac")) {
 			target_type = SAMAKE_TARGET_TYPE_MAC;
+		} else if (!strcmp(argv[1], "ace")) {
+			target_type = SAMAKE_TARGET_TYPE_ACE;
 		} else {
 			err_type = SAMAKE_ERROR_USAGE;
 			goto on_error;
