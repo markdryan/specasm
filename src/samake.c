@@ -31,6 +31,7 @@
 #define SAMAKE_TARGET_TYPE_TST 4
 #define SAMAKE_TARGET_TYPE_MAC 5
 #define SAMAKE_TARGET_TYPE_ACE 6
+#define SAMAKE_TARGET_TYPE_AUTOACE 7
 
 #define SAMAKE_CODE_BUF_SIZE 1024
 
@@ -483,7 +484,6 @@ static void prv_make_ace_e(void)
 	specasm_handle_t in_f;
 	uint16_t bin_size;
 	uint16_t i;
-	uint8_t header[30];
 	uint16_t data_block_size;
 	uint8_t checksum = 0;
 	uint8_t ace_name_len = bin_name_len;
@@ -496,19 +496,19 @@ static void prv_make_ace_e(void)
 	if (ace_name_len > 10)
 		ace_name_len = 10;
 
-	memset(&header[3], 0x20, 24);
-	header[0] = 26; /* header block size LSB */
-	header[1] = 0;	/* header block size MSB */
-	header[2] = 32; /* file type (byte) */
-	memcpy(&header[3], bin_name, ace_name_len);
-	memcpy(&header[13], &bin_size, sizeof(bin_size));
-	memcpy(&header[15], &org_address, sizeof(org_address));
+	memset(&basic_buf[3], 0x20, 24);
+	basic_buf[0] = 26; /* header block size LSB */
+	basic_buf[1] = 0;  /* header block size MSB */
+	basic_buf[2] = 32; /* file type (byte) */
+	memcpy(&basic_buf[3], bin_name, ace_name_len);
+	memcpy(&basic_buf[13], &bin_size, sizeof(bin_size));
+	memcpy(&basic_buf[15], &org_address, sizeof(org_address));
 
 	for (i = 2; i < 27; i++)
-		checksum ^= header[i];
-	header[27] = checksum;
+		checksum ^= basic_buf[i];
+	basic_buf[27] = checksum;
 	data_block_size = bin_size + 1;
-	memcpy(&header[28], &data_block_size, sizeof(data_block_size));
+	memcpy(&basic_buf[28], &data_block_size, sizeof(data_block_size));
 
 	out_f = specasm_file_wopen_e(app_name);
 	if (err_type != SPECASM_ERROR_OK) {
@@ -516,7 +516,7 @@ static void prv_make_ace_e(void)
 		return;
 	}
 
-	specasm_file_write_e(out_f, &header, sizeof(header));
+	specasm_file_write_e(out_f, basic_buf, 30);
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
@@ -525,6 +525,143 @@ static void prv_make_ace_e(void)
 	 */
 
 	checksum = prv_write_code_e(in_f, out_f, 0);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_write_e(out_f, &checksum, 1);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	return;
+
+on_error:
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	specasm_remove_file(app_name);
+}
+
+/*
+ * Template based on:
+ * https://github.com/McKlaud76/JACE-TAP-templates/blob/main/asm/AUTORUN_template.asm
+ */
+
+/* clang-format off */
+
+static const uint8_t aceauto_template[] = {
+    /* TAP Header Block (0-27).  All data is constant */
+    0x1a, 0x00, 0x20,  'a',  'u',  't',  'o',  'r',
+     'u',  'n', 0x20, 0x20, 0x20, 0x1f, 0x00, 0xe0,
+    0x22, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+    0x20, 0x20, 0x20, 0xbb,
+
+    /* TAP Data Block (28-61).  Binary file name and checksum are overwritten  */
+    0x20, 0x00, 0x00,  'L',  'O',  'A',  'D', 0x20,
+    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,  /* Binary file name, offset 36 */
+    0x20,  'R',  'U',  'N', 0x20, 0x20, 0x20, 0x20,
+    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+    0x00, /* checksum, offset 61 */
+
+    /* TAP Header Block (62-89). Binary file name, file length, STKBOT and checksum are overwritten  */
+    0x1a, 0x00, 0x00,
+    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, /* Binary file name, offset 65 */
+    0x00, 0x00, /* File length, offset 75 */
+    0x51, 0x3c, 0x58, 0x3c, 0x20, 0x20, 0x20, 0x20,
+    0x20, 0x20,
+    0x00, 0x00,  /* STKBOT, offset 87 */
+    0x00, /* checksum, offset 89 */
+
+    /* TAP Data Block (90-101).  Data block length and word length overwritten */
+
+    0x00, 0x00, /* Data block length, offset 90 */
+     'R',  'U', 0xce,
+    0x00, 0x00, /* Word length, offset 95 */
+    0x49, 0x3c, 0x03, 0x5b, 0x3c
+
+    /* Code starts here followed by checksum of entire data block. */
+    };
+
+/* clang-format on */
+
+static void prv_make_autoace_e(void)
+{
+	specasm_handle_t out_f;
+	specasm_handle_t in_f;
+	uint16_t bin_size;
+	uint16_t i;
+	uint16_t word_size;
+	uint16_t stkbot;
+	uint8_t checksum;
+	uint8_t ace_name_len;
+
+	if (org_address != 15451) {
+		printf("Bad ORG address %s, want 15451\n", start_address);
+		err_type = SAMAKE_ERROR_BAD_ORG;
+		return;
+	}
+
+	prv_make_app_name("tap");
+	in_f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	memcpy(basic_buf, aceauto_template, sizeof(aceauto_template));
+
+	ace_name_len = bin_name_len;
+	if (ace_name_len > 10)
+		ace_name_len = 10;
+
+	memcpy(&basic_buf[36], bin_name, ace_name_len);
+
+	checksum = 0;
+	for (i = 30; i < 61; i++)
+		checksum ^= basic_buf[i];
+	basic_buf[61] = checksum;
+
+	memcpy(&basic_buf[65], bin_name, ace_name_len);
+
+	word_size = bin_size + 10;
+	memcpy(&basic_buf[75], &word_size, sizeof(word_size));
+
+	stkbot = org_address + bin_size;
+	memcpy(&basic_buf[87], &stkbot, sizeof(stkbot));
+	checksum = 0;
+	for (i = 64; i < 89; i++)
+		checksum ^= basic_buf[i];
+	basic_buf[89] = checksum;
+
+	/*
+	 * length of block containing RUN word and code
+	 */
+	word_size++;
+	memcpy(&basic_buf[90], &word_size, sizeof(word_size));
+
+	/*
+	 * length of word and code
+	 */
+	word_size -= 4;
+	memcpy(&basic_buf[95], &word_size, sizeof(word_size));
+
+	checksum = 0;
+	for (i = 92; i < 102; i++)
+		checksum ^= basic_buf[i];
+
+	out_f = specasm_file_wopen_e(app_name);
+	if (err_type != SPECASM_ERROR_OK) {
+		specasm_file_close_e(in_f);
+		return;
+	}
+
+	specasm_file_write_e(out_f, basic_buf, 102);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	/*
+	 * Now write out code file and compute the checksum.
+	 */
+
+	checksum = prv_write_code_e(in_f, out_f, checksum);
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
@@ -710,7 +847,7 @@ static void prv_make_p_e(void)
 	const uint8_t footer[] = {118, 128};
 
 	if (got_org && strcmp(start_address, "16514")) {
-		printf("Bad ORG address %s, want 16514", start_address);
+		printf("Bad ORG address %s, want 16514\n", start_address);
 		err_type = SAMAKE_ERROR_BAD_ORG;
 		return;
 	}
@@ -1073,12 +1210,23 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 	 * to stop people creating a loader for a dot program.
 	 */
 
-	if ((target_type != SAMAKE_TARGET_TYPE_P) &&
-	    (target_type != SAMAKE_TARGET_TYPE_ACE) && (org_address < 24000))
-		printf("Warning: org %" PRIu16 " is very low\n", org_address);
+	if (org_address < 24000) {
+		switch (target_type) {
+		case SAMAKE_TARGET_TYPE_BAS:
+		case SAMAKE_TARGET_TYPE_TAP:
+		case SAMAKE_TARGET_TYPE_TST:
+			printf("Warning: org %" PRIu16 " is very low\n",
+			       org_address);
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (target_type == SAMAKE_TARGET_TYPE_ACE) {
 		prv_make_ace_e();
+	} else if (target_type == SAMAKE_TARGET_TYPE_AUTOACE) {
+		prv_make_autoace_e();
 	} else if (target_type == SAMAKE_TARGET_TYPE_BAS) {
 		prv_make_bas_e();
 	} else if (target_type == SAMAKE_TARGET_TYPE_MAC) {
@@ -1123,6 +1271,8 @@ int main(int argc, char *argv[])
 			target_type = SAMAKE_TARGET_TYPE_MAC;
 		} else if (!strcmp(argv[1], "ace")) {
 			target_type = SAMAKE_TARGET_TYPE_ACE;
+		} else if (!strcmp(argv[1], "autoace")) {
+			target_type = SAMAKE_TARGET_TYPE_AUTOACE;
 		} else {
 			err_type = SAMAKE_ERROR_USAGE;
 			goto on_error;
