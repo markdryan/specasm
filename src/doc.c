@@ -815,7 +815,7 @@ static const specasm_ins_form_t specasm_forms[] = {
 
 #ifdef SPECASM_TARGET_NEXT_OPCODES
 	/* SPECASM_DOC_PUSH_IMM_FORMS */
-	{"nm", "ED 8A+nm", 6, 23},
+	{"nm", "ED 8A n m", 6, 23},
 #endif
 	/* SPECASM_DOC_RES_FORMS */
 	{"n,r", "CB 80+b+r", 2, 8},

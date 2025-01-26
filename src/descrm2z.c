@@ -74,7 +74,7 @@ const char specasm_doc_pixelad[] =
     "that contains the pixel addressed by the x and y coordinates in "
     "the e and d registers, respectively.";
 const char specasm_doc_pixeldn[] =
-    "On entry hl should point to the start of a 8 bit pixel block in the "
+    "On entry hl should point to the start of an 8 bit pixel block in the "
     "Spectrum's display file. On exit hl points to the same pixel block "
     "one line down.";
 #endif
@@ -164,7 +164,7 @@ const char specasm_doc_srl[] =
 const char specasm_doc_sub[] = "The operand is subracted from a.";
 
 #ifdef SPECASM_TARGET_NEXT_OPCODES
-const char specasm_doc_swapnib[] = "Swaps the nibbles in a";
+const char specasm_doc_swapnib[] = "Swaps the nibbles in a.";
 const char specasm_doc_test[] =
     "ANDs the immediate operand with a, sets the flags and discards "
     "the result.";

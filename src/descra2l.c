@@ -147,7 +147,7 @@ const char specasm_doc_halt[] =
     "CPU execution is suspended until the next interrupt or reset.";
 
 const char specasm_doc_im[] =
-    "Sets the interrupt mode.  With im 2 the MSB of the vector "
+    "Sets the interrupt mode. With im 2 the MSB of the vector "
     "address is taken from the i register.";
 
 const char specasm_doc_in[] =
@@ -189,7 +189,7 @@ const char specasm_doc_jp[] =
 const char specasm_doc_jp_c[] =
     "Jumps to address formed from the address of the next instruction "
     "and data read from an io port. Bit 14 and 15 are taken "
-    "from the PC of the next instruction.  Bits 0-5 are 0.  Bits "
+    "from the PC of the next instruction. Bits 0-5 are 0.  Bits "
     "6-13 come from an implicit in (c).";
 #endif
 
@@ -203,7 +203,7 @@ const char specasm_doc_ld1[] =
     "absolute address.";
 
 const char specasm_doc_ld2[] =
-    "Loads SP with the value of another 16 bit register pair.";
+    "Loads sp with the value of another 16 bit register pair.";
 
 const char specasm_doc_ld3[] =
     "Loads byte register an immediate value or another register.";
@@ -233,11 +233,11 @@ const char specasm_doc_ldd[] =
 
 #ifdef SPECASM_TARGET_NEXT_OPCODES
 const char specasm_doc_lddrx[] =
-    "Load (hl) into (de) if (hl) != a. hl and bc are decremented while"
-    "de in incremented. If bc!=0 lddrx repeats. lddrx consumes more "
+    "Load (hl) into (de) if (hl)!=a. hl and bc are decremented while "
+    "de is incremented. If bc!=0 lddrx repeats. lddrx consumes more "
     "t-states when it repeats.";
 const char specasm_doc_lddx[] =
-    "Load (hl) into (de) if (hl) != a. de is incremented. bc and "
+    "Load (hl) into (de) if (hl)!=a. de is incremented. bc and "
     "hl are decremented.";
 #endif
 
@@ -257,22 +257,22 @@ const char specasm_doc_ldir[] =
 
 #ifdef SPECASM_TARGET_NEXT_OPCODES
 const char specasm_doc_ldirx[] =
-    "Load (hl) into (de) if (hl) != a. hl and de are incremented, while "
-    "bc is decremented. If bc != 0 ldirx repeats. ldirx consumes more "
+    "Load (hl) into (de) if (hl)!=a. hl and de are incremented while "
+    "bc is decremented. If bc!=0 ldirx repeats. ldirx consumes more "
     "t-states when it repeats.";
 
 const char specasm_doc_ldix[] =
-    "Load (hl) into (de) if (hl) != a. Both hl and de "
+    "Load (hl) into (de) if (hl)!=a. Both hl and de "
     "are incremented while bc is decremented.";
 
 const char specasm_doc_ldpirx[] =
     "Load the byte whose address is formed from the top 13 bits of hl "
-    "and bottom 3 bits of de into (de) if the byte != a. de is incremented, "
-    "while bc is decremented. If bc != 0 ldpirx repeats. ldpirx consumes more "
+    "and bottom 3 bits of de into (de) if the byte != a. de is incremented "
+    "while bc is decremented. If bc!=0 ldpirx repeats. ldpirx consumes more "
     "t-states when it repeats.";
 
 const char specasm_doc_ldws[] =
     "Load (hl) into (de) and increment l and d. The v flag is set "
-    "if d was $7f before increment.";
+    "if d was $7f before incremented.";
 
 #endif
