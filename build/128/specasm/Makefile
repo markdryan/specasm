@@ -40,6 +40,12 @@ analysis_banked.o: analysis.c
 doc_banked.o: doc.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_3 --constsegBANK_3 --datasegBANK_3 -c $<
 
+descra2l_banked.o: descra2l.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_3 --constsegBANK_3 --datasegBANK_3 -c $<
+
+descrm2z_banked.o: descrm2z.c
+	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ --codesegBANK_3 --constsegBANK_3 --datasegBANK_3 -c $<
+
 clipboard.o: clipboard.c
 	$(CC) $(CFLAGS) -DSPECASM_128_BANKED -o $@ -c $<
 
@@ -71,7 +77,9 @@ SPECASM = \
 	editor_banked.o \
 	editor_extra_banked.o \
 	analysis_banked.o \
-	doc_banked.o
+	doc_banked.o \
+	descra2l_banked.o \
+	descrm2z_banked.o
 
 specasm_bare.tap: $(SPECASM)
 	$(CC) $(CFLAGS) -zorg=32768 -m -startup=31 -o $@ $^ -pragma-include:zpragma.inc $(CZFLAGS)

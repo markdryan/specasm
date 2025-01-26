@@ -53,6 +53,15 @@ queued_files_banked.o: queued_files.c
 link_obj_banked.o: link_obj.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ --codesegBANK_45_H --constsegBANK_45_H --datasegBANK_45_H -c $<
 
+doc_banked.o: doc.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED  -o $@ --codesegBANK_47_L --constsegBANK_47_L --datasegBANK_47_L -c $<
+
+descra2l_banked.o: descra2l.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED  -o $@ --codesegBANK_47_H --constsegBANK_47_H --datasegBANK_47_H -c $<
+
+descrm2z_banked.o: descrm2z.c
+	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED  -o $@ --codesegBANK_48_H --constsegBANK_48_H --datasegBANK_48_H -c $<
+
 clipboard.o: clipboard.c
 	$(CC) $(CFLAGS) -DSPECASM_NEXT_BANKED -o $@ -c $<
 
@@ -80,7 +89,10 @@ SPECASM = \
 	state_dump_banked.o \
 	editor_banked.o \
 	editor_extra_banked.o \
-	analysis_banked.o
+	analysis_banked.o \
+	doc_banked.o \
+	descra2l_banked.o \
+	descrm2z_banked.o
 
 SALINK = \
 	salink.o \
