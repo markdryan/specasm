@@ -951,6 +951,9 @@ struct specasm_ins_doc_t_ {
 	uint8_t reg_encoding;
 	uint8_t bits;
 	uint8_t all_cc;
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	uint8_t zxn;
+#endif
 	const char *description;
 	const char *flags;
 };
@@ -998,6 +1001,9 @@ const static specasm_ins_doc_t docs[] = {
 		1,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_adc,
 		"XX X X0X",
 	},
@@ -1008,6 +1014,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_add,
 		"XX X X0X",
 	},
@@ -1018,6 +1027,9 @@ const static specasm_ins_doc_t docs[] = {
 		3,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_add_16,
 		"   X  0X",
 	},
@@ -1028,6 +1040,9 @@ const static specasm_ins_doc_t docs[] = {
 		4,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_add_16,
 		"   X  0X",
 	},
@@ -1038,6 +1053,9 @@ const static specasm_ins_doc_t docs[] = {
 		5,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_add_16,
 		"   X  0X",
 	},
@@ -1049,6 +1067,7 @@ const static specasm_ins_doc_t docs[] = {
 		8,
 		0,
 		0,
+		1,
 		specasm_doc_add_rra,
 		"       ?",
 	},
@@ -1059,6 +1078,7 @@ const static specasm_ins_doc_t docs[] = {
 		9,
 		0,
 		0,
+		1,
 		specasm_doc_add_16imm,
 		NULL,
 	},
@@ -1070,6 +1090,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_align,
 		NULL,
 	},
@@ -1080,6 +1103,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_and,
 		"XX 1 X00",
 	},
@@ -1090,6 +1116,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		8,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_bit,
 		"?X 1 ?0 ",
 	},
@@ -1101,6 +1130,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_brlc,
 		NULL,
 	},
@@ -1111,6 +1141,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_bsla,
 		NULL,
 	},
@@ -1121,6 +1152,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_bsra,
 		NULL,
 	},
@@ -1131,6 +1163,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_bsrf,
 		NULL,
 	},
@@ -1141,6 +1174,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_bsrl,
 		NULL,
 	},
@@ -1153,6 +1187,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		8,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_call,
 		NULL,
 	},
@@ -1163,6 +1200,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ccf,
 		"   ?  0X"
 	},
@@ -1173,6 +1213,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_cp,
 		"XX X X1X",
 	},
@@ -1183,6 +1226,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_cpd,
 		"XX X X1 ",
 	},
@@ -1193,6 +1239,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_cpdr,
 		"XX X X1 ",
 	},
@@ -1203,6 +1252,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_cpi,
 		"XX X X1 ",
 	},
@@ -1213,6 +1265,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_cpir,
 		"XX X X1 ",
 	},
@@ -1223,6 +1278,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_cpl,
 		"   1  1 ",
 	},
@@ -1233,6 +1291,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_daa,
 		"XX X X X",
 	},
@@ -1243,6 +1304,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_db,
 		NULL,
 	},
@@ -1253,6 +1317,9 @@ const static specasm_ins_doc_t docs[] = {
 		6,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_dec,
 		"XX X X1 ",
 	},
@@ -1263,6 +1330,9 @@ const static specasm_ins_doc_t docs[] = {
 		3,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_dec,
 		NULL,
 	},
@@ -1273,6 +1343,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_di,
 		NULL,
 	},
@@ -1283,6 +1356,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_djnz,
 		NULL,
 	},
@@ -1293,6 +1369,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ds,
 		NULL,
 	},
@@ -1303,6 +1382,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_dw,
 		NULL,
 	},
@@ -1313,6 +1395,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ei,
 		NULL,
 	},
@@ -1323,6 +1408,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ex,
 		"XXXXXXXX",
 	},
@@ -1333,6 +1421,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_exx,
 		NULL,
 	},
@@ -1343,6 +1434,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_halt,
 		NULL,
 	},
@@ -1353,6 +1447,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_im,
 		NULL,
 	},
@@ -1363,6 +1460,9 @@ const static specasm_ins_doc_t docs[] = {
 		6,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_in,
 		"XX X X0 ",
 	},
@@ -1373,6 +1473,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_in2,
 		NULL,
 	},
@@ -1383,6 +1486,9 @@ const static specasm_ins_doc_t docs[] = {
 		6,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_inc,
 		"XX X X0 ",
 	},
@@ -1393,6 +1499,9 @@ const static specasm_ins_doc_t docs[] = {
 		3,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_inc,
 		NULL,
 	},
@@ -1403,6 +1512,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ind,
 		"?X ? ?1 ",
 	},
@@ -1413,6 +1525,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_indr,
 		"?1 ? ?1 "
 	},
@@ -1423,6 +1538,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ini,
 		"?X ? ?1 ",
 	},
@@ -1433,6 +1551,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_inir,
 		"?1 ? ?1 "
 	},
@@ -1443,6 +1564,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		8,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_jp,
 		NULL,
 	},
@@ -1454,6 +1578,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_jp_c,
 		"?? ? ???"
 	},
@@ -1465,6 +1590,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		8,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_jr,
 		NULL,
 	},
@@ -1475,6 +1603,9 @@ const static specasm_ins_doc_t docs[] = {
 		3,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ld1,
 		NULL,
 	},
@@ -1485,6 +1616,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ld2,
 		NULL,
 	},
@@ -1495,6 +1629,9 @@ const static specasm_ins_doc_t docs[] = {
 		6,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ld3,
 		NULL,
 	},
@@ -1505,6 +1642,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ld4,
 		NULL,
 	},
@@ -1515,6 +1655,9 @@ const static specasm_ins_doc_t docs[] = {
 		3,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ld5,
 		NULL,
 	},
@@ -1525,6 +1668,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ld6,
 		NULL,
 	},
@@ -1535,6 +1681,9 @@ const static specasm_ins_doc_t docs[] = {
 		6,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ld7,
 		NULL,
 	},
@@ -1545,6 +1694,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ld8,
 		NULL,
 	},
@@ -1555,6 +1707,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ldd,
 		"    0 X0 ",
 	},
@@ -1565,6 +1720,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_lddr,
 		"   0 00 ",
 	},
@@ -1577,6 +1735,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_lddrx,
 		NULL,
 	},
@@ -1587,6 +1746,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_lddx,
 		NULL,
 	},
@@ -1598,6 +1758,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ldi,
 		"    0 X0 ",
 	},
@@ -1608,6 +1771,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ldir,
 		"   0 00 ",
 	},
@@ -1619,6 +1785,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_ldirx,
 		NULL,
 	},
@@ -1629,6 +1796,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_ldix,
 		NULL,
 	},
@@ -1639,6 +1807,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_ldpirx,
 		NULL,
 	},
@@ -1649,6 +1818,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_ldws,
 		"XX X X0 ",
 	},
@@ -1660,6 +1830,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_map,
 		NULL,
 	},
@@ -1671,6 +1844,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_mirror,
 		NULL,
 	},
@@ -1681,6 +1855,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_mul,
 		NULL,
 	},
@@ -1692,6 +1867,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_neg,
 		"XX X X1X",
 	},
@@ -1703,6 +1881,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_nextreg,
 		NULL,
 	},
@@ -1714,6 +1893,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_nop,
 		NULL,
 	},
@@ -1724,6 +1906,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_or,
 		"XX 0 X00",
 	},
@@ -1734,6 +1919,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_org,
 		NULL,
 	},
@@ -1744,6 +1932,9 @@ const static specasm_ins_doc_t docs[] = {
 		6,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_out1,
 		NULL,
 	},
@@ -1754,6 +1945,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_out2,
 		NULL,
 	},
@@ -1764,6 +1958,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_outd,
 		"?X ? ?1 ",
 	},
@@ -1774,6 +1971,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_outdr,
 		"?1 ? ?1 ",
 	},
@@ -1784,6 +1984,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_outi,
 		"?X ? ?1 ",
 	},
@@ -1795,6 +1998,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_outinb,
 		"?? ? ???",
 	},
@@ -1806,6 +2010,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_outir,
 		"?1 ? ?1 ",
 	},
@@ -1817,6 +2024,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_pixelad,
 		NULL,
 	},
@@ -1827,6 +2035,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_pixeldn,
 		NULL,
 	},
@@ -1838,6 +2047,9 @@ const static specasm_ins_doc_t docs[] = {
 		7,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_pop,
 		NULL,
 	},
@@ -1848,6 +2060,9 @@ const static specasm_ins_doc_t docs[] = {
 		7,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_push,
 		NULL,
 	},
@@ -1859,6 +2074,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_push_imm,
 		NULL,
 	},
@@ -1870,6 +2086,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		8,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_res,
 		NULL,
 	},
@@ -1880,6 +2099,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		8,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_ret,
 		NULL,
 	},
@@ -1890,6 +2112,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_reti,
 		NULL,
 	},
@@ -1900,6 +2125,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_retn,
 		NULL,
 	},
@@ -1910,6 +2138,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rl,
 		"XX 0 X0X",
 	},
@@ -1920,6 +2151,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rla,
 		"   0  0X",
 	},
@@ -1930,6 +2164,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rlc,
 		"XX 0 X0X",
 	},
@@ -1940,6 +2177,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rlca,
 		"   0  0X",
 	},
@@ -1950,6 +2190,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rld,
 		"XX 0 X0 ",
 	},
@@ -1960,6 +2203,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rr,
 		"XX 0 X0X",
 	},
@@ -1970,6 +2216,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rra,
 		"   0  0X",
 	},
@@ -1980,6 +2229,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rrc,
 		"XX 0 X0X",
 	},
@@ -1990,6 +2242,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rrca,
 		"   0  0X",
 	},
@@ -2000,6 +2255,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rrd,
 		"XX 0 X0 ",
 	},
@@ -2010,6 +2268,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_rst,
 		NULL,
 	},
@@ -2020,6 +2281,9 @@ const static specasm_ins_doc_t docs[] = {
 		1,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_sbc,
 		"XX X X1X",
 	},
@@ -2030,6 +2294,9 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_scf,
 		"   0  01"
 	},
@@ -2040,6 +2307,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		8,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_set,
 		NULL,
 	},
@@ -2051,6 +2321,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_setae,
 		NULL,
 	},
@@ -2062,6 +2333,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_sla,
 		"XX 0 X0X",
 	},
@@ -2072,6 +2346,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_sra,
 		"XX 0 X0X",
 	},
@@ -2082,6 +2359,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_srl,
 		"XX 0 X0X",
 	},
@@ -2092,6 +2372,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_sub,
 		"XX X X1X",
 	},
@@ -2103,6 +2386,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_swapnib,
 		NULL,
 	},
@@ -2113,6 +2397,7 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+		1,
 		specasm_doc_test,
 		"XX X X?X",
 	},
@@ -2124,6 +2409,9 @@ const static specasm_ins_doc_t docs[] = {
 		2,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_xor,
 		"XX 0 X00",
 	},
@@ -2134,10 +2422,12 @@ const static specasm_ins_doc_t docs[] = {
 		0,
 		0,
 		0,
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+		0,
+#endif
 		specasm_doc_zx81,
 		NULL,
 	},
-
 };
 
 /* clang-format on */
@@ -2364,7 +2654,10 @@ static void prv_draw_help(uint8_t ins_id)
 	memcpy(&scratch[x], ins_name, ins_name_len);
 
 	specasm_util_print(scratch, 0, 0, PAPER_BLUE | INK_WHITE | 64);
-
+#ifdef SPECASM_TARGET_NEXT_OPCODES
+	if (doc->zxn)
+		specasm_util_print("zxn", 0, 0, PAPER_BLUE | INK_RED | 64);
+#endif
 	y = 2;
 	memcpy(scratch, "Opcode          Encoding    M  T",
 	       SPECASM_LINE_MAX_LEN);
