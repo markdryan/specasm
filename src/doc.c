@@ -2725,6 +2725,10 @@ static uint8_t prv_find_mnemomic(const char *ins_name)
 	 * Opcode not found.  Let's return something close.
 	 */
 
+	if ((r < max_docs - 1) && (ins_name[0] != docs[r].name[0]) &&
+	    (ins_name[0] == docs[r + 1].name[0]))
+		r++;
+
 	return r;
 }
 
@@ -2759,8 +2763,6 @@ void specasm_help_banked(const char *ins_name)
 		} else if (k >= 'a' && k <= 'z') {
 			jmp[0] = k;
 			id = prv_find_mnemomic(jmp);
-			if (id < max_docs - 1)
-				id++;
 			redraw = 1;
 		} else {
 			break;
