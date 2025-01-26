@@ -513,6 +513,11 @@ static void prv_exit_command_mode(uint8_t m)
 static uint8_t prv_single_char_command_e(uint8_t ch)
 {
 	uint8_t reset = 0;
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+#ifndef UNITTESTS
+	char start_help[2];
+#endif
+#endif
 
 	switch (ch) {
 	case 'n':
@@ -564,8 +569,10 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 		break;
 #ifndef UNITTESTS
 	case 'h':
+		start_help[0] = 'a';
+		start_help[1] = 0;
 		specasm_text_set_flash(col, row, 0);
-		specasm_help("a");
+		specasm_help(start_help);
 		specasm_text_set_flash(col, row, SPECASM_FLASH);
 		specasm_draw_screen(line - row);
 		specasm_draw_status();
