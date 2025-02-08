@@ -21,6 +21,7 @@
 #include "state_base.h"
 
 specasm_state_t state;
+specasm_error_t err_type;
 
 void specasm_state_reset(void)
 {

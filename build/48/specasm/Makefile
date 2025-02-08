@@ -87,7 +87,6 @@ SAMAC = \
 	line_dump_common.o \
 	line_parse.o \
 	line_parse_common.o \
-	error.o \
 	scratch.o \
 	state_base.o \
 	state_dump.o \
