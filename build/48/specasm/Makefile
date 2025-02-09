@@ -112,8 +112,7 @@ SAMAKE: $(SAMAKE)
 	$(CC) $(CFLAGS) -startup=30 -o $@ $(SAMAKE) -subtype=dotx -Cz"--clean" -create-app
 
 SAMAC: $(SAMAC)
-	$(CC) $(CFLAGS) -m -zorg=32768 -pragma-output="CLIB_MALLOC_HEAP_SIZE=0" -pragma-output="REGISTER_SP=-1" -startup=31 -o $@ $^
-#	$(CC) $(CFLAGS) -m -zorg=26000 -startup=31 -o $@ $^ -Cz"--bin" -create-app -pragma-output="REGISTER_SP=-1"
+	$(CC) $(CFLAGS) -m -zorg=30720 -pragma-output="CLIB_MALLOC_HEAP_SIZE=0" -pragma-output="REGISTER_SP=-1" -startup=31 -o $@ $^
 
 clean:
 	- rm -rf specasm *.zip -rf unitzx

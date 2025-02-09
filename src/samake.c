@@ -35,6 +35,16 @@
 
 #define SAMAKE_CODE_BUF_SIZE 1024
 
+/*
+ * We could use an ORG address of 32768 for the SAMAC binary, but
+ * this would be cutting it a bit fine, leaving only 500 or so bytes
+ * free.  If the code grew in a subsequent release we'd end up having
+ * to lower the ORG address and this would break users' macros.  So
+ * let's leave ourselves some room.
+ */
+
+#define SAMAC_ORG_ADDRESS 30720
+
 static char bin_name[MAX_FNAME + 1];
 static char app_name[MAX_FNAME + 1];
 static uint8_t bin_name_len;
@@ -71,6 +81,14 @@ static union {
 
 static specasm_dirent_t dirent;
 
+static void prv_set_org_address(uint16_t sa)
+{
+	org_address = sa;
+	(void)utoa(sa, start_address, 10);
+	sa--;
+	(void)utoa(sa, clear_address, 10);
+}
+
 static uint8_t prv_parse_obj_e(const char *fname)
 {
 	uint16_t i;
@@ -106,11 +124,8 @@ static uint8_t prv_parse_obj_e(const char *fname)
 				return 1;
 		} else if (!got_org && (line->type == SPECASM_LINE_TYPE_ORG)) {
 			sa = *((uint16_t *)&line->data.op_code[0]);
-			org_address = sa;
+			prv_set_org_address(sa);
 			got_org = 1;
-			(void)utoa(sa, start_address, 10);
-			sa--;
-			(void)utoa(sa, clear_address, 10);
 			if (bin_name[0] && got_zx81)
 				return 1;
 		} else if (!got_zx81 &&
@@ -1175,6 +1190,7 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 	if (target_type == SAMAKE_TARGET_TYPE_MAC) {
 		strcpy(bin_name, samac_name);
 		bin_name_len = strlen(samac_name);
+		prv_set_org_address(SAMAC_ORG_ADDRESS);
 	} else {
 		prv_find_bin_name_e(dir, target_type);
 		if (err_type != SPECASM_ERROR_OK)
