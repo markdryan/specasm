@@ -2746,7 +2746,7 @@ void specasm_help_banked(const char *ins_name)
 		if (redraw)
 			prv_draw_help(id);
 		do {
-			specasm_sleep_ms(25);
+			specasm_sleep_ms(50);
 		} while (!(k = in_inkey()));
 
 		redraw = 0;
