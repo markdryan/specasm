@@ -85,6 +85,7 @@ analysis_banked.o: analysis.c state.h state_base.h line_common.h line.h error.h 
 doc_banked.o: doc.h editor.h error.h line.h line_common.h peer.h peer_zx.h scratch.h util_print_zx.h
 descra2l_banked.o: descra2l.c descra2l.h
 descrm2z_banked.o: descrm2z.c descrm2z.h
+samac.o: samac.c error.h line.h scratch.h state.h state_base.h strings.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

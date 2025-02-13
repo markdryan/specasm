@@ -1,12 +1,15 @@
 VPATH=../../../src
 
 .PHONY: all
-all: SPECASM SALINK SAEXPORT SAIMPORT SAMAKE
+all: SPECASM SALINK SAEXPORT SAIMPORT SAMAKE SAMAC
 
 CC=zcc
 CFLAGS=+zxn -SO3 --opt-code-size --max-allocs-per-node200000 -Cs "--disable-warning 85" -clib=sdcc_iy -DSPECASM_TARGET_NEXT -DSPECASM_TARGET_NEXT_OPCODES
 CZFLAGS=-Cz="--clean --fullsize --main-fence 0xDE00"
 SACZFLAGS=-Cz="--clean --fullsize --main-fence 0xBFFE"
+
+samac_cmds_next.o: samac_cmds_next.asm
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 util_print_acc_next.o: util_print_acc_next.asm
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -139,6 +142,23 @@ SAMAKE =\
 	peer_file_next.o \
 	peer_next.o
 
+SAMAC = \
+	samac.o \
+	samac_cmds_next.o \
+	ld_parse.o \
+	line_common.o \
+	line_dump.o \
+	line_dump_common.o \
+	line_parse.o \
+	line_parse_common.o \
+	error.o \
+	scratch.o \
+	state_base.o \
+	state_dump.o \
+	state_parse.o \
+	peer_next.o
+
+
 SPECASM: $(SPECASM)
 	$(CC) $(CFLAGS) -m -startup=31 -o $@ $^ -pragma-include:zpragmasa.inc -subtype=dotn $(SACZFLAGS) -create-app
 
@@ -154,9 +174,13 @@ SAIMPORT: $(SAIMPORT)
 SAMAKE: $(SAMAKE)
 	$(CC) $(CFLAGS) -startup=30 -o $@ $(SAMAKE) -subtype=dotn -Cz"--clean" -create-app
 
+SAMAC: $(SAMAC)
+	$(CC) $(CFLAGS) -zorg=28736 -pragma-output="CLIB_MALLOC_HEAP_SIZE=0" -pragma-output="REGISTER_SP=-1" -startup=31 -o $@ $^
+
+
 clean:
 	- rm -rf specasm *.zip
-	- rm *.X *.o *.bin SPECASM SALINK SAIMPORT SAEXPORT SAMAKE
+	- rm *.X *.o *.bin *.map SPECASM SALINK SAIMPORT SAEXPORT SAMAKE SAMAC SAMAC_CODE.bin
 
 .PHONY: release
 release:
@@ -165,7 +189,9 @@ release:
 	cp ../../../COPYING release/specasm
 	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
 	cp SPECASM SALINK SAIMPORT SAEXPORT SAMAKE release/specasm
+	cp SAMAC_CODE.bin release/specasm/SAMAC
 	cp ../../../bas/next/INSTALL.BAS release/specasm
 	cp ../../../bas/next/REMOVE.BAS release/specasm
+	cp ../../../bas/next/MAC.BAS release/specasm
 	../../../buildlib.sh `realpath release` next
 	cd release && zip -r specasmnext.zip specasm

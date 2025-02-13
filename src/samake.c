@@ -81,6 +81,9 @@ static union {
 
 static specasm_dirent_t dirent;
 
+static uint8_t prv_write_code_e(specasm_handle_t in_f, specasm_handle_t out_f,
+				uint8_t checksum);
+
 static void prv_set_org_address(uint16_t sa)
 {
 	org_address = sa;
@@ -369,6 +372,7 @@ static void prv_make_bas_e(void)
 	prv_create_bas_file_e();
 }
 
+#ifndef SPECASM_TARGET_NEXT
 static void prv_make_mac_e(const char *apn)
 {
 	specasm_handle_t f;
@@ -395,6 +399,50 @@ static void prv_make_mac_e(const char *apn)
 	prv_create_bas_file_e();
 }
 
+/*
+ * For the next macros we're just going to copy a template file from
+ * the /specasm directory.  We're not going to generate anything.  The
+ * file is a little too large to encode in the samake binary.
+ */
+
+#else
+static void prv_copy_next_mac_e(const char *dir)
+{
+	specasm_handle_t in_f;
+	specasm_handle_t out_f;
+
+	if (strcmp(dir, ".")) {
+		if (!strchr(dir, '.')) {
+			prv_make_app_name_gen("bas", dir, strlen(dir));
+		} else {
+			if (strlen(dir) > MAX_FNAME) {
+				err_type = SPECASM_ERROR_BAD_FNAME;
+				return;
+			}
+			strcpy(app_name, dir);
+		}
+	} else {
+		strcpy(app_name, "mac.bas");
+	}
+
+	in_f = specasm_file_ropen_e("/specasm/MAC.BAS");
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	out_f = specasm_file_wopen_e(app_name);
+	if (err_type != SPECASM_ERROR_OK) {
+		specasm_file_close_e(in_f);
+		return;
+	}
+
+	(void)prv_write_code_e(in_f, out_f, 0);
+
+on_error:
+	specasm_file_close_e(out_f);
+	specasm_file_close_e(in_f);
+}
+#endif
+
 static void prv_make_basic_header(void)
 {
 	uint8_t i;
@@ -408,7 +456,8 @@ static void prv_make_basic_header(void)
 	container.tap_block[2] = 0;    /* Flag byte, 0 = header */
 	container.tap_block[3] = 0;    /* Type byte, 0 = program */
 
-	/* Copy the name of the BASIC file, we'll just use the bin file */
+	/* Copy the name of the BASIC file, we'll just use the bin file
+	 */
 
 	memset(&container.tap_block[4], ' ', 10);
 	memcpy(&container.tap_block[4], bin_name, name_len);
@@ -445,7 +494,8 @@ static void prv_make_code_header(uint16_t bin_size)
 	container.tap_block[2] = 0; /* Flag byte, 0 = header */
 	container.tap_block[3] = 3; /* Type byte, 0 = program */
 
-	/* Copy the name of the BASIC file, we'll just use the bin file */
+	/* Copy the name of the BASIC file, we'll just use the bin file
+	 */
 
 	memset(&container.tap_block[4], ' ', 10);
 	memcpy(&container.tap_block[4], bin_name, name_len);
@@ -712,8 +762,8 @@ static void prv_make_tap_e(void)
 		return;
 
 	/*
-	 * That's the header.  Now we can write our BASIC program followed
-	 * by the checksum.
+	 * That's the header.  Now we can write our BASIC program
+	 * followed by the checksum.
 	 */
 
 	out_f = specasm_file_wopen_e(app_name);
@@ -1188,9 +1238,14 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 	const char *apn;
 
 	if (target_type == SAMAKE_TARGET_TYPE_MAC) {
+#ifdef SPECASM_TARGET_NEXT
+		prv_copy_next_mac_e(dir);
+		return;
+#else
 		strcpy(bin_name, samac_name);
 		bin_name_len = strlen(samac_name);
 		prv_set_org_address(SAMAC_ORG_ADDRESS);
+#endif
 	} else {
 		prv_find_bin_name_e(dir, target_type);
 		if (err_type != SPECASM_ERROR_OK)
@@ -1205,12 +1260,13 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 	}
 
 	/*
-	 * We could perform the opposite check here, that if you select p
-	 * and your program doesn't include the zx81 directive then we report
-	 * an error.  The thing is though that this should still work, providing
-	 * you set the org correctly and do the character conversion yourself.
-	 * This might actually be something you want to do if you have some
-	 * existing code that does the conversion at runtime.
+	 * We could perform the opposite check here, that if you select
+	 * p and your program doesn't include the zx81 directive then we
+	 * report an error.  The thing is though that this should still
+	 * work, providing you set the org correctly and do the
+	 * character conversion yourself. This might actually be
+	 * something you want to do if you have some existing code that
+	 * does the conversion at runtime.
 	 */
 
 	if (target_type == SAMAKE_TARGET_TYPE_NONE)
@@ -1218,12 +1274,13 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 		    got_zx81 ? SAMAKE_TARGET_TYPE_P : SAMAKE_TARGET_TYPE_BAS;
 
 	/*
-	 * TODO, this check isn't really correct.  Ideally we'd add the loading
-	 * address of BASIC program and the size of the BASIC program and check
-	 * that the resulting value isn't greater than org_address, but I can't
-	 * figure out whether there's a fixed starting address for BASIC
-	 * programs, so for now let's just print a warning.  It's mainly there
-	 * to stop people creating a loader for a dot program.
+	 * TODO, this check isn't really correct.  Ideally we'd add the
+	 * loading address of BASIC program and the size of the BASIC
+	 * program and check that the resulting value isn't greater than
+	 * org_address, but I can't figure out whether there's a fixed
+	 * starting address for BASIC programs, so for now let's just
+	 * print a warning.  It's mainly there to stop people creating a
+	 * loader for a dot program.
 	 */
 
 	if (org_address < 24000) {
@@ -1245,9 +1302,11 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 		prv_make_autoace_e();
 	} else if (target_type == SAMAKE_TARGET_TYPE_BAS) {
 		prv_make_bas_e();
+#ifndef SPECASM_TARGET_NEXT
 	} else if (target_type == SAMAKE_TARGET_TYPE_MAC) {
 		apn = strcmp(dir, ".") ? dir : "mac";
 		prv_make_mac_e(apn);
+#endif
 	} else if (target_type == SAMAKE_TARGET_TYPE_TAP) {
 		prv_make_tap_e();
 	} else if (target_type == SAMAKE_TARGET_TYPE_P) {
@@ -1305,10 +1364,14 @@ int main(int argc, char *argv[])
 
 on_error:
 	if (err_type != SPECASM_ERROR_OK) {
-		if (err_type < SPECASM_MAX_ERRORS)
+		if (err_type < SPECASM_MAX_ERRORS) {
 			printf("%s\n", specasm_error_msg(err_type));
-		else if (err_type == SAMAKE_ERROR_USAGE)
-			printf("Usage: samake (bas|tap) [dir]\n");
+		} else if (err_type == SAMAKE_ERROR_USAGE) {
+			printf("Usage:\n");
+			printf(" samake (bas|tap|p|tst) [dir]\n");
+			printf(" samake (ace|autoace) [dir]\n");
+			printf(" samake mac [macro filename]\n");
+		}
 		ret = 1;
 	} else {
 		printf("Created %s\n", app_name);
