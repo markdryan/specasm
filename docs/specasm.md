@@ -78,6 +78,12 @@ The Next and the Spectrum 128 versions of Specasm provide two additional command
 | t       | Displays the number of M cycles and T states the selected code will take to execute.  Specasm prints two numbers for each value, a minimum and a maximum.  The value is likely to be inaccurate for instructions whose running times depend on runtime state, e.g., LDIR.  |
 | fl       | Displays the flags modified by a selected block of code. |
 
+The Next and the Spectrum 128 versions of Specasm provide a help command that describes each of the mnemonics supported by the assembler.  A brief description of each mnemonic is provided, along with its various encodings, timings and the flags it affects.  The Next version of Specasm includes documentation for the ZXN opcodes, which are identified by the string "zxn" highlighted in red in the top left hand corner of the screen.
+
+| Command | Description |
+|---------|-------------|
+| h [mnemonic] | Enters the help system. Takes one optional argument, a mnemonic, which, when given, displays information on that mnemonic.  Help for "adc" is shown when the command is used without a argument.  Use the arrow keys to navigate inside the help system.  Pressing a letter takes you to the first mnemonic that begins with that letter.  Pressing any key other than a letter or left and right exits help. |
+
 Finally, the Next and the Spectrum 128 versions of Specasm have a garbage collection command to reclaim unused strings.  See the *Limitations* section below for more details.
 
 | Command | Description |
@@ -764,6 +770,24 @@ The 'p' argument can be omitted if one of the .x files in the current directory 
 
 On the Spectrum Next, the generate .p file can be run from the browser which will execute it in the built-in ZX81 emulator.
 
+## Jupiter Ace Support
+
+Specasm itself does run on the Jupiter Ace, but it can be used to cross assemble Ace programs from the Spectrum.  The samake shipped with Version v11 and above of Specasm can be used to generate Jupiter Ace tap files.  There are two samake sub commands for the Ace.
+
+- **ace** generates a tap file containing the linked binary of the current project.  The tap file can be loaded with `0 0 bload <project-name>` and then run with `<org-address> call`.
+- **autoace** generates a auto-running tap file.  The tap file can be loaded and run with a single command;  `0 0 bload autorun`.  For this to work, the project needs to have an org address of 15451.
+
+So to create an auto-running tap file for the Ace simply add an `org 15451` statement to your program, link it and type
+
+```
+CLEAR 32767
+.samake autoace
+```
+
+> [!TIP]
+> Note the CLEAR statement is not needed on the ZX Spectrum Next as .samake is implemented as a dotn file.
+
+
 ## Unit Tests
 
 Specasm v9 adds basic support for unit testing.  Test content is placed in a .t file.  .t files are binary files like .x files that can be edited by Specasm but are intended to contain test code only.  .t files can be saexported and saimported to and from .ts source files.  .t files can be included in the same directory as the .x files that constitute the main program.  When salink is run it builds a main binary out of all the .x files in the project.  In Specasm v9, if the project contains any .t files, it will also generate a second binary that contains the contents of all the .t and all the .x files in the project.  The second binary has the same name as the main binary with a '.tst' extension appended.
@@ -980,3 +1004,68 @@ zx81
 ...
 ```
 
+## Scripting support
+
+Specasm does not directly support macros.  It does support numeric expressions but these are mostly used for constants and for address calculations.  It has no facility to programmatically generate assembly language code or data directives directly in its source files.   Although Specasm itself doesn't provide a macro language your ZX Spectrum does (Sinclair BASIC).  Rather than trying to squeeze a custom macro language into Specasm, versions v11 and above of Specasm allow you to use your Spectrum's native language to programmatically create .x files.  So while Specasm doesn't support macros it is scriptable.  The way this works differs on the ZX Spectrum and the Spectrum Next.
+
+### Scripting on the ZX Spectrum
+
+To create a new Specasm script on the ZX Spectrum, simply use the samake **mac** sub command.  This sub command creates a new Specasm BASIC script.  If used without arguments the name of that script is mac.bas.  If an argument is provided the script file name is derived from the argument.  The script contains a single line of code that loads and executes a BASIC extension.  Once executed the extension initialises a new .x file in memory and adds four new commands to Sinclair BASIC, each of which begins with a '*'.  These are
+
+- \*asm which accepts one string argument which is expected to be a valid line of Specasm code.  The line is assembled and appended to the in memory .x file.
+- \*load which accepts one string argument, the path of an .x file, and loads that file into memory, replacing the contents of the previous in memory .x file.
+- \*new which accepts no arguments and resets the in memory .x file.
+- \*save which accepts one string argument, the path of an .x file, and saves the in memory .x file to the given path.
+
+For example, to create and load a new Specasm script type
+
+```
+CLEAR 32767
+.samake mac
+LOAD * "mac.bas"
+```
+
+Then add the following lines and run the program.
+
+```
+20 *asm ".sinwaveY"
+30 FOR n=0 to 255
+40 *asm "db " + STR$(88+INT(80*SIN(n/128*PI)))
+50 NEXT n
+60 *save "sin.x"
+RUN
+```
+
+You should end up with a .x file that contains the y coordinates of a sine wave, e.g.,
+
+```
+.sinwaveY
+db 88
+db 89
+db 91
+db 93
+db 95
+...
+```
+
+One consequence of the way the extensions work is that line 10 of each Specasm script needs to be executed before you can start entering the new Specasm BASIC commands.  This is not an issue the first time you create a script, as the first time you load the script it will only contain one line, line 10, which will be automatically executed.  It may however be an issue if you want to re-edit the script at a later stage.  If you load or merge the file without executing it, you will not be able to add new Specasm commands.  To edit the script you'll need to execute line 10.  I usually do this by executing NEW and then merging the file (so it doesn't execute).  I then add `15 STOP` to the program to prevent all but the first line from executing, run it and then delete line 15.  The Specasm BASIC extension commands can then be freely used.
+
+### Scripting on the ZX Spectrum Next
+
+The mechanism used to extend Sinclair BASIC on the ZX Spectrum does not work on the ZX Spectrum Next.  It may be possible to use a variation of the same trick to get it to work, but it's not worth the effort.  Next BASIC has procedures so we can just use them instead.  A macro file can be created in the same way on the Next as on the ZX Spectrum.  Simply type
+
+```
+.samake mac
+```
+
+This will generate a BASIC program that loads and executes some machine code. The machine code initialises a new .x file in memory and then sets up some entry points that can be used to manipulate the file.  These entry points can be acccessed from the BASIC program via 4 pre-supplied procedures; PROCasm, PROCloadx, PROCnewx and PROCsavex.  These procedures have the same use as the Sinclair BASIC extensions with similar names described above.  For example, to create the sin.x file in Next BASIC, we would add the following code to the generated macro.
+
+```
+20 PROC asm(".sinwaveY")
+30 FOR n=0 to 255
+40 PROC asm("db " + STR$(88+INT(80*SIN(n/128*PI))))
+50 NEXT n
+60 PROCsavex("sin.x")
+```
+
+Unlike the macros on the ZX Spectrum, there's no need to execute a Specasm macro on the Next before editing it.
