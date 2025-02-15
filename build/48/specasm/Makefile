@@ -118,16 +118,3 @@ clean:
 	- rm -rf specasm *.zip -rf unitzx
 	- rm *.X *.o *.bin *.tap SAIMPORT SAEXPORT SAMAKE SAMAC
 
-.PHONY: release
-release:
-	- rm -rf release
-	mkdir -p release/specasm
-	cp specasm.tap salink.tap release/specasm
-	cp ../../../COPYING release/specasm
-	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
-	cp SAMAKE SAIMPORT SAEXPORT *.X release/specasm
-	cp SAMAC_CODE.bin release/specasm/SAMAC
-	cp ../../../bas/48/INSTALL.BAS release/specasm
-	cp ../../../bas/48/REMOVE.BAS release/specasm
-	../../../buildlib.sh `realpath release` 48 specasm
-	cd release && zip -r specasm48.zip specasm

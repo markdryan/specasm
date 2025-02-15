@@ -1,19 +1,22 @@
 # Specasm
 
-Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrum and the ZX Spectrum Next.  It requires an SD card solution running ESXDOS 0.87 or greater to function on the 48Kb and 128Kb ZX Spectrum.  For detailed information about how Specasm works, please see the [documentation](https://github.com/markdryan/specasm/blob/master/docs/specasm.md).  To get started, carry on reading.
+Specasm is a Z80 assembler designed to run on the 48k and 128k ZX Spectrums and the ZX Spectrum Next.  It requires an SD card solution running ESXDOS 0.87 or greater to function on the 48Kb and 128Kb ZX Spectrum.  For detailed information about how Specasm works, please see the [documentation](https://github.com/markdryan/specasm/blob/master/docs/specasm.md).  To get started, carry on reading.
 
 ## Getting Started
 
 [Download](https://github.com/markdryan/specasm/releases) the latest release of Specasm appropriate for your Spectrum and unzip the contents of the file into the root directory of your SD card.
 
 > [!TIP]
-> There are three different Zip files available, specasm48.zip for the 48kb, specasm128.zip for the 128kb Spectrum, and specasmnext.zip for the ZX Spectrum Next.  You must download the appropriate version for your machine.
+> There are two different Zip files available, specasm.zip for the 48kb and 128kb Spectrums, and specasmnext.zip for the ZX Spectrum Next.  The specasm.zip file contains separate binaries and install scripts for both the 48kb and 128kb versions.  You must download the appropriate version for your machine.
 
-You should now have a folder in your root directory called SPECASM.  It should look something like this if you downloaded specasm48.zip
+You should now have a folder in your root directory called SPECASM.  It should look something like this if you downloaded specasm.zip
 
 ![Installing](/docs/install.png)
 
-Now navigate to the INSTALL.BAS file, which is a BASIC program, and press **ENTER** to execute it.  On the 48kb or 128kb Spectrum this will use ESXDOS's **.launcher** command to set up some command line short cuts for the tap files in the SPECASM directory.  It will also copy some executables to the /bin folder.  On the ZX Spectrum Next it will copy the various executable programs that compose Specasm to the /dot folder.
+To install Specasm you need to run a short BASIC program.  Run INST48.BAS when installing on a 48kb Spectrum, INST128.BAS when installing on a 128kb Spectrum and INSTALL.BAS when running on the Next.  Navigate to the appropriate install file and press **ENTER** to execute it.  On the 48kb or 128kb Spectrum this will use ESXDOS's **.launcher** command to set up some command line short cuts for the tap files in the SPECASM directory.  It will also copy some executables to the /bin folder.  On the ZX Spectrum Next it will copy the various executable programs that compose Specasm to the /dot folder.
+
+> [!TIP]
+> Note on previous releases of Specasm, there were separate zip files just for the 48kb and the 128kb Spectrums and users ran a BASIC script called INSTALL.BAS to install Specasm on these machines.  From release v11 onwards, the zip files for the 48kb and 128kb Spectrums have been combined and you must run INST48.BAS or INST128.BAS to install the correct version.  If you run the wrong install program by mistake just run REMOVE.BAS to uninstall Specasm and then execute the correct installer.
 
 ## Reinstalling Specasm
 

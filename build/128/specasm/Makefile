@@ -94,7 +94,7 @@ specasm.tap: specasm_bare.tap sald128/sald128
 	z88dk-appmake +zx -b specasm_bare_BANK_6.bin -o bank6.tap --org 49152 --noloader
 	z88dk-appmake +zx -b specasm_bare_BANK_3.bin -o bank3.tap --org 49152 --noloader
 	z88dk-appmake +zx -b sald128/sald128 -o sald128.tap --org 32768 --noloader
-	cat ../../../bas/128/specld.tap sald128.tap bank0.tap bank4.tap bank6.tap bank3.tap specasm_bare.tap > specasm.tap
+	cat ../../../bas/128/specld.tap sald128.tap bank0.tap bank4.tap bank6.tap bank3.tap specasm_bare.tap > sa128.tap
 
 clean:
 	- rm -rf specasm *.zip -rf unitzx sald128
@@ -104,13 +104,15 @@ clean:
 release:
 	- rm -rf release
 	mkdir -p release/specasm
-	cp specasm.tap release/specasm
+	cp sa128.tap release/specasm
 	cp ../../48/specasm/salink.tap release/specasm
+	cp ../../48/specasm/specasm.tap release/specasm
 	cp ../../48/specasm/SAMAC_CODE.bin release/specasm/SAMAC
 	cp ../../../COPYING release/specasm
 	sed 's/```//g' ../../../docs/specasm.md > release/specasm/specasm.txt
 	cp ../../48/specasm/SAMAKE ../../48/specasm/SAIMPORT ../../48/specasm/SAEXPORT ../../48/specasm/*.X release/specasm
-	cp ../../../bas/48/INSTALL.BAS release/specasm
+	cp ../../../bas/128/INST128.BAS release/specasm
+	cp ../../../bas/48/INST48.BAS release/specasm
 	cp ../../../bas/48/REMOVE.BAS release/specasm
 	../../../buildlib.sh `realpath release` 128 specasm
-	cd release && zip -r specasm128.zip specasm
+	cd release && zip -r specasm.zip specasm
