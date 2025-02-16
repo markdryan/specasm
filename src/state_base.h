@@ -12,17 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #ifndef SPECASM_STATE_READ_H
 #define SPECASM_STATE_READ_H
 
 #ifdef SPECASM_TARGET_NEXT_OPCODES
-#define SPECASM_VERSION 0x800a
-#define SPECASM_VERSION_STR "v10n"
+#define SPECASM_VERSION 0x800b
+#define SPECASM_VERSION_STR "v11n"
 #else
-#define SPECASM_VERSION 10
-#define SPECASM_VERSION_STR "v10"
+#define SPECASM_VERSION 11
+#define SPECASM_VERSION_STR "v11"
 #endif
 
 #include <stdint.h>
