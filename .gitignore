@@ -23,6 +23,7 @@ SAIMPORT.X
 SAEXPORT.X
 SAMAKE
 SAMAKE.X
+SAMAC
 build.sh
 compile.sh
 !build/48/specasm/
@@ -30,6 +31,7 @@ compile.sh
 !bas/128/*.TAP
 !bas/*.TAP
 build/48/specasm/release/
+build/128/specasm/release/
 !build/next/specasm/
 !build/128/specasm/
 build/next/specasm/release/
@@ -40,3 +42,4 @@ build/next/unit/tests/
 examples/hello/hello
 examples/hello/hello.x
 .DS_Store
+.vscode

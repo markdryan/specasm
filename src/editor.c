@@ -12,11 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #include "editor.h"
 #include "editor_buffers.h"
 #if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+#include "doc.h"
 #include "editor_extra.h"
 #endif
 #include "line.h"
@@ -24,7 +25,6 @@
 #include "peer.h"
 #include "scratch.h"
 #include "state.h"
-
 
 #include <stdlib.h>
 #include <string.h>
@@ -105,8 +105,9 @@ static void specasm_dump_line_e(unsigned int l, uint8_t r, uint8_t inv)
 		(void)specasm_text_print(scratch, 0, r, col);
 		return;
 	}
-	for (i = SPECASM_LINE_MAX_OPCODE + 1; (i < SPECASM_LINE_MAX_LEN) &&
-		     (scratch[i] != ';'); i++);
+	for (i = SPECASM_LINE_MAX_OPCODE + 1;
+	     (i < SPECASM_LINE_MAX_LEN) && (scratch[i] != ';'); i++)
+		;
 	scratch[i] = 0;
 	(void)specasm_text_print(scratch, 0, r, col);
 	if (i < SPECASM_LINE_MAX_LEN - 2) {
@@ -512,6 +513,11 @@ static void prv_exit_command_mode(uint8_t m)
 static uint8_t prv_single_char_command_e(uint8_t ch)
 {
 	uint8_t reset = 0;
+#if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
+#ifndef UNITTESTS
+	char start_help[2];
+#endif
+#endif
 
 	switch (ch) {
 	case 'n':
@@ -561,6 +567,17 @@ static uint8_t prv_single_char_command_e(uint8_t ch)
 	case 'v':
 		specasm_selecting_clip_paste_e();
 		break;
+#ifndef UNITTESTS
+	case 'h':
+		start_help[0] = 'a';
+		start_help[1] = 0;
+		specasm_text_set_flash(col, row, 0);
+		specasm_help(start_help);
+		specasm_text_set_flash(col, row, SPECASM_FLASH);
+		specasm_draw_screen(line - row);
+		specasm_draw_status();
+		break;
+#endif
 #endif
 	default:
 		err_type = SPECASM_ERROR_BAD_COMMAND;
@@ -687,6 +704,14 @@ static uint8_t prv_long_command_e(char *com, uint8_t len)
 			return 0;
 	} else if ((com[0] == 'f') && (com[1] == 'l') && !com[2]) {
 		specasm_selecting_flags();
+#ifndef UNITTESTS
+	} else if (com[0] == 'h' && com[1] == ' ') {
+		specasm_text_set_flash(col, row, 0);
+		specasm_help(&com[2]);
+		specasm_text_set_flash(col, row, SPECASM_FLASH);
+		specasm_draw_screen(line - row);
+		specasm_draw_status();
+#endif
 #endif
 	} else {
 		err_type = SPECASM_ERROR_BAD_COMMAND;
@@ -1192,7 +1217,6 @@ static uint8_t prv_select_block_down(uint16_t adj)
 
 	return 1;
 }
-
 
 static uint8_t prv_select_block_up(uint8_t adj)
 {

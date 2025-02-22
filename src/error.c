@@ -16,8 +16,6 @@
 
 #include "error.h"
 
-specasm_error_t err_type;
-
 /* clang-format off */
 
 const char* error_msgs[SPECASM_MAX_ERRORS] = {

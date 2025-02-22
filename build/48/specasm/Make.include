@@ -54,6 +54,7 @@ queued_files.o: queued_files.c peer.h error.h peer_zx.h \
 editor_buffers.o: editor_buffers.c editor_buffers.h line.h \
   error.h
 scratch.o: scratch.c scratch.h line.h error.h
+samac.o: samac.c error.h line.h scratch.h state.h state_base.h strings.h
 
 %.o: %.c
 	zcc $(CFLAGS) -o $@ -c $<

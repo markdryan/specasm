@@ -8,6 +8,7 @@ dw calib
 dw bank0
 dw bank4
 dw bank6
+dw bank3
 dw bank1
 
 .calib
@@ -32,8 +33,10 @@ dw bank1
   align 4
 .bank128
 db 16,20,22,17
+db 19	
 .bankPlus2a
 db 16,17,19,20
+db 22
 
 .bank0
   ld c, 0
@@ -44,9 +47,11 @@ db 16,17,19,20
 .bank6
   ld c, 2
   jr switchBank
+.bank3
+  ld c, 4
+  jr switchBank
 .bank1
   ld c, 3
-
 
 .switchBank
   ld a, (=cpuid)

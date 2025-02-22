@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #if defined(SPECASM_TARGET_NEXT_OPCODES) || defined(SPECASM_TARGET_128)
 #include <stdlib.h>
@@ -26,6 +26,15 @@
 #include "line.h"
 #include "scratch.h"
 #include "state.h"
+
+static void prv_restore_line_buf(const char *command)
+{
+	memset(line_buf, ' ', SPECASM_LINE_MAX_LEN);
+	line_buf[0] = '>';
+	line_buf[2] = command[0];
+	if (command[1])
+		line_buf[3] = command[1];
+}
 
 static void prv_clip_copy_e(const char *command)
 {
@@ -49,11 +58,7 @@ on_error:
 	 * We need to put line_buf back the way it was.
 	 */
 
-	memset(line_buf, ' ', SPECASM_LINE_MAX_LEN);
-	line_buf[0] = '>';
-	line_buf[2] = command[0];
-	if (command[1])
-		line_buf[3] = command[1];
+	prv_restore_line_buf(command);
 }
 
 void specasm_selecting_clip_copy_e(void)
@@ -102,6 +107,7 @@ uint8_t specasm_selecting_clip_cut_e(void)
 void specasm_selecting_clip_paste_e(void)
 {
 	uint16_t i;
+	specasm_error_t paste_err = SPECASM_ERROR_OK;
 	uint16_t ptr = 0;
 	uint16_t line_count = specasm_clip_get_line_count();
 
@@ -118,15 +124,23 @@ void specasm_selecting_clip_paste_e(void)
 		specasm_parse_line_e(i, line_buf);
 
 		/*
-		 * This can't really error unless there's some memory
-		 * corruption.  If we return an error here we'll need
-		 * to reset line_buf.  As this cannot happen it's not
-		 * worth the code to do it.  We'll clear the error here
-		 * to prevent the corrupted line_buf from being used
-		 * when the command prompt is redisplayed.
+		 * Although the line is guaranteed to be syntactically correct
+		 * we could still get an error, if for example, there are no
+		 * strings left.  When this happens in the editor, you can't add
+		 * the line, but here the line is already added, and then
+		 * corrupted by the failed call to specasm_parse_line_e, so
+		 * we'll need to set it back to empty before reporting the
+		 * error.
 		 */
+		if (err_type != SPECASM_ERROR_OK) {
+			state.lines.lines[i].type = SPECASM_LINE_TYPE_EMPTY;
+			prv_restore_line_buf("v");
+			paste_err = err_type;
+			err_type = SPECASM_ERROR_OK;
+			specasm_delete_lines(i, line + line_count);
+			break;
+		}
 
-		err_type = SPECASM_ERROR_OK;
 		ptr = specasm_clip_get_line(ptr, line_buf);
 		i++;
 	}
@@ -135,6 +149,7 @@ void specasm_selecting_clip_paste_e(void)
 		select_end = select_start = 0;
 		specasm_draw_status();
 	}
+	err_type = paste_err;
 }
 
 void specasm_selecting_cycles(void)

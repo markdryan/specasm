@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -29,8 +29,21 @@
 #define SAMAKE_TARGET_TYPE_TAP 2
 #define SAMAKE_TARGET_TYPE_P 3
 #define SAMAKE_TARGET_TYPE_TST 4
+#define SAMAKE_TARGET_TYPE_MAC 5
+#define SAMAKE_TARGET_TYPE_ACE 6
+#define SAMAKE_TARGET_TYPE_AUTOACE 7
 
 #define SAMAKE_CODE_BUF_SIZE 1024
+
+/*
+ * We could use an ORG address of 32768 for the SAMAC binary, but
+ * this would be cutting it a bit fine, leaving only 500 or so bytes
+ * free.  If the code grew in a subsequent release we'd end up having
+ * to lower the ORG address and this would break users' macros.  So
+ * let's leave ourselves some room.
+ */
+
+#define SAMAC_ORG_ADDRESS 30720
 
 static char bin_name[MAX_FNAME + 1];
 static char app_name[MAX_FNAME + 1];
@@ -39,6 +52,7 @@ static char start_address[6] = "32768";
 static char clear_address[6] = "32767";
 static char fsize_file_address[6] = "60000";
 static uint16_t org_address = 0x8000;
+static const char *samac_name = "/specasm/SAMAC";
 static uint16_t basic_prog_len;
 static uint8_t got_org;
 uint8_t got_zx81;
@@ -66,6 +80,17 @@ static union {
 } container;
 
 static specasm_dirent_t dirent;
+
+static uint8_t prv_write_code_e(specasm_handle_t in_f, specasm_handle_t out_f,
+				uint8_t checksum);
+
+static void prv_set_org_address(uint16_t sa)
+{
+	org_address = sa;
+	(void)utoa(sa, start_address, 10);
+	sa--;
+	(void)utoa(sa, clear_address, 10);
+}
 
 static uint8_t prv_parse_obj_e(const char *fname)
 {
@@ -102,11 +127,8 @@ static uint8_t prv_parse_obj_e(const char *fname)
 				return 1;
 		} else if (!got_org && (line->type == SPECASM_LINE_TYPE_ORG)) {
 			sa = *((uint16_t *)&line->data.op_code[0]);
-			org_address = sa;
+			prv_set_org_address(sa);
 			got_org = 1;
-			(void)utoa(sa, start_address, 10);
-			sa--;
-			(void)utoa(sa, clear_address, 10);
 			if (bin_name[0] && got_zx81)
 				return 1;
 		} else if (!got_zx81 &&
@@ -173,19 +195,25 @@ finish:
 	specasm_closedir(dir);
 }
 
-static void prv_make_app_name(const char *type)
+static void prv_make_app_name_gen(const char *type, const char *name,
+				  uint8_t len)
 {
 	uint8_t ext_pos;
-	uint8_t bin_name_len_plus_ext;
+	uint8_t len_plus_ext;
 
-	bin_name_len_plus_ext = bin_name_len + strlen(type) + 1;
-	if (bin_name_len_plus_ext > MAX_FNAME)
-		ext_pos = bin_name_len - (bin_name_len_plus_ext - MAX_FNAME);
+	len_plus_ext = len + strlen(type) + 1;
+	if (len_plus_ext > MAX_FNAME)
+		ext_pos = len - (len_plus_ext - MAX_FNAME);
 	else
-		ext_pos = bin_name_len;
-	strcpy(app_name, bin_name);
+		ext_pos = len;
+	strcpy(app_name, name);
 	app_name[ext_pos] = '.';
 	strcpy(&app_name[ext_pos + 1], type);
+}
+
+static void prv_make_app_name(const char *type)
+{
+	prv_make_app_name_gen(type, bin_name, bin_name_len);
 }
 
 static uint8_t *prv_write_address(uint8_t *ptr, const char *address)
@@ -296,20 +324,10 @@ close_in_f:
 	return 0;
 }
 
-static void prv_make_bas_e(void)
+static void prv_create_bas_file_e(void)
 {
 	specasm_handle_t f;
-	uint16_t bin_size;
 
-	/* Check bin file exists and is not too big. */
-
-	f = prv_open_bin_e(&bin_size);
-	if (err_type != SPECASM_ERROR_OK)
-		return;
-	specasm_file_close_e(f);
-	err_type = SPECASM_ERROR_OK;
-
-	prv_make_app_name("bas");
 #ifdef SPECASM_TARGET_NEXT
 	prv_make_basic_file(0, bin_name, bin_name_len);
 #else
@@ -337,6 +355,94 @@ on_error:
 	specasm_remove_file(app_name);
 }
 
+static void prv_make_bas_e(void)
+{
+	specasm_handle_t f;
+	uint16_t bin_size;
+
+	/* Check bin file exists and is not too big. */
+
+	f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	specasm_file_close_e(f);
+	err_type = SPECASM_ERROR_OK;
+
+	prv_make_app_name("bas");
+	prv_create_bas_file_e();
+}
+
+#ifndef SPECASM_TARGET_NEXT
+static void prv_make_mac_e(const char *apn)
+{
+	specasm_handle_t f;
+	uint16_t bin_size;
+
+	/* Check bin file exists and is not too big. */
+
+	f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+	specasm_file_close_e(f);
+	err_type = SPECASM_ERROR_OK;
+
+	if (!strchr(apn, '.')) {
+		prv_make_app_name_gen("bas", apn, strlen(apn));
+	} else {
+		if (strlen(apn) > MAX_FNAME) {
+			err_type = SPECASM_ERROR_BAD_FNAME;
+			return;
+		}
+		strcpy(app_name, apn);
+	}
+
+	prv_create_bas_file_e();
+}
+
+/*
+ * For the next macros we're just going to copy a template file from
+ * the /specasm directory.  We're not going to generate anything.  The
+ * file is a little too large to encode in the samake binary.
+ */
+
+#else
+static void prv_copy_next_mac_e(const char *dir)
+{
+	specasm_handle_t in_f;
+	specasm_handle_t out_f;
+
+	if (strcmp(dir, ".")) {
+		if (!strchr(dir, '.')) {
+			prv_make_app_name_gen("bas", dir, strlen(dir));
+		} else {
+			if (strlen(dir) > MAX_FNAME) {
+				err_type = SPECASM_ERROR_BAD_FNAME;
+				return;
+			}
+			strcpy(app_name, dir);
+		}
+	} else {
+		strcpy(app_name, "mac.bas");
+	}
+
+	in_f = specasm_file_ropen_e("/specasm/MAC.BAS");
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	out_f = specasm_file_wopen_e(app_name);
+	if (err_type != SPECASM_ERROR_OK) {
+		specasm_file_close_e(in_f);
+		return;
+	}
+
+	(void)prv_write_code_e(in_f, out_f, 0);
+
+on_error:
+	specasm_file_close_e(out_f);
+	specasm_file_close_e(in_f);
+}
+#endif
+
 static void prv_make_basic_header(void)
 {
 	uint8_t i;
@@ -350,7 +456,8 @@ static void prv_make_basic_header(void)
 	container.tap_block[2] = 0;    /* Flag byte, 0 = header */
 	container.tap_block[3] = 0;    /* Type byte, 0 = program */
 
-	/* Copy the name of the BASIC file, we'll just use the bin file */
+	/* Copy the name of the BASIC file, we'll just use the bin file
+	 */
 
 	memset(&container.tap_block[4], ' ', 10);
 	memcpy(&container.tap_block[4], bin_name, name_len);
@@ -387,7 +494,8 @@ static void prv_make_code_header(uint16_t bin_size)
 	container.tap_block[2] = 0; /* Flag byte, 0 = header */
 	container.tap_block[3] = 3; /* Type byte, 0 = program */
 
-	/* Copy the name of the BASIC file, we'll just use the bin file */
+	/* Copy the name of the BASIC file, we'll just use the bin file
+	 */
 
 	memset(&container.tap_block[4], ' ', 10);
 	memcpy(&container.tap_block[4], bin_name, name_len);
@@ -412,10 +520,10 @@ static void prv_make_code_header(uint16_t bin_size)
 	container.tap_block[23] = 0xff;
 }
 
-static uint8_t prv_write_code_e(specasm_handle_t in_f, specasm_handle_t out_f)
+static uint8_t prv_write_code_e(specasm_handle_t in_f, specasm_handle_t out_f,
+				uint8_t checksum)
 {
 	uint16_t i;
-	uint8_t checksum = 0xff;
 	size_t read;
 
 	for (;;) {
@@ -433,6 +541,207 @@ static uint8_t prv_write_code_e(specasm_handle_t in_f, specasm_handle_t out_f)
 	}
 
 	return checksum;
+}
+
+static void prv_make_ace_e(void)
+{
+	specasm_handle_t out_f;
+	specasm_handle_t in_f;
+	uint16_t bin_size;
+	uint16_t i;
+	uint16_t data_block_size;
+	uint8_t checksum = 0;
+	uint8_t ace_name_len = bin_name_len;
+
+	prv_make_app_name("tap");
+	in_f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	if (ace_name_len > 10)
+		ace_name_len = 10;
+
+	memset(&basic_buf[3], 0x20, 24);
+	basic_buf[0] = 26; /* header block size LSB */
+	basic_buf[1] = 0;  /* header block size MSB */
+	basic_buf[2] = 32; /* file type (byte) */
+	memcpy(&basic_buf[3], bin_name, ace_name_len);
+	memcpy(&basic_buf[13], &bin_size, sizeof(bin_size));
+	memcpy(&basic_buf[15], &org_address, sizeof(org_address));
+
+	for (i = 2; i < 27; i++)
+		checksum ^= basic_buf[i];
+	basic_buf[27] = checksum;
+	data_block_size = bin_size + 1;
+	memcpy(&basic_buf[28], &data_block_size, sizeof(data_block_size));
+
+	out_f = specasm_file_wopen_e(app_name);
+	if (err_type != SPECASM_ERROR_OK) {
+		specasm_file_close_e(in_f);
+		return;
+	}
+
+	specasm_file_write_e(out_f, basic_buf, 30);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	/*
+	 * Now write out code file and compute the checksum.
+	 */
+
+	checksum = prv_write_code_e(in_f, out_f, 0);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_write_e(out_f, &checksum, 1);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	return;
+
+on_error:
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	specasm_remove_file(app_name);
+}
+
+/*
+ * Template based on:
+ * https://github.com/McKlaud76/JACE-TAP-templates/blob/main/asm/AUTORUN_template.asm
+ */
+
+/* clang-format off */
+
+static const uint8_t aceauto_template[] = {
+    /* TAP Header Block (0-27).  All data is constant */
+    0x1a, 0x00, 0x20,  'a',  'u',  't',  'o',  'r',
+     'u',  'n', 0x20, 0x20, 0x20, 0x1f, 0x00, 0xe0,
+    0x22, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+    0x20, 0x20, 0x20, 0xbb,
+
+    /* TAP Data Block (28-61).  Binary file name and checksum are overwritten  */
+    0x20, 0x00, 0x00,  'L',  'O',  'A',  'D', 0x20,
+    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,  /* Binary file name, offset 36 */
+    0x20,  'R',  'U',  'N', 0x20, 0x20, 0x20, 0x20,
+    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+    0x00, /* checksum, offset 61 */
+
+    /* TAP Header Block (62-89). Binary file name, file length, STKBOT and checksum are overwritten  */
+    0x1a, 0x00, 0x00,
+    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, /* Binary file name, offset 65 */
+    0x00, 0x00, /* File length, offset 75 */
+    0x51, 0x3c, 0x58, 0x3c, 0x20, 0x20, 0x20, 0x20,
+    0x20, 0x20,
+    0x00, 0x00,  /* STKBOT, offset 87 */
+    0x00, /* checksum, offset 89 */
+
+    /* TAP Data Block (90-101).  Data block length and word length overwritten */
+
+    0x00, 0x00, /* Data block length, offset 90 */
+     'R',  'U', 0xce,
+    0x00, 0x00, /* Word length, offset 95 */
+    0x49, 0x3c, 0x03, 0x5b, 0x3c
+
+    /* Code starts here followed by checksum of entire data block. */
+    };
+
+/* clang-format on */
+
+static void prv_make_autoace_e(void)
+{
+	specasm_handle_t out_f;
+	specasm_handle_t in_f;
+	uint16_t bin_size;
+	uint16_t i;
+	uint16_t word_size;
+	uint16_t stkbot;
+	uint8_t checksum;
+	uint8_t ace_name_len;
+
+	if (org_address != 15451) {
+		printf("Bad ORG address %s, want 15451\n", start_address);
+		err_type = SAMAKE_ERROR_BAD_ORG;
+		return;
+	}
+
+	prv_make_app_name("tap");
+	in_f = prv_open_bin_e(&bin_size);
+	if (err_type != SPECASM_ERROR_OK)
+		return;
+
+	memcpy(basic_buf, aceauto_template, sizeof(aceauto_template));
+
+	ace_name_len = bin_name_len;
+	if (ace_name_len > 10)
+		ace_name_len = 10;
+
+	memcpy(&basic_buf[36], bin_name, ace_name_len);
+
+	checksum = 0;
+	for (i = 30; i < 61; i++)
+		checksum ^= basic_buf[i];
+	basic_buf[61] = checksum;
+
+	memcpy(&basic_buf[65], bin_name, ace_name_len);
+
+	word_size = bin_size + 10;
+	memcpy(&basic_buf[75], &word_size, sizeof(word_size));
+
+	stkbot = org_address + bin_size;
+	memcpy(&basic_buf[87], &stkbot, sizeof(stkbot));
+	checksum = 0;
+	for (i = 64; i < 89; i++)
+		checksum ^= basic_buf[i];
+	basic_buf[89] = checksum;
+
+	/*
+	 * length of block containing RUN word and code
+	 */
+	word_size++;
+	memcpy(&basic_buf[90], &word_size, sizeof(word_size));
+
+	/*
+	 * length of word and code
+	 */
+	word_size -= 4;
+	memcpy(&basic_buf[95], &word_size, sizeof(word_size));
+
+	checksum = 0;
+	for (i = 92; i < 102; i++)
+		checksum ^= basic_buf[i];
+
+	out_f = specasm_file_wopen_e(app_name);
+	if (err_type != SPECASM_ERROR_OK) {
+		specasm_file_close_e(in_f);
+		return;
+	}
+
+	specasm_file_write_e(out_f, basic_buf, 102);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	/*
+	 * Now write out code file and compute the checksum.
+	 */
+
+	checksum = prv_write_code_e(in_f, out_f, checksum);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_write_e(out_f, &checksum, 1);
+	if (err_type != SPECASM_ERROR_OK)
+		goto on_error;
+
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	return;
+
+on_error:
+	specasm_file_close_e(in_f);
+	specasm_file_close_e(out_f);
+	specasm_remove_file(app_name);
 }
 
 static void prv_make_tap_e(void)
@@ -453,8 +762,8 @@ static void prv_make_tap_e(void)
 		return;
 
 	/*
-	 * That's the header.  Now we can write our BASIC program followed
-	 * by the checksum.
+	 * That's the header.  Now we can write our BASIC program
+	 * followed by the checksum.
 	 */
 
 	out_f = specasm_file_wopen_e(app_name);
@@ -492,7 +801,7 @@ static void prv_make_tap_e(void)
 	 * Now write out code file and compute the checksum.
 	 */
 
-	checksum = prv_write_code_e(in_f, out_f);
+	checksum = prv_write_code_e(in_f, out_f, 0xff);
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
@@ -599,11 +908,11 @@ static void prv_make_p_e(void)
 	uint16_t i;
 
 	const uint8_t loader[] = {118, 0,  2,  11, 0,  249, 212, 197,
-				  11,  29, 34, 33, 29, 32,  11,  118};
+				  11,  29, 34, 33, 29, 32,  11,	 118};
 	const uint8_t footer[] = {118, 128};
 
 	if (got_org && strcmp(start_address, "16514")) {
-		printf("Bad ORG address %s, want 16514", start_address);
+		printf("Bad ORG address %s, want 16514\n", start_address);
 		err_type = SAMAKE_ERROR_BAD_ORG;
 		return;
 	}
@@ -626,7 +935,7 @@ static void prv_make_p_e(void)
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
-	(void)prv_write_code_e(in_f, out_f);
+	(void)prv_write_code_e(in_f, out_f, 0xff);
 	if (err_type != SPECASM_ERROR_OK)
 		goto on_error;
 
@@ -926,9 +1235,22 @@ on_error:
 
 static void prv_make_e(const char *dir, uint8_t target_type)
 {
-	prv_find_bin_name_e(dir, target_type);
-	if (err_type != SPECASM_ERROR_OK)
+	const char *apn;
+
+	if (target_type == SAMAKE_TARGET_TYPE_MAC) {
+#ifdef SPECASM_TARGET_NEXT
+		prv_copy_next_mac_e(dir);
 		return;
+#else
+		strcpy(bin_name, samac_name);
+		bin_name_len = strlen(samac_name);
+		prv_set_org_address(SAMAC_ORG_ADDRESS);
+#endif
+	} else {
+		prv_find_bin_name_e(dir, target_type);
+		if (err_type != SPECASM_ERROR_OK)
+			return;
+	}
 
 	if (got_zx81 && (target_type != SAMAKE_TARGET_TYPE_P) &&
 	    (target_type != SAMAKE_TARGET_TYPE_NONE)) {
@@ -938,12 +1260,13 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 	}
 
 	/*
-	 * We could perform the opposite check here, that if you select p
-	 * and your program doesn't include the zx81 directive then we report
-	 * an error.  The thing is though that this should still work, providing
-	 * you set the org correctly and do the character conversion yourself.
-	 * This might actually be something you want to do if you have some
-	 * existing code that does the conversion at runtime.
+	 * We could perform the opposite check here, that if you select
+	 * p and your program doesn't include the zx81 directive then we
+	 * report an error.  The thing is though that this should still
+	 * work, providing you set the org correctly and do the
+	 * character conversion yourself. This might actually be
+	 * something you want to do if you have some existing code that
+	 * does the conversion at runtime.
 	 */
 
 	if (target_type == SAMAKE_TARGET_TYPE_NONE)
@@ -951,25 +1274,46 @@ static void prv_make_e(const char *dir, uint8_t target_type)
 		    got_zx81 ? SAMAKE_TARGET_TYPE_P : SAMAKE_TARGET_TYPE_BAS;
 
 	/*
-	 * TODO, this check isn't really correct.  Ideally we'd add the loading
-	 * address of BASIC program and the size of the BASIC program and check
-	 * that the resulting value isn't greater than org_address, but I can't
-	 * figure out whether there's a fixed starting address for BASIC
-	 * programs, so for now let's just print a warning.  It's mainly there
-	 * to stop people creating a loader for a dot program.
+	 * TODO, this check isn't really correct.  Ideally we'd add the
+	 * loading address of BASIC program and the size of the BASIC
+	 * program and check that the resulting value isn't greater than
+	 * org_address, but I can't figure out whether there's a fixed
+	 * starting address for BASIC programs, so for now let's just
+	 * print a warning.  It's mainly there to stop people creating a
+	 * loader for a dot program.
 	 */
 
-	if ((target_type != SAMAKE_TARGET_TYPE_P) && (org_address < 24000))
-		printf("Warning: org %" PRIu16 " is very low\n", org_address);
+	if (org_address < 24000) {
+		switch (target_type) {
+		case SAMAKE_TARGET_TYPE_BAS:
+		case SAMAKE_TARGET_TYPE_TAP:
+		case SAMAKE_TARGET_TYPE_TST:
+			printf("Warning: org %" PRIu16 " is very low\n",
+			       org_address);
+			break;
+		default:
+			break;
+		}
+	}
 
-	if (target_type == SAMAKE_TARGET_TYPE_BAS)
+	if (target_type == SAMAKE_TARGET_TYPE_ACE) {
+		prv_make_ace_e();
+	} else if (target_type == SAMAKE_TARGET_TYPE_AUTOACE) {
+		prv_make_autoace_e();
+	} else if (target_type == SAMAKE_TARGET_TYPE_BAS) {
 		prv_make_bas_e();
-	else if (target_type == SAMAKE_TARGET_TYPE_TAP)
+#ifndef SPECASM_TARGET_NEXT
+	} else if (target_type == SAMAKE_TARGET_TYPE_MAC) {
+		apn = strcmp(dir, ".") ? dir : "mac";
+		prv_make_mac_e(apn);
+#endif
+	} else if (target_type == SAMAKE_TARGET_TYPE_TAP) {
 		prv_make_tap_e();
-	else if (target_type == SAMAKE_TARGET_TYPE_P)
+	} else if (target_type == SAMAKE_TARGET_TYPE_P) {
 		prv_make_p_e();
-	else
+	} else {
 		prv_make_tst_e();
+	}
 }
 
 int main(int argc, char *argv[])
@@ -998,6 +1342,12 @@ int main(int argc, char *argv[])
 			target_type = SAMAKE_TARGET_TYPE_BAS;
 		} else if (!strcmp(argv[1], "tst")) {
 			target_type = SAMAKE_TARGET_TYPE_TST;
+		} else if (!strcmp(argv[1], "mac")) {
+			target_type = SAMAKE_TARGET_TYPE_MAC;
+		} else if (!strcmp(argv[1], "ace")) {
+			target_type = SAMAKE_TARGET_TYPE_ACE;
+		} else if (!strcmp(argv[1], "autoace")) {
+			target_type = SAMAKE_TARGET_TYPE_AUTOACE;
 		} else {
 			err_type = SAMAKE_ERROR_USAGE;
 			goto on_error;
@@ -1014,10 +1364,14 @@ int main(int argc, char *argv[])
 
 on_error:
 	if (err_type != SPECASM_ERROR_OK) {
-		if (err_type < SPECASM_MAX_ERRORS)
+		if (err_type < SPECASM_MAX_ERRORS) {
 			printf("%s\n", specasm_error_msg(err_type));
-		else if (err_type == SAMAKE_ERROR_USAGE)
-			printf("Usage: samake (bas|tap) [dir]\n");
+		} else if (err_type == SAMAKE_ERROR_USAGE) {
+			printf("Usage:\n");
+			printf(" samake (bas|tap|p|tst) [dir]\n");
+			printf(" samake (ace|autoace) [dir]\n");
+			printf(" samake mac [macro filename]\n");
+		}
 		ret = 1;
 	} else {
 		printf("Created %s\n", app_name);
